@@ -16,7 +16,7 @@ npm install -g @ionic/cli@latest
 
 ### 2. 개발 서버 실행
 ```sh
-npm ionic serve
+ionic serve
 ```
 
 ### 3. 프로덕션 빌드
