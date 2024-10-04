@@ -4,6 +4,9 @@ import TabsPage from '../views/TabsPage.vue'
 import path from "path";
 import LoginName from "@/views/auth/LoginName.vue";
 import LoginTerms from "@/views/auth/LoginTerms.vue";
+import LoginGender from "@/views/auth/LoginGender.vue";
+import LoginFinish from "@/views/auth/LoginFinish.vue";
+import LoginSchool from "@/views/auth/LoginSchool.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -39,7 +42,19 @@ const routes: Array<RouteRecordRaw> = [
   {
     path:'/loginTerms',
     component:LoginTerms
-  }
+  },
+  {
+    path:'/loginGender',
+    component:LoginGender
+  },
+  {
+    path:'/loginSchool',
+    component:LoginSchool
+  },
+ {
+    path:'/loginFinish',
+    component:LoginFinish
+  },
 
 ]
 

@@ -25,11 +25,12 @@ import '@ionic/vue/css/display.css';
  * -----------------------------------------------------
  * For more info, please see:
  * https://ionicframework.com/docs/theming/dark-mode
+ * 다크 모드를 지원하지 않기 때문에 관련 css 주석처리
  */
 
 /* @import '@ionic/vue/css/palettes/dark.always.css'; */
 /* @import '@ionic/vue/css/palettes/dark.class.css'; */
-import '@ionic/vue/css/palettes/dark.system.css';
+/* import '@ionic/vue/css/palettes/dark.system.css'; */
 
 /* Theme variables */
 import './theme/variables.css';
