@@ -7,6 +7,8 @@ import LoginTerms from "@/views/auth/LoginTerms.vue";
 import LoginGender from "@/views/auth/LoginGender.vue";
 import LoginFinish from "@/views/auth/LoginFinish.vue";
 import LoginSchool from "@/views/auth/LoginSchool.vue";
+import Onboarding from "@/views/intro/Onboarding.vue";
+import Splash from "@/views/intro/Splash.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -55,6 +57,14 @@ const routes: Array<RouteRecordRaw> = [
     path:'/loginFinish',
     component:LoginFinish
   },
+  {
+    path:'/intro/onboarding',
+    component:Onboarding
+  },
+  {
+    path:'/intro/splash',
+    component:Splash
+  }
 
 ]
 
