@@ -8,11 +8,15 @@ import { chevronBackOutline } from 'ionicons/icons';
   <ion-toolbar>
     <ion-buttons slot="start">
       <ion-back-button :icon="chevronBackOutline" default-href="/"></ion-back-button>
-    </ion-buttons>  </ion-toolbar>
+    </ion-buttons>
+  </ion-toolbar>
 </ion-header>
 </template>
 
 <style scoped>
+ion-buttons{
+  margin-left: 0;
+}
 ion-back-button{
   --padding-start: 0;
 }
