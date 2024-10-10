@@ -9,6 +9,7 @@ import LoginFinish from "@/views/auth/LoginFinish.vue";
 import LoginSchool from "@/views/auth/LoginSchool.vue";
 import Onboarding from "@/views/intro/Onboarding.vue";
 import Splash from "@/views/intro/Splash.vue";
+import SurveyPage from "@/components/survey/SurveyPage.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -39,31 +40,43 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: '/loginName',
+    name: 'LoginName',
     component: LoginName
   },
   {
     path:'/loginTerms',
+    name: 'LoginTerms',
     component:LoginTerms
   },
   {
     path:'/loginGender',
+    name: 'LoginGender',
     component:LoginGender
   },
   {
     path:'/loginSchool',
+    name: 'LoginSchool',
     component:LoginSchool
   },
  {
-    path:'/loginFinish',
-    component:LoginFinish
+   path:'/loginFinish',
+   name: 'LoginFinish',
+   component:LoginFinish
   },
   {
     path:'/intro/onboarding',
+    name: 'Onboadrding',
     component:Onboarding
   },
   {
     path:'/intro/splash',
+    name:'Splash',
     component:Splash
+  },
+  {
+    path: '/surveyPage',
+    name: 'SurveyPage',
+    component:SurveyPage
   }
 
 ]
