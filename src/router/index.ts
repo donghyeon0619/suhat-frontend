@@ -10,6 +10,7 @@ import LoginSchool from "@/views/auth/LoginSchool.vue";
 import Onboarding from "@/views/intro/Onboarding.vue";
 import Splash from "@/views/intro/Splash.vue";
 import SurveyPage from "@/components/survey/SurveyPage.vue";
+import SurveyResult from "@/components/survey/SurveyResult.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -77,6 +78,11 @@ const routes: Array<RouteRecordRaw> = [
     path: '/surveyPage',
     name: 'SurveyPage',
     component:SurveyPage
+  },
+  {
+    path: '/surveyResult',
+    name: 'SurveyResult',
+    component:SurveyResult
   }
 
 ]

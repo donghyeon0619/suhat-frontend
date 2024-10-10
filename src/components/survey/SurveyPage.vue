@@ -85,7 +85,7 @@ const goToNextQuestion = () => {
 const router = useRouter();
 const submitSurvey = () => {
   // 제출 처리 후 결과 페이지로 이동
-  router.push({ name: "loginFinish" });
+  router.push({ name: "SurveyResult" });
 };
 </script>
 
