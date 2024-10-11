@@ -87,8 +87,16 @@ const onSlideChange = (swiper) => {
 
 <style scoped>
 
-ion-content{
-  --background: #F3F4F6;
+.ion-page {
+  background: #F3F4F6;
+}
+
+ion-toolbar{
+  --background: transparent;
+}
+
+ion-content::part(background) {
+  background: transparent;
 }
 
 .slide-content {
@@ -100,15 +108,16 @@ ion-content{
 }
 
 ion-thumbnail{
-  width: 40vh;
-  height: 42vh;
+  width: 100%;
+  height: 100%;
 }
 
 .img-wrapper {
+  min-height: 42vh;
+  margin-top: 5vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding-top: 20%;
 }
 
 .text-wrapper {
@@ -121,7 +130,7 @@ ion-thumbnail{
 
 .slide-title {
   font-size: 1.625rem;
-  font-weight: 600;
+  font-weight: 700;
   color: #191F28;
   margin-top:2.5vh;
   margin-bottom:2.5vh;
@@ -129,7 +138,7 @@ ion-thumbnail{
 
 .slide-description {
   font-size: 1.125rem;
-  font-weight: 700;
+  font-weight: 600;
   color: #13BD7E;
 }
 
@@ -142,20 +151,25 @@ ion-thumbnail{
 }
 
 .pagination-dot {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   margin: 0 5px;
   background-color: #ddd;
   border-radius: 50%;
-  transition: background-color 0.3s;
+  transition: width 0.3s ease, background-color 0.3s ease, border-radius 0.3s ease; /* 부드러운 전환 효과 */
 }
 
 .active-dot {
   background-color: #000000;
+  width: 30px;
+  height: 10px;
+  border-radius: 16px; /* 타원형으로 만듦 */
+  transition: width 0.3s ease, background-color 0.3s ease, border-radius 0.3s ease;
+
 }
+
 ion-footer{
   height: 13%;
-  background-color: #F3F4F6;
 }
 
 

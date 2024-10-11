@@ -13,11 +13,10 @@ import {
   IonGrid,
   IonRow,
   IonCol,
-  IonFooter
+  IonFooter, useIonRouter
 } from "@ionic/vue";
 import {computed, ref, watch} from "vue";
 import { chevronBackOutline} from "ionicons/icons";
-import {useRouter} from "vue-router";
 
 
 // 덤프 데이터: 질문 리스트
@@ -67,6 +66,10 @@ const selectOption = (value: number) => {
   }
 };
 
+const totalScore = computed(()=>{
+  return selectedAnswers.value.reduce((sum, current) => sum + (current !== -1 ? current : 0), 0)
+})
+
 // 이전 문제 버튼 클릭 핸들러
 const goToPreviousQuestion = () => {
   if (currentQuestionIndex.value > 0) {
@@ -82,10 +85,14 @@ const goToNextQuestion = () => {
 };
 
 // 제출하기 버튼 클릭 핸들러
-const router = useRouter();
+const router = useIonRouter();
+
 const submitSurvey = () => {
   // 제출 처리 후 결과 페이지로 이동
-  router.push({ name: "loginFinish" });
+  router.push({
+    name: "SurveyResult",
+    query: {score:totalScore.value}
+  });
 };
 </script>
 
