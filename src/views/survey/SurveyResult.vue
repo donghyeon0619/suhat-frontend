@@ -15,8 +15,9 @@ import {
   IonLabel,
   IonChip,
   IonAvatar,
-  actionSheetController
+  actionSheetController,
 } from "@ionic/vue";
+import {useRoute} from "vue-router";
 
 import goHome from "@/assets/icons/goHome.svg"
 import trophy from "@/assets/icons/trophyIcon.svg"
@@ -27,28 +28,36 @@ import EnvelopBack from "@/assets/img/common/back-envelope.svg"
 import singleIcon from "@/assets/icons/singleplay-icon.svg"
 import multiIcon from "@/assets/icons/multiplay-icon.svg"
 
+
 const showGameModeActionSheet = async () => {
-  const actionsheet= await actionSheetController.create({
+  const actionSheet = await actionSheetController.create({
     header: '게임 방식을 선택해주세요',
-    cssClass: 'custom-action-sheet',
-    buttons:[
+    cssClass: 'select-mode-action-sheet',
+    buttons:  [
       {
         text: '혼자하기',
-        cssClass: 'custom-action-sheet-button',
+        cssClass: 'select-mode-action-sheet-button ',
         handler() {
           console.log("혼자하기 선택");
         },
-        icon: `<ion-img src="${singleIcon}" style="width: 24px; height: 24px;"></ion-img>`
+        icon: singleIcon
       },
       {
         text: '다른사람과 함께하기',
-        cssClass: 'custom-action-sheet-button',
-        icon: `<ion-img src="${singleIcon}" style="width: 24px; height: 24px;"></ion-img>`
+        cssClass: 'select-mode-action-sheet-button ',
+        handler() {
+          console.log("같이하기 선택");
+        },
+        icon: multiIcon
       }
     ]
   });
-  await actionsheet.present();
-}
+
+  await actionSheet.present();
+};
+
+const route = useRoute();
+const score = route.query.score;
 
 
 </script>
@@ -89,7 +98,7 @@ const showGameModeActionSheet = async () => {
                 <ion-img :src="trophy"></ion-img>
               </IonThumbnail>
               <IonLabel class="card-title">내 점수</IonLabel>
-              <IonLabel slot="end" class="score">96점</IonLabel>
+              <IonLabel slot="end" class="score">{{score}}점</IonLabel>
             </ion-item>
           </IonCardHeader>
           <IonCardContent>
@@ -128,6 +137,12 @@ const showGameModeActionSheet = async () => {
         <IonButton expand="block" @click="showGameModeActionSheet">시작하기</IonButton>
       </div>
     </IonFooter>
+    <IonActionSheet
+        class="custom-action-sheet"
+        trigger="showGameModeActionSheet"
+        header="게임 방식을 선택해주세요"
+        :buttons="actionSheetButtons"
+    ></IonActionSheet>
   </IonPage>
 </template>
 
@@ -315,18 +330,16 @@ ion-footer{
 
 .action-button{
   margin: 1vh 2vh 1vh 2vh;
+  ion-button {
+    --border-radius: 16px;
+    --background: #333333;
+    font-weight: 700;
+    font-size:1rem;
+    line-height: 1.25rem;
+    --padding-top: 2vh;
+    --padding-bottom: 2vh;
+  }
 }
-
-ion-button {
-  --border-radius: 16px;
-  --background: #333333;
-  font-weight: 700;
-  font-size:1rem;
-  line-height: 1.25rem;
-  --padding-top: 2vh;
-  --padding-bottom: 2vh;
-}
-
 
 /* 갤럭시 S8 (기본적으로 작은 스마트폰 해상도) */
 @media screen and (max-width: 360px) {
@@ -354,15 +367,6 @@ ion-button {
 
 /* 갤럭시 Z Fold (펼친 상태) */
 @media screen and (min-width: 501px) and (max-width: 800px) {
-}
-
-
-.custom-action-sheet{
-  --color: red;
-}
-
-.custom-action-sheet-button{
-
 }
 
 </style>

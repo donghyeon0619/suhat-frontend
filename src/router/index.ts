@@ -9,8 +9,8 @@ import LoginFinish from "@/views/auth/LoginFinish.vue";
 import LoginSchool from "@/views/auth/LoginSchool.vue";
 import Onboarding from "@/views/intro/Onboarding.vue";
 import Splash from "@/views/intro/Splash.vue";
-import SurveyPage from "@/components/survey/SurveyPage.vue";
-import SurveyResult from "@/components/survey/SurveyResult.vue";
+import SurveyPage from "@/views/survey/SurveyPage.vue";
+import SurveyResult from "@/views/survey/SurveyResult.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
