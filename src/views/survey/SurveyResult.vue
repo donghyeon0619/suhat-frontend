@@ -27,6 +27,7 @@ import EnvelopFront from "@/assets/img/common/front-envelope.svg"
 import EnvelopBack from "@/assets/img/common/back-envelope.svg"
 import singleIcon from "@/assets/icons/singleplay-icon.svg"
 import multiIcon from "@/assets/icons/multiplay-icon.svg"
+import SuhatChip from "@/components/common/SuhatChip.vue";
 
 
 const showGameModeActionSheet = async () => {
@@ -120,15 +121,7 @@ const score = route.query.score;
             그럼 본격적으로 게임을 시작해볼까?
           </IonLabel>
         </div>
-
-        <br><br>
-        <!-- 캐릭터 아이콘 (살짝 겹치게) -->
-        <IonChip class="suhat-chip">
-          <IonAvatar>
-            <IonImg :src="suhat"/>
-          </IonAvatar>
-          <ion-label class="chip-text">햇냥이</ion-label>
-        </IonChip>
+        <SuhatChip/>
       </div>
 
     </IonContent>
@@ -151,20 +144,6 @@ const score = route.query.score;
   position: absolute;
   top: -3vh;
   z-index: 2;
-  --background: #13BD7E;
-  border: 2px solid #09834C;
-  --border-radius: 10px;
-  ion-avatar{
-    background: white;
-    border: 2px solid #09834C;
-  }
-  .chip-text {
-    font-size: 1rem;
-    line-height: 1.25rem;
-    font-family: "Haan Wing2";
-    font-weight: 700;
-    color: #ffffff;
-  }
 }
 
 .chat-wrapper{
