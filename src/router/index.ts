@@ -11,6 +11,7 @@ import Onboarding from "@/views/intro/Onboarding.vue";
 import Splash from "@/views/intro/Splash.vue";
 import SurveyPage from "@/views/survey/SurveyPage.vue";
 import SurveyResult from "@/views/survey/SurveyResult.vue";
+import GameHome from "@/views/game/GameHome.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -83,6 +84,11 @@ const routes: Array<RouteRecordRaw> = [
     path: '/surveyResult',
     name: 'SurveyResult',
     component:SurveyResult
+  },
+  {
+    path: '/game/home',
+    name: 'GameHome',
+    component:GameHome
   }
 
 ]
