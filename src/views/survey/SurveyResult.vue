@@ -19,14 +19,14 @@ import {
 } from "@ionic/vue";
 import {useRoute} from "vue-router";
 
-import goHome from "@/assets/icons/goHome.svg"
-import trophy from "@/assets/icons/trophyIcon.svg"
-import lock from "@/assets/icons/lockIcon.svg"
+import goHome from "@/assets/icons/common/icon-go-home.svg"
+import trophy from "@/assets/icons/common/icon-trophy.svg"
+import lock from "@/assets/icons/common/icon-lock.svg"
 import suhat from "@/assets/img/suhat_smal.svg"
 import EnvelopFront from "@/assets/img/common/front-envelope.svg"
 import EnvelopBack from "@/assets/img/common/back-envelope.svg"
-import singleIcon from "@/assets/icons/singleplay-icon.svg"
-import multiIcon from "@/assets/icons/multiplay-icon.svg"
+import singleIcon from "@/assets/icons/common/singleplay-icon.svg"
+import multiIcon from "@/assets/icons/common/multiplay-icon.svg"
 import SuhatChip from "@/components/common/SuhatChip.vue";
 
 
@@ -86,7 +86,7 @@ const score = route.query.score;
 
           <!-- 앞부분 봉투 -->
           <div class="front-envelope">
-            <IonThumbnail style="--size:106%;">
+            <IonThumbnail style="--size:100%;">
               <ion-img :src="EnvelopFront"></ion-img>
             </IonThumbnail>
           </div>
@@ -222,7 +222,7 @@ ion-title{
 
 .back-envelope {
   position: absolute;
-  bottom: -0.5vh;
+  bottom: 0;
   left: 0;
   z-index: 1;
   width: 100%;
@@ -230,8 +230,7 @@ ion-title{
 
 .front-envelope {
   position: absolute;
-  bottom: -0.5vh;
-  left: -3%;
+  bottom: 0;
   z-index: 3;
   width: 100%;
 }

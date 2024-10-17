@@ -12,6 +12,8 @@ import Splash from "@/views/intro/Splash.vue";
 import SurveyPage from "@/views/survey/SurveyPage.vue";
 import SurveyResult from "@/views/survey/SurveyResult.vue";
 import TypeTestPage from "@/views/typetest/TypeTestPage.vue";
+import TypeTestResult from "@/views/typetest/TypeTestResult.vue";
+import TypeTestSummary from "@/views/typetest/TypeTestSummary.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -89,7 +91,17 @@ const routes: Array<RouteRecordRaw> = [
     path: '/typeTestPage',
     name: 'TypeTestPage',
     component: TypeTestPage,
-  }
+  },
+  {
+      path: '/typeTestResult',
+      name: 'TypeTestResult',
+      component: TypeTestResult,
+  },
+  {
+    path: '/typeTestSummary',
+    name: 'TypeTestSummary',
+    component: TypeTestSummary,
+  },
 
 ]
 

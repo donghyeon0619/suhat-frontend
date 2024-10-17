@@ -66,7 +66,7 @@ const router = useIonRouter();
 const submitSurvey = () => {
   // 제출 처리 후 결과 페이지로 이동
   router.push({
-    name: "SurveyResult",
+    name: "TypeTestResult",
     query: {score:totalScore.value}
   });
 };
@@ -83,7 +83,7 @@ const submitSurvey = () => {
       </IonToolbar>
     </IonHeader>
 
-    <IonContent class="ion-padding">
+    <IonContent class="ion-padding" scroll-y="false">
 
       <!-- 질문 영역 -->
       <div class="question-container">
@@ -131,7 +131,6 @@ const submitSurvey = () => {
           <ion-col size="5">
             <ion-button
                 expand="block"
-                fill="outline"
                 class="prev-button"
                 @click="goToPreviousQuestion">이전 문제</ion-button>
           </ion-col>
@@ -153,7 +152,7 @@ const submitSurvey = () => {
 
 <style scoped>
 .ion-page {
-  background-image: url('../../assets/img/typetest/typetest-background.png'); /* 이미지를 직접 넣는 방법 */
+  background-image: url('../../assets/img/typetest/bg-type-test-page.png'); /* 이미지를 직접 넣는 방법 */
 }
 ion-toolbar{
   --background: transparent;
@@ -201,7 +200,7 @@ ion-buttons{
 .question-title {
   margin-top: 3%;
   font-weight: 800;
-  width: 100\0%;
+  width: 100%;
   text-align: start;
   font-size: 1.75rem;
   line-height: 1.3;
@@ -210,7 +209,7 @@ ion-buttons{
 
 .suhat-chip{
   position: absolute;
-  top: -60%;
+  top: -70%;
   left: 3%;
   z-index: 4;
 }
@@ -228,7 +227,7 @@ ion-buttons{
   background: rgba(255, 255, 255, 0.8);
   border-radius: 20px;
   border: 3px solid #F2F2F2;
-  padding: 3% 10% 3.5% 6%;
+  padding: 1.5% 10% 2% 6%;
   ion-label{
     font-weight: 900;
     font-size: 0.75rem;
@@ -243,11 +242,11 @@ ion-buttons{
   content: '';
   position: absolute;
   bottom: 0;
-  left: 15%;
+  left: 25%;
   width: 0;
   height: 0;
   border: 15px solid transparent;
-  border-top-color: rgba(255, 255, 255, 0.8); /* 말풍선 배경 색상 */
+  border-top-color:rgba(255, 255, 255, 0.8); /* 말풍선 배경 색상 */
   border-bottom: 0;
   margin-left: -15px;
   margin-bottom: -14px;
@@ -258,7 +257,7 @@ ion-buttons{
   content: '';
   position: absolute;
   bottom: 0;
-  left: 15%;
+  left: 25%;
   width: 0;
   height: 0;
   border: 17px solid transparent;
@@ -332,4 +331,41 @@ ion-footer{
 .next-button:disabled{
   --background:#BBE5A6 ;
 }
+
+
+/* Media Query for Small Devices (e.g., Galaxy S8) */
+@media(max-width: 360px) {
+
+  .option-item {
+    --padding-start: 3%; /* Reduce padding inside the options */
+    --padding-end: 3%;
+    --padding-top: 1.5%;
+    --padding-bottom: 1.5%;
+  }
+
+  .question-title {
+    font-size: 1.5rem; /* Reduce font size for the question */
+  }
+
+
+
+  .question-container {
+    margin-top: 3%; /* Reduce top margin for question container */
+  }
+
+
+  /* Reduce chat bubble margin */
+  .chat-bubble {
+    margin-top: 10%;
+  }
+}
+
+@media(max-width: 345px){
+
+  .chat-bubble {
+    margin-top: 30%;
+  }
+
+}
+
 </style>
