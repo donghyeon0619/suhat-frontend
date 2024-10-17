@@ -9,16 +9,23 @@
   }
 
   .action-sheet-title{
-    font-size:1.325rem;
-    line-height:2;
+    font-size:1.375rem;
+    line-height:1.45;
     font-weight:700;
     padding-left: 3%;
     padding-bottom: 2%;
 
   }
+  .action-sheet-sub-title{
+    font-size:1.375rem;
+    line-height:1.45;
+    font-weight:700;
+    padding-top:0;
+  }
 
   .select-mode-action-sheet-button{
     padding:2vh;
+    height: 7vh;
     color: #333D4B;
     font-size: 1rem;
     line-height: 1.25;

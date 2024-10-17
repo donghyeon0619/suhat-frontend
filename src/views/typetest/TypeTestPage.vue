@@ -23,6 +23,12 @@ import {computed, ref, reactive, watch} from "vue";
 import { chevronBackOutline} from "ionicons/icons";
 import SuhatChip from "@/components/common/SuhatChip.vue";
 import { surveyData } from "@/data/surveyData";
+import {useRoute} from "vue-router";
+
+const router = useIonRouter();
+
+const route = useRoute();
+const serviceType= route.query.serviceType;
 
 // 현재 질문 번호와 선택된 답변들 저장
 const currentQuestionIndex = ref(0);
@@ -61,8 +67,6 @@ const goToNextQuestion = () => {
 };
 
 // 제출하기 버튼 클릭 핸들러
-const router = useIonRouter();
-
 const submitSurvey = () => {
   // 제출 처리 후 결과 페이지로 이동
   router.push({
@@ -70,6 +74,8 @@ const submitSurvey = () => {
     query: {score:totalScore.value}
   });
 };
+
+
 </script>
 
 <template>
@@ -79,7 +85,7 @@ const submitSurvey = () => {
         <IonButtons slot="start">
           <IonBackButton :icon="chevronBackOutline" default-href="/"></IonBackButton>
         </IonButtons>
-        <IonTitle class="page-title">소셜 미디어 유형 검사</IonTitle>
+        <IonTitle class="page-title">{{serviceType}} 유형검사</IonTitle>
       </IonToolbar>
     </IonHeader>
 
