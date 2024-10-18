@@ -108,8 +108,7 @@ ion-content::part(background) {
 }
 
 ion-thumbnail{
-  width: 100%;
-  height: 100%;
+  --size: 100%
 }
 
 .img-wrapper {
@@ -183,6 +182,16 @@ ion-button {
   font-size:16px;
   --padding-top: 2vh;
   --padding-bottom: 2vh;
+}
+
+/* Media Query for Small Devices (e.g., Galaxy S8) */
+@media(max-width: 360px){
+  ion-thumbnail{
+    --size: 90%;
+  }
+  .img-wrapper{
+    min-height: 43vh;
+  }
 }
 
 </style>

@@ -1,10 +1,9 @@
-<script setup lang="ts" xmlns="http://www.w3.org/1999/html">
+<script setup lang="ts">
 import {IonPage, IonContent, IonText, IonIcon} from "@ionic/vue";
 import LoginFooter from "@/views/auth/components/LoginFooter.vue";
 import {ref, onMounted} from "vue";
 import lottie from 'lottie-web';
 import confettiAnimationData from '@/assets/confetti.json'
-import {checkmarkCircle} from "ionicons/icons";
 
 // 사용자 이름
 const userName = ref("이수햇");
@@ -13,15 +12,16 @@ const userName = ref("이수햇");
 const animationContainer = ref<HTMLElement | null>(null);  // 초기값을 null로 설정
 
 onMounted(() => {
-  if (animationContainer.value) {  // DOM 요소가 존재할 때만 실행
-    const anim = lottie.loadAnimation({
-      container: animationContainer.value,  // 애니메이션을 렌더링할 HTML 요소
-      renderer: 'svg',
-      loop: false,  // 애니메이션 반복 여부
-      autoplay: true,  // 애니메이션 자동 재생 여부
-      animationData: confettiAnimationData  // JSON 파일을 직접 사용
-    });
-    console.log(anim);  // 애니메이션이 제대로 로드되는지 확인
+  if (animationContainer.value) {
+    setTimeout(() => {
+      const anim = lottie.loadAnimation({
+        container: animationContainer.value as HTMLElement, // the container to render the animation in
+        renderer: 'svg',
+        loop: false,
+        autoplay: true,
+        animationData: confettiAnimationData,
+      });
+    }, 100); // Delay by 100ms
   }
 });
 
@@ -29,8 +29,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <IonPage style="justify-content: normal">
-    <IonContent scroll-y="false">
+  <IonPage>
+    <IonContent class="ion-padding" scroll-y="false">
       <div class="center-container">
       <!-- 체크 아이콘과 애니메이션 공간 -->
       <div class="icon-container">
@@ -48,7 +48,6 @@ onMounted(() => {
       <!-- 가입 완료 메시지 -->
       <div class="message-container">
         <ion-text class="success-message">가입완료!</ion-text>
-        <br />
         <ion-text class="welcome-message">
           반가워요 <span class="user-name">{{ userName }}님</span>
         </ion-text>
@@ -58,22 +57,14 @@ onMounted(() => {
           </ion-text>
         </div>
       </div>
-      </div>
 
+      </div>
     </IonContent>
     <LoginFooter :is-button-disabled="false" button-text="확인"></LoginFooter>
   </IonPage>
 </template>
 
 <style scoped>
-
-ion-content{
-  --padding-start: 2vh;
-  --padding-end: 2vh;
-  --padding-top: 2vh;
-  --padding-bottom:2vh;
-}
-
 .center-container {
   display: flex;
   flex-direction: column;
@@ -96,6 +87,7 @@ ion-content{
 .confetti-container {
   position: absolute;
   width: 100vw;
+  will-change: transform, opacity;
   height: 100vh;
   z-index: 10; /* 체크 아이콘 뒤에 오도록 설정 */
 }
@@ -103,6 +95,8 @@ ion-content{
 
 /* 메시지 및 텍스트 스타일 */
 .message-container {
+  display: flex;
+  flex-direction: column;
   text-align: center;
   margin-top: 3vh;
 }
@@ -110,12 +104,13 @@ ion-content{
 .success-message, .welcome-message{
   font-size:  1.625rem;
   color: #191F28;
-  font-weight: bold;
+  font-weight: 700;
+  line-height: 1.23;
 }
 
 .user-name {
   color: #13BD7E;
-  font-weight: bold;
+  font-weight: 700;
 }
 
 .description {

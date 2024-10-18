@@ -105,7 +105,7 @@ const clearSearch = () =>{
       <ion-title >주소 검색</ion-title>
     </ion-toolbar>
   </ion-header>
-  <ion-content>
+  <ion-content class="ion-padding">
     <!-- 검색바 부분-->
     <div class="searchbar-container">
       <ion-searchbar
@@ -186,13 +186,6 @@ const clearSearch = () =>{
 </template>
 
 <style scoped>
-ion-content{
-  --padding-start: 2vh;
-  --padding-end: 2vh;
-  --padding-top: 2vh;
-  --padding-bottom:2vh;
-}
-
 ion-title {
   font-weight: bold;
   font-size: 1.125rem;
@@ -214,7 +207,6 @@ ion-button{
   height: 13%;
   display: flex;
   align-items: center;
-  margin-bottom: 2vh;
 }
 
 .custom-searchbar{
@@ -267,14 +259,17 @@ ion-button{
 
 .empty-title h2 {
   font-size: 1.125rem;
-  font-weight: bold;
+  font-weight: 700;
   color: #404040;
+  line-height: 1.5;
   margin-bottom: 1vh;
 }
 
 .empty-subtitle {
   font-size: 0.875rem;
   color: #6B7684;
+  line-height: 1.43;
+  font-weight: 500;
 }
 
 .content-area ion-list{
@@ -291,6 +286,9 @@ ion-badge{
   --background:#fff;
   border: 2px solid #EBECEE;
   --color: #A3A9B0 ;
+  font-size:0.75rem;
+  line-height: 1.5;
+  font-weight: 500;
 }
 
 ion-item-divider{
@@ -298,11 +296,17 @@ ion-item-divider{
   --color: #404040;
   border-bottom-color: transparent;
   font-size: 1rem;
-  font-weight: 1000;
+  font-weight: 600;
+  line-height: 1.5;
 }
 
 .results-item-detail{
-  --min-height: 1vh;
+  --min-height: 4vh;
+}
+.results-item-detail ion-label{
+  font-size: 0.875rem;
+  line-height: 1.43;
+  color: #404040;
 }
 
 </style>
