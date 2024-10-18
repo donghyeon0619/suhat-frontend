@@ -14,95 +14,96 @@ import SurveyResult from "@/views/survey/SurveyResult.vue";
 import TypeTestPage from "@/views/typetest/TypeTestPage.vue";
 import TypeTestResult from "@/views/typetest/TypeTestResult.vue";
 import TypeTestSummary from "@/views/typetest/TypeTestSummary.vue";
+import HomePage from "@/views/home/HomePage.vue";
 
 const routes: Array<RouteRecordRaw> = [
-  {
-    path: '/',
-    redirect: '/tabs/tab1'
-  },
-  {
-    path: '/tabs/',
-    component: TabsPage,
-    children: [
-      {
-        path: '',
-        redirect: '/tabs/tab1'
-      },
-      {
-        path: 'tab1',
-        component: () => import('@/views/Tab1Page.vue')
-      },
-      {
-        path: 'tab2',
-        component: () => import('@/views/Tab2Page.vue')
-      },
-      {
-        path: 'tab3',
-        component: () => import('@/views/Tab3Page.vue')
-      }
-    ]
-  },
-  {
+    {
+        path: '/home',
+        name: 'HomePage',
+        component: HomePage,
+    },
+    {
+        path: '/tabs/',
+        component: TabsPage,
+        children: [
+            {
+                path: '',
+                redirect: '/tabs/tab1'
+            },
+            {
+                path: 'tab1',
+                component: () => import('@/views/Tab1Page.vue')
+            },
+            {
+                path: 'tab2',
+                component: () => import('@/views/Tab2Page.vue')
+            },
+            {
+                path: 'tab3',
+                component: () => import('@/views/Tab3Page.vue')
+            }
+        ]
+    },
+    {
     path: '/loginName',
     name: 'LoginName',
     component: LoginName
-  },
-  {
+    },
+    {
     path:'/loginTerms',
     name: 'LoginTerms',
     component:LoginTerms
-  },
-  {
+    },
+    {
     path:'/loginGender',
     name: 'LoginGender',
     component:LoginGender
-  },
-  {
+    },
+    {
     path:'/loginSchool',
     name: 'LoginSchool',
     component:LoginSchool
-  },
- {
-   path:'/loginFinish',
-   name: 'LoginFinish',
-   component:LoginFinish
-  },
-  {
-    path:'/intro/onboarding',
-    name: 'Onboadrding',
-    component:Onboarding
-  },
-  {
-    path:'/intro/splash',
-    name:'Splash',
-    component:Splash
-  },
-  {
-    path: '/surveyPage',
-    name: 'SurveyPage',
-    component:SurveyPage
-  },
-  {
-    path: '/surveyResult',
-    name: 'SurveyResult',
-    component:SurveyResult
-  },
-  {
-    path: '/typeTestPage',
-    name: 'TypeTestPage',
-    component: TypeTestPage,
-  },
-  {
-      path: '/typeTestResult',
-      name: 'TypeTestResult',
-      component: TypeTestResult,
-  },
-  {
-    path: '/typeTestSummary',
-    name: 'TypeTestSummary',
-    component: TypeTestSummary,
-  },
-
+    },
+    {
+        path:'/loginFinish',
+        name: 'LoginFinish',
+        component:LoginFinish
+    },
+    {
+        path:'/intro/onboarding',
+        name: 'Onboadrding',
+        component:Onboarding
+    },
+    {
+        path:'/intro/splash',
+        name:'Splash',
+        component:Splash
+    },
+    {
+        path: '/surveyPage',
+        name: 'SurveyPage',
+        component:SurveyPage
+        },
+    {
+        path: '/surveyResult',
+        name: 'SurveyResult',
+        component:SurveyResult
+    },
+    {
+        path: '/typeTestPage',
+        name: 'TypeTestPage',
+        component: TypeTestPage,
+    },
+    {
+        path: '/typeTestResult',
+        name: 'TypeTestResult',
+        component: TypeTestResult,
+    },
+    {
+        path: '/typeTestSummary',
+        name: 'TypeTestSummary',
+        component: TypeTestSummary,
+    },
 ]
 
 const router = createRouter({

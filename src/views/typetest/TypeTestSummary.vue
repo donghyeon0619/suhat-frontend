@@ -18,8 +18,8 @@ import {useRoute} from "vue-router";
 import BulbIcon from "@/assets/icons/common/icon-bulb.svg"
 import DigitalMaestro from "@/assets/img/typetest/img-digital-maestro.png"
 import WaveCard from "@/assets/img/typetest/bg-wave-card.svg"
-import VideoIcon from "@/assets/icons/typetest/Video.svg"
-import PhotoIcon from "@/assets/icons/typetest/Photo.svg"
+import VideoIcon from "@/assets/icons/typetest/icon-video.svg"
+import PhotoIcon from "@/assets/icons/typetest/icon-photo.svg"
 
 const route = useRoute();
 const router = useIonRouter();
