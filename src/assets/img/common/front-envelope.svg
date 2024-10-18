@@ -1,18 +1,22 @@
-<svg width="365" height="179" viewBox="0 0 365 179" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g filter="url(#filter0_d_509_1852)">
-<path fill-rule="evenodd" clip-rule="evenodd" d="M354.143 14L182.5 90.2859L10.8568 14H10V172H355V14H354.143Z" fill="#F5D97B"/>
-</g>
-<path fill-rule="evenodd" clip-rule="evenodd" d="M355 163.762C355 160.195 353.101 156.899 350.015 155.11L192.531 63.8149C186.327 60.2186 178.673 60.2186 172.469 63.8148L14.9847 155.11C11.8993 156.899 10 160.195 10 163.762V173C10 176.314 12.6863 179 16 179H349C352.314 179 355 176.314 355 173V163.762Z" fill="#F9D04B"/>
-<defs>
-<filter id="filter0_d_509_1852" x="0" y="0" width="365" height="178" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-<feFlood flood-opacity="0" result="BackgroundImageFix"/>
-<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
-<feOffset dy="-4"/>
-<feGaussianBlur stdDeviation="5"/>
-<feComposite in2="hardAlpha" operator="out"/>
-<feColorMatrix type="matrix" values="0 0 0 0 0.589355 0 0 0 0 0.399255 0 0 0 0 0.0410937 0 0 0 0.14 0"/>
-<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_509_1852"/>
-<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_509_1852" result="shape"/>
-</filter>
-</defs>
+<?xml version="1.0"?>
+<svg width="365" height="179" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+ <defs>
+  <filter color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse" height="178" id="filter0_d_509_1852" width="365" x="0" y="0">
+   <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+   <feColorMatrix in="SourceAlpha" result="hardAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/>
+   <feOffset dy="-4"/>
+   <feGaussianBlur stdDeviation="5"/>
+   <feComposite in2="hardAlpha" operator="out"/>
+   <feColorMatrix type="matrix" values="0 0 0 0 0.589355 0 0 0 0 0.399255 0 0 0 0 0.0410937 0 0 0 0.14 0"/>
+   <feBlend in2="BackgroundImageFix"/>
+   <feBlend in="SourceGraphic" in2="effect1_dropShadow_509_1852"/>
+  </filter>
+ </defs>
+ <g class="layer">
+  <title>Layer 1</title>
+  <g filter="url(#filter0_d_509_1852)" id="svg_1">
+   <path clip-rule="evenodd" d="m363.1,14l-180.6,76.29l-180.6,-76.29l-0.9,0l0,158l363,0l0,-158l-0.9,0z" fill="#F5D97B" fill-rule="evenodd" id="svg_2"/>
+  </g>
+  <path clip-rule="evenodd" d="m355,163.76c0,-3.57 -1.9,-6.86 -4.99,-8.65l-157.48,-91.3c-6.2,-3.59 -13.86,-3.59 -20.06,0l-157.49,91.3c-3.08,1.79 -4.98,5.08 -4.98,8.65l0,9.24c0,3.31 2.69,6 6,6l333,0c3.31,0 6,-2.69 6,-6l0,-9.24z" fill="#F9D04B" fill-rule="evenodd" id="svg_3"/>
+ </g>
 </svg>
