@@ -11,6 +11,7 @@ import Onboarding from "@/views/intro/Onboarding.vue";
 import Splash from "@/views/intro/Splash.vue";
 import SurveyPage from "@/views/survey/SurveyPage.vue";
 import SurveyResult from "@/views/survey/SurveyResult.vue";
+import GameHome from "@/views/game/GameHome.vue";
 import TypeTestPage from "@/views/typetest/TypeTestPage.vue";
 import TypeTestResult from "@/views/typetest/TypeTestResult.vue";
 import TypeTestSummary from "@/views/typetest/TypeTestSummary.vue";
@@ -64,30 +65,35 @@ const routes: Array<RouteRecordRaw> = [
     name: 'LoginSchool',
     component:LoginSchool
     },
-    {
-        path:'/loginFinish',
-        name: 'LoginFinish',
-        component:LoginFinish
+   {
+     path:'/loginFinish',
+     name: 'LoginFinish',
+     component:LoginFinish
     },
     {
-        path:'/intro/onboarding',
-        name: 'Onboadrding',
-        component:Onboarding
+      path:'/intro/onboarding',
+      name: 'Onboadrding',
+      component:Onboarding
     },
     {
-        path:'/intro/splash',
-        name:'Splash',
-        component:Splash
+      path:'/intro/splash',
+      name:'Splash',
+      component:Splash
     },
     {
-        path: '/surveyPage',
-        name: 'SurveyPage',
-        component:SurveyPage
-        },
+      path: '/surveyPage',
+      name: 'SurveyPage',
+      component:SurveyPage
+    },
     {
-        path: '/surveyResult',
-        name: 'SurveyResult',
-        component:SurveyResult
+      path: '/surveyResult',
+      name: 'SurveyResult',
+      component:SurveyResult
+    },
+    {
+      path: '/game/home',
+      name: 'GameHome',
+      component:GameHome
     },
     {
         path: '/typeTestPage',
@@ -104,6 +110,7 @@ const routes: Array<RouteRecordRaw> = [
         name: 'TypeTestSummary',
         component: TypeTestSummary,
     },
+
 ]
 
 const router = createRouter({
