@@ -4,12 +4,25 @@ import {IonPage, IonContent, IonInput,IonText} from "@ionic/vue";
 import LoginFooter from "@/views/auth/components/LoginFooter.vue";
 import {ref, watch} from "vue";
 
+// State to track focus
+const isFocused = ref(false);
+
+// Handle focus event
+const handleFocus = () => {
+  isFocused.value = true;
+};
+
+// Handle blur event
+const handleBlur = () => {
+  isFocused.value = false;
+};
+
 // 이름 입력값 상태 관리
 const nameInput = ref('');
 const isButtonDisabled = ref(true);
 
 // 입력한 이름이 적절한지 검증
-const validateName = (name) => {
+const validateName = (name: string) => {
   const maxLength = 6; // 글자수 제한 6자
   return name.length > 0 && name.length <= maxLength; // 1자 이상 6자 이하일 때 유효
 };
@@ -22,9 +35,10 @@ watch(nameInput, (newValue) => {
 </script>
 
 <template>
-  <IonPage style="justify-content: normal">
+  <IonPage>
     <LoginHeader></LoginHeader>
-    <IonContent scroll-y="false">
+    <IonContent class="ion-padding" scroll-y="false">
+      <!-- 타이틀 부분-->
       <div class="title">
         <ion-text class="title-text">
           반가워요!
@@ -32,18 +46,20 @@ watch(nameInput, (newValue) => {
           이름을 알려주세요
         </ion-text>
       </div>
+
+      <!-- 입력 부분 -->
       <div class="input-wrapper">
-      <ion-input
+      <IonInput
           v-model="nameInput"
           type="text"
           inputmode="text"
           maxlength="6"
-          color="dark"
-          fill="outline"
           aria-label="name input"
           placeholder="성함을 입력해주세요"
+          @ionFocus="handleFocus"
+          @ionBlur="handleBlur"
           class="name-input"
-      ></ion-input>
+      ></IonInput>
       </div>
     </IonContent>
     <LoginFooter :isButtonDisabled="isButtonDisabled"></LoginFooter>
@@ -51,37 +67,36 @@ watch(nameInput, (newValue) => {
 </template>
 
 <style scoped>
-
-ion-content{
-  --padding-start: 2vh;
-  --padding-end: 2vh;
-  --padding-top: 2vh;
-  --padding-bottom:2vh;
-}
-
 .title {
   height: 13%;
   display: flex;
   align-items: center;
-  margin-bottom: 3vh;
+  margin-bottom: 8%;
+  color: #191F28;
 }
 
 .title-text {
-  font-size: 24px;
-  font-weight: bold;
-  line-height: 1.5;
+  font-size: 1.625rem;
+  font-weight: 700;
+  line-height: 1.23;
 }
 
 
 .name-input{
-  --background: #fff;
-  --color: #000;
+  --color: #191F28;
+  --padding-start: 2vh;
   --padding-bottom: 2vh;
   --padding-end: 2vh;
-  --padding-start: 2vh;
   --padding-top: 2vh;
-  --border-radius: 12px;
   --border-width: 2px;
+  --border-style:solid;
+  border: 1.4px solid #EBECEE;
+  --placeholder-color: #A3A9B0;
+  --highlight-color-focused: tranparent;
+  border-radius: 12px;
 }
 
+.has-focus {
+  border: 1.4px solid #191F28 !important;
+}
 </style>

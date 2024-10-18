@@ -23,9 +23,9 @@ const handleSelectionChange= (event) =>{
 </script>
 
 <template>
-  <IonPage style="justify-content: normal">
+  <IonPage>
     <LoginHeader></LoginHeader>
-    <IonContent scroll-y="false">
+    <IonContent class="ion-padding" scroll-y="false">
       <div class="title">
         <ion-text class="title-text">
           성별을
@@ -49,25 +49,18 @@ const handleSelectionChange= (event) =>{
 </template>
 
 <style scoped>
-
-ion-content{
-  --padding-start: 2vh;
-  --padding-end: 2vh;
-  --padding-top: 2vh;
-  --padding-bottom:2vh;
-}
-
 .title {
   height: 13%;
   display: flex;
   align-items: center;
-  margin-bottom: 3vh;
+  margin-bottom: 8%;
+  color: #191F28;
 }
 
 .title-text {
-  font-size: 24px;
-  font-weight: bold;
-  line-height: 1.5;
+  font-size: 1.625rem;
+  font-weight: 700;
+  line-height: 1.23;
 }
 
 ion-radio::part(container) {
@@ -87,10 +80,9 @@ ion-radio.radio-checked::part(container) {
 ion-radio.radio-checked::part(mark) {
   width: 2vw;
   height: 1.5vh;
-  border-width: 0px 2px 2px 0px;
+  border-width: 0 2px 2px 0;
   border-style: solid;
   border-color: #13BD7E;
-
   transform: rotate(45deg);
 }
 
@@ -104,8 +96,10 @@ ion-item {
 }
 
 ion-radio::part(label) {
-  color: #EBECEE; /* 기본 글씨 색상 */
-  font-size: 16px;
+  color: #A3A9B0; /* 기본 글씨 색상 */
+  font-size: 1rem;
+  line-height: 1.5;
+  font-weight: 500;
 }
 
 /* 선택된 상태의 스타일 */
@@ -115,7 +109,7 @@ ion-radio::part(label) {
 
 .item-selected ion-radio::part(label) {
   color: #13BD7E !important; /* 선택된 상태의 글씨 색상 */
-  font-weight: bold;
+  font-weight: 500;
 }
 
 </style>
