@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {IonPage, IonContent, IonImg, IonText, IonButton} from "@ionic/vue"
+import {IonPage, IonContent, IonImg, IonText, IonButton, IonModal} from "@ionic/vue"
 import Header from "@/views/auth/components/LoginHeader.vue";
 </script>
 
@@ -17,7 +17,7 @@ import Header from "@/views/auth/components/LoginHeader.vue";
         <ion-text class="title">게임 유형</ion-text>
         <div class="btn-container">
           <!-- 방 만들기 버튼 -->
-          <ion-button class="btn">
+          <ion-button class="btn" id="open-modal" onclick="createGameRoom">
             <div class="btn-content">
               <ion-img class="icon" src="src/assets/icons/house.svg"></ion-img>
               <ion-text class="btn-title">방 만들기</ion-text>
@@ -26,7 +26,7 @@ import Header from "@/views/auth/components/LoginHeader.vue";
           </ion-button>
 
           <!-- 입장하기 버튼 -->
-          <ion-button class="btn">
+          <ion-button class="btn" onclick="enterGameRoom">
             <div class="btn-content">
               <ion-img class="icon" src="src/assets/icons/flag.svg"></ion-img>
               <ion-text class="btn-title">입장하기</ion-text>
@@ -36,6 +36,20 @@ import Header from "@/views/auth/components/LoginHeader.vue";
         </div>
       </ion-card>
   </IonPage>
+
+  <ion-modal trigger="open-modal" :initial-breakpoint="1" :breakpoints="[0, 1]">
+    <div class="block">
+      <ion-title class="modal-title">방만들기</ion-title>
+
+      <ion-title class="modal-title modal-sub-title ion-no-padding">방 이름</ion-title>
+      <ion-input fill="outline" placeholder="방 이름을 입력하세요(8자 이하, 특수문자 제외)"></ion-input>
+
+      <ion-title class="modal-title modal-sub-title ion-no-padding">인원</ion-title>
+      <ion-checkbox class="checkbox">
+
+      </ion-checkbox>
+    </div>
+  </ion-modal>
 </template>
 
 <style scoped>
@@ -63,8 +77,10 @@ ion-content::part(background) {
   text-align: center;
   margin: 20px 0;
   color: white;
-  font-size:5.7vw;
+  font-size:5.9vw;
   font-weight: bold;
+  letter-spacing: 1px;
+  line-height: 35px;
 }
 
 .img-container {
@@ -74,7 +90,7 @@ ion-content::part(background) {
 }
 
 .puzzle-lock-img {
-  width: 30vh;
+  width: 27vh;
 }
 
 .choice-container {
@@ -115,7 +131,7 @@ ion-content::part(background) {
 .btn-title {
   display: block;
   color: #333D4B;
-  font-size: 4.5vw;
+  font-size: 4.7vw;
   font-weight: bold;
   margin: 10px;
   letter-spacing: 0.1px;
@@ -123,9 +139,40 @@ ion-content::part(background) {
 
 .btn-description {
   color: #6B7684;
-  font-size: 3vw;
-  font-weight: bold;
+  font-size: 3.3vw;
   line-height: 20px;
   letter-spacing: 0.1px;
+}
+
+.block {
+  width: 100%;
+  height: 300px;
+  padding: 20px;
+}
+
+ion-modal {
+  --height: auto;
+  --border-radius: 24px 24px 0 0;
+}
+
+.modal-title {
+  margin: 10px 0;
+  text-align: center;
+  font-size: 4.5vw;
+  font-weight: bold;
+  --color: #6B7684;
+}
+
+.modal-sub-title {
+  --color: #191F28;
+  text-align: left;
+}
+
+::v-deep ion-input::placeholder {
+  font-size: 1px;
+}
+
+.checkbox {
+  border-radius: 10px;
 }
 </style>
