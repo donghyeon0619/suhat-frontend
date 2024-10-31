@@ -10,6 +10,10 @@ const props= defineProps({
   buttonText:{
     type:String,
     default: '다음'
+  },
+  onConfirm:{
+    type: Function,
+    required: true
   }
 })
 </script>
@@ -17,7 +21,7 @@ const props= defineProps({
 <template>
   <IonFooter class="ion-no-border">
     <div class="action-button">
-      <ion-button expand="block" :disabled="isButtonDisabled">{{buttonText}}</ion-button>
+      <ion-button expand="block" :disabled="isButtonDisabled" @click="props.onConfirm">{{buttonText}}</ion-button>
     </div>
   </IonFooter>
 

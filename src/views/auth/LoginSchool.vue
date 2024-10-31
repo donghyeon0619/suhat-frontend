@@ -1,15 +1,36 @@
 <script setup lang="ts">
 import LoginHeader from "@/views/auth/components/LoginHeader.vue";
-import {IonPage, IonContent, IonInput, IonText, IonLabel, IonIcon, IonItem, modalController } from "@ionic/vue";
+import {
+  IonPage,
+  IonContent,
+  IonInput,
+  IonText,
+  IonLabel,
+  IonIcon,
+  IonItem,
+  modalController,
+  useIonRouter, onIonViewWillEnter
+} from "@ionic/vue";
 import SchoolSearchModal from "@/components/auth/SchoolSearchModal.vue";
 import LoginFooter from "@/views/auth/components/LoginFooter.vue";
 import {ref } from "vue";
 import {closeCircle, searchSharp} from "ionicons/icons";
 import CheckmarkIcon from "@/components/common/CheckmarkIcon.vue";
+import {getUserInfo, setUserInfo} from "@/store/secureStorage";
+import {signup} from "@/api/authService";
 
 // 학교 이름 및 상세주소 관리
 const schoolName = ref('');
 const isButtonDisabled = ref(true);
+
+// 라우터 변수 정의
+const router = useIonRouter();
+
+// 사용자가 화면에 들어올 때, 저장된 학교 데이터를 불러와서 schoolName에 설정
+onIonViewWillEnter(async () => {
+  const userInfo = await getUserInfo();
+  schoolName.value = userInfo?.school || '';
+})
 
 const openModal = async () => {
   const modal = await modalController.create({
@@ -31,6 +52,17 @@ const validateForm = () =>{
   isButtonDisabled.value = schoolName.value === '';
 };
 
+// 학교를 저장하고 loginFinish로 이동
+const saveSchoolAndFinish = async () => {
+  const updatedUserInfo = {...(await getUserInfo() || {}), school: schoolName.value};
+  const response = await signup(updatedUserInfo)
+
+  if(response.token){
+    router.push('/loginFinish');
+  } else {
+    console.error('가입완료 실패')
+  }
+}
 </script>
 
 <template>
@@ -65,7 +97,7 @@ const validateForm = () =>{
       </div>
       </div>
     </IonContent>
-    <LoginFooter :isButtonDisabled="isButtonDisabled"></LoginFooter>
+    <LoginFooter :isButtonDisabled="isButtonDisabled" :onConfirm="saveSchoolAndFinish"/>
   </IonPage>
 </template>
 

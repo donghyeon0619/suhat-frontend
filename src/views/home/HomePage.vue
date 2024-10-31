@@ -90,13 +90,15 @@ const router = useIonRouter();
 
       <!-- 타이틀 부분 -->
       <div class="title-container">
-        <img :src="XIcon" alt="x 아이콘" class="x-icon"/>
         <IonText class="subtitle-text">
           스마트폰 중독에서 벗어나기 위한
         </IonText>
-        <IonText class="title-text">
-          중독방지
-        </IonText>
+        <div class="title-text-1-wrapper">
+          <img :src="XIcon" alt="x 아이콘" class="x-icon"/>
+          <IonText class="title-text">
+            중독방지
+          </IonText>
+        </div>
         <IonText class="title-text">
           퍼즐탐험
         </IonText>
@@ -187,17 +189,21 @@ ion-title{
 
 .title-container{
   width: 100%;
-  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   letter-spacing: -0.025625rem;
 }
 
+.title-text-1-wrapper {
+  position: relative;
+}
+
+
 .x-icon{
   position: absolute;
-  right: 9%;
-  top: 37%;
+  right: -6%;
+  bottom: 5%;
 }
 
 .title-text{

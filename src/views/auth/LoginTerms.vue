@@ -8,11 +8,12 @@ import {
   IonThumbnail,
   IonItem,
   IonText,
-  IonLabel
+  IonLabel, useIonRouter
 } from "@ionic/vue";
 import LoginFooter from "@/views/auth/components/LoginFooter.vue";
 import {reactive, watch} from 'vue';
 import CheckmarkIcon from "@/components/common/CheckmarkIcon.vue";
+import {setUserInfo} from "@/store/secureStorage";
 
 // 각 체크박스의 상태 관리
 const checkboxes = reactive({
@@ -20,6 +21,9 @@ const checkboxes = reactive({
   serviceTerms: false,
   privacyPolicy: false
 });
+
+// 라우터 변수 선언
+const router = useIonRouter();
 
 const toggleCheckbox = (key: keyof typeof checkboxes) => {
   checkboxes[key] = !checkboxes[key];
@@ -36,6 +40,19 @@ const toggleAllCheckboxes = () => {
 watch([() => checkboxes.serviceTerms, () => checkboxes.privacyPolicy], () => {
   checkboxes.allChecked = checkboxes.serviceTerms && checkboxes.privacyPolicy;
 });
+
+
+// userInfo 초기화 및 loginName 라우팅
+const initUserInfoAndProceed = async () => {
+  await setUserInfo({
+    name: '',
+    gender: '',
+    school: ''
+  });
+  router.push('/loginName');
+}
+
+
 </script>
 
 <template>
@@ -94,7 +111,7 @@ watch([() => checkboxes.serviceTerms, () => checkboxes.privacyPolicy], () => {
       </div>
     </IonContent>
 
-    <login-footer :isButtonDisabled="!checkboxes.allChecked" button-text="동의하기"></login-footer>
+    <login-footer :isButtonDisabled="!checkboxes.allChecked" button-text="동의하기" :onConfirm="initUserInfoAndProceed"></login-footer>
   </IonPage>
 </template>
 

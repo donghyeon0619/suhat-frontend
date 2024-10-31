@@ -1,14 +1,32 @@
 <script setup lang="ts">
 import LoginHeader from "@/views/auth/components/LoginHeader.vue";
-import {IonPage, IonContent, IonText, IonRadioGroup, IonList, IonItem, IonRadio} from "@ionic/vue";
+import {
+  IonPage,
+  IonContent,
+  IonText,
+  IonRadioGroup,
+  IonList,
+  IonItem,
+  IonRadio,
+  useIonRouter,
+  onIonViewWillEnter
+} from "@ionic/vue";
 import LoginFooter from "@/views/auth/components/LoginFooter.vue";
 import {ref, watch} from "vue";
+import {getUserInfo, setUserInfo} from "@/store/secureStorage";
 
 // 성별 선택 관리
 const selectedGender= ref('');
 //버튼 비활성화 상태
 const isButtonDisabled = ref(true);
+// 라우터 변수 정의
+const router = useIonRouter();
 
+// 사용자가 화면에 들어올 때, 저장된 성별 데이터를 불러와서 selectGender에 설정
+onIonViewWillEnter(async()=>{
+  const userInfo = await getUserInfo();
+  selectedGender.value = userInfo?.gender || '';
+})
 
 // 성별이 선택되었는지에 따라 버튼 활성화
 watch(selectedGender, (newValue) => {
@@ -18,6 +36,14 @@ watch(selectedGender, (newValue) => {
 // 선택된 성별 값을 다루는 이벤트 함수 함수
 const handleSelectionChange= (event) =>{
   selectedGender.value = event.detail.value || ''; // 선택 취소 및 변경 시 selectedGender값 변경
+}
+
+// 성별을 저장하고 LoginSchool로 라우팅
+const saveGenderAndProceed = async () => {
+  const existingUserInfo = (await getUserInfo() || {});
+  await setUserInfo({...existingUserInfo, gender: selectedGender.value});
+
+  router.push('/loginSchool');
 }
 
 </script>
@@ -44,7 +70,7 @@ const handleSelectionChange= (event) =>{
         </ion-radio-group>
       </div>
     </IonContent>
-    <LoginFooter :isButtonDisabled="isButtonDisabled"></LoginFooter>
+    <LoginFooter :isButtonDisabled="isButtonDisabled" :onConfirm="saveGenderAndProceed"/>
   </IonPage>
 </template>
 
