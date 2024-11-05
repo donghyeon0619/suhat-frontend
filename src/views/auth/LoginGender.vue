@@ -16,7 +16,7 @@ import {ref, watch} from "vue";
 import {getUserInfo, setUserInfo} from "@/store/secureStorage";
 
 // 성별 선택 관리
-const selectedGender= ref('');
+const selectedGender= ref<number|null>(null);
 //버튼 비활성화 상태
 const isButtonDisabled = ref(true);
 // 라우터 변수 정의
@@ -25,17 +25,17 @@ const router = useIonRouter();
 // 사용자가 화면에 들어올 때, 저장된 성별 데이터를 불러와서 selectGender에 설정
 onIonViewWillEnter(async()=>{
   const userInfo = await getUserInfo();
-  selectedGender.value = userInfo?.gender || '';
+  selectedGender.value = userInfo?.gender ?? null;
 })
 
 // 성별이 선택되었는지에 따라 버튼 활성화
 watch(selectedGender, (newValue) => {
-  isButtonDisabled.value = newValue === ''; // 유효하면 버튼 활성화, 아니면 비활성화
+  isButtonDisabled.value = newValue === null; // 유효하면 버튼 활성화, 아니면 비활성화
 });
 
 // 선택된 성별 값을 다루는 이벤트 함수 함수
 const handleSelectionChange= (event) =>{
-  selectedGender.value = event.detail.value || ''; // 선택 취소 및 변경 시 selectedGender값 변경
+  selectedGender.value = event.detail.value; // 선택 취소 및 변경 시 selectedGender값 변경
 }
 
 // 성별을 저장하고 LoginSchool로 라우팅
@@ -61,11 +61,11 @@ const saveGenderAndProceed = async () => {
       </div>
       <div class="input-wrapper">
         <ion-radio-group v-model="selectedGender" allow-empty-selection="true" @ionChange=handleSelectionChange>
-          <ion-item :class="{ 'item-selected': selectedGender=== 'man'}" lines="none">
-            <ion-radio value="man" justify="space-between">남자</ion-radio>
+          <ion-item :class="{ 'item-selected': selectedGender=== 0 }" lines="none">
+            <ion-radio value="0" justify="space-between">남자</ion-radio>
           </ion-item>
-          <ion-item :class="{ 'item-selected': selectedGender === 'woman' }" lines="none">
-            <ion-radio value="woman" justify="space-between">여자</ion-radio>
+          <ion-item :class="{ 'item-selected': selectedGender === 1 }" lines="none">
+            <ion-radio value="1" justify="space-between">여자</ion-radio>
           </ion-item>
         </ion-radio-group>
       </div>

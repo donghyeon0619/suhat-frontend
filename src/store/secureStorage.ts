@@ -2,7 +2,7 @@ import {SecureStorage, StorageError, StorageErrorType} from "@aparajita/capacito
 
 
 // 유저정보 저장하는 함수
-export async function setUserInfo(userInfo: { name : string; gender : string; school: string;}){
+export async function setUserInfo(userInfo: { name : string; gender : number; school: string;}){
   try{
     await SecureStorage.set('userInfo', JSON.stringify(userInfo), true);
   } catch (error) {
@@ -34,29 +34,29 @@ export async function setSecureItem(key: string, value: any) {
 }
 
 // 토큰 저장함수
-export async function setToken(token: string) {
+export async function setSessionId(sessionId: string) {
   try {
-    await SecureStorage.set('token', token);
+    await SecureStorage.set('sessionId', sessionId);
   } catch (error){
     handleStorageError(error);
   }
 }
 
 // 토큰 가져오기 함수
-export async function getToken(){
+export async function getSessionId(){
   try {
-    return await SecureStorage.get('token') as string | null;
+    return await SecureStorage.get('sessionId') as string | null;
   } catch (error) {
     handleStorageError(error);
   }
 }
 
 // 토큰 삭제 함수
-export async function removeToken() {
+export async function removeSessionId() {
   try {
-    await SecureStorage.remove('token');
+    await SecureStorage.remove('sessionId');
   } catch (error) {
-    console.error('Error removing token:', error);
+    console.error('Error removing sessionId:', error);
   }
 }
 

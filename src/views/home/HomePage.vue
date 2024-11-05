@@ -202,7 +202,7 @@ ion-title{
 
 .x-icon{
   position: absolute;
-  right: -6%;
+  right: -10%;
   bottom: 5%;
 }
 
@@ -214,7 +214,7 @@ ion-title{
   color: transparent; /* Fallback for other browsers */
   font-weight: 400;
   font-size: 4.25rem; /* 68px converted to rem */
-  font-family: Jahan 2TF;
+  font-family: 'Jalnan';
 }
 
 .subtitle-text{

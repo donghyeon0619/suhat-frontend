@@ -4,9 +4,11 @@ import LoginFooter from "@/views/auth/components/LoginFooter.vue";
 import {ref, onMounted} from "vue";
 import lottie from 'lottie-web';
 import confettiAnimationData from '@/assets/confetti.json'
+import {useRoute} from "vue-router";
 
-// 사용자 이름
-const userName = ref("이수햇");
+// 라우터 정의
+const route = useRoute();
+const userName = route.query.username;
 
 // Lottie 애니메이션을 제어하기 위한 함수
 const animationContainer = ref<HTMLElement | null>(null);  // 초기값을 null로 설정

@@ -57,8 +57,11 @@ const saveSchoolAndFinish = async () => {
   const updatedUserInfo = {...(await getUserInfo() || {}), school: schoolName.value};
   const response = await signup(updatedUserInfo)
 
-  if(response.token){
-    router.push('/loginFinish');
+  if (response) {
+    console.log("유저 정보", updatedUserInfo);
+    router.push(
+      { name: "LoginFinish",
+      query: { username: updatedUserInfo.name }});
   } else {
     console.error('가입완료 실패')
   }
