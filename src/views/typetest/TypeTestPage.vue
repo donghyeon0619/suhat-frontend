@@ -17,7 +17,7 @@ import {
   IonCol,
   IonList,
   IonItem,
-  IonFooter, useIonRouter,
+  IonFooter, useIonRouter, onIonViewWillEnter,
 } from "@ionic/vue";
 import {computed, ref, reactive, watch} from "vue";
 import { chevronBackOutline} from "ionicons/icons";
@@ -36,6 +36,12 @@ const selectedAnswers = reactive<number[]>(Array<number>(surveyData.length).fill
 
 // 현재 질문에 대해 답변이 선택되었는지 확인
 const isOptionSelected = computed(() => selectedAnswers[currentQuestionIndex.value] !== -1);
+
+// 페이지 렌더링 시 현재 질문번호 및 선택된 답변 초기화
+onIonViewWillEnter(()=>{
+  currentQuestionIndex.value = 0;
+  selectedAnswers.fill(-1);
+})
 
 // 선택된 답변 핸들러
 const selectOption = (value: number) => {
@@ -194,6 +200,7 @@ ion-buttons{
   display: flex;
   flex-direction: column;
   align-items: start;
+  min-height: 12vh;
 }
 
 .question-number{
@@ -215,7 +222,7 @@ ion-buttons{
 
 .suhat-chip{
   position: absolute;
-  top: -70%;
+  top: -85%;
   left: 3%;
   z-index: 4;
 }
@@ -299,6 +306,9 @@ ion-card{
 
 .selected-option{
   --background: #13BD7E ;
+  .option-text{
+    color: #ffffff;
+  }
 }
 
 .option-text {

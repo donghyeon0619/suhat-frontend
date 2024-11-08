@@ -25,12 +25,26 @@ const route = useRoute();
 const router = useIonRouter();
 const score = route.query.score;
 
-const goSummary = () => {
+const goToRetry = () => {
   // 제출 처리 후 결과 페이지로 이동
-  router.push({
-    name: "SurveySummary",
-  });
+  router.navigate({
+    name: "TypeTestPage",
+  },
+    "back",
+    "replace",
+  );
 };
+const goToEnd = () => {
+  // 제출 처리 후 결과 페이지로 이동
+  router.navigate({
+    name: "HomePage",
+  },
+    "forward",
+    "replace",
+  );
+};
+
+
 
 </script>
 
@@ -81,8 +95,10 @@ const goSummary = () => {
         <ion-row>
           <ion-col size="5">
             <ion-button
-                expand="block"
-                class="again-button">
+              expand="block"
+              class="again-button"
+              @click="goToRetry"
+            >
               다시하기
             </ion-button>
           </ion-col>
@@ -90,6 +106,7 @@ const goSummary = () => {
             <ion-button
                 expand="block"
                 class="end-button"
+                @click="goToEnd"
             >
               끝내기
             </ion-button>

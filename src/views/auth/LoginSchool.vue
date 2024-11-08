@@ -7,30 +7,25 @@ import {
   IonText,
   IonLabel,
   IonIcon,
-  IonItem,
   modalController,
-  useIonRouter, onIonViewWillEnter
+  useIonRouter,
 } from "@ionic/vue";
 import SchoolSearchModal from "@/components/auth/SchoolSearchModal.vue";
 import LoginFooter from "@/views/auth/components/LoginFooter.vue";
-import {ref } from "vue";
+import {ref, watch} from "vue";
 import {closeCircle, searchSharp} from "ionicons/icons";
-import CheckmarkIcon from "@/components/common/CheckmarkIcon.vue";
-import {getUserInfo, setUserInfo} from "@/store/secureStorage";
 import {signup} from "@/api/authService";
+import {useStore} from "vuex";
+
+// 스토어 변수 선언
+const store = useStore();
 
 // 학교 이름 및 상세주소 관리
-const schoolName = ref('');
+const schoolName = ref(store.getters["user/userInfo"].school || '');
 const isButtonDisabled = ref(true);
 
 // 라우터 변수 정의
 const router = useIonRouter();
-
-// 사용자가 화면에 들어올 때, 저장된 학교 데이터를 불러와서 schoolName에 설정
-onIonViewWillEnter(async () => {
-  const userInfo = await getUserInfo();
-  schoolName.value = userInfo?.school || '';
-})
 
 const openModal = async () => {
   const modal = await modalController.create({
@@ -54,18 +49,27 @@ const validateForm = () =>{
 
 // 학교를 저장하고 loginFinish로 이동
 const saveSchoolAndFinish = async () => {
-  const updatedUserInfo = {...(await getUserInfo() || {}), school: schoolName.value};
-  const response = await signup(updatedUserInfo)
+  await store.dispatch("user/setSchool", schoolName);
+
+  const userInfo = store.getters["user/userInfo"];
+  const response = await signup();
 
   if (response) {
-    console.log("유저 정보", updatedUserInfo);
-    router.push(
-      { name: "LoginFinish",
-      query: { username: updatedUserInfo.name }});
+    router.navigate(
+      {
+        name: "LoginFinish",
+        query: {username: userInfo.name}
+      },
+      'forward', 'replace');
   } else {
     console.error('가입완료 실패')
   }
 }
+
+// 학교가 선택되었는지에 따라 버튼 활성화
+watch(schoolName,(newValue) => {
+  isButtonDisabled.value = newValue.trim() === ''; // 유효하면 버튼 활성화, 아니면 비활성화
+});
 </script>
 
 <template>

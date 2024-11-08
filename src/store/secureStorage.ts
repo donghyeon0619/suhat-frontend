@@ -1,25 +1,6 @@
 import {SecureStorage, StorageError, StorageErrorType} from "@aparajita/capacitor-secure-storage";
 
 
-// 유저정보 저장하는 함수
-export async function setUserInfo(userInfo: { name : string; gender : number; school: string;}){
-  try{
-    await SecureStorage.set('userInfo', JSON.stringify(userInfo), true);
-  } catch (error) {
-    console.error('Error storing user info:', error);
-  }
-}
-
-// 유저정보 가져오는 함수
-export async function getUserInfo() {
-  try {
-    const value = await SecureStorage.get('userInfo') as string | null;
-    return value ? JSON.parse(value) : null;
-  } catch (error) {
-    console.error('Error storing user info:', error);
-  }
-}
-
 // 지정된 키와 값을 사용하여 데이터를 안전하게 저장하는 함수
 export async function setSecureItem(key: string, value: any) {
   try{

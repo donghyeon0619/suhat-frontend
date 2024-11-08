@@ -1,23 +1,18 @@
 <script setup lang="ts">
 import LoginHeader from "@/views/auth/components/LoginHeader.vue";
-import {IonPage, IonContent, IonInput, IonText, useIonRouter, onIonViewWillEnter} from "@ionic/vue";
+import {IonPage, IonContent, IonInput, IonText, useIonRouter,} from "@ionic/vue";
 import LoginFooter from "@/views/auth/components/LoginFooter.vue";
 import {ref, watch} from "vue";
-import {getUserInfo, setUserInfo} from "@/store/secureStorage";
+import {useStore} from "vuex";
 
+
+const store = useStore();
 // State to track focus
 const isFocused = ref(false);
-
 // 이름 입력값 상태 관리
-const nameInput = ref('');
+const nameInput = ref(store.getters["user/userInfo"].name || '');
 const isButtonDisabled = ref(true);
 const router = useIonRouter();
-
-// 사용자가 화면에 들어올 때, 저장된 이름 데이터를 불러와서 nameInput에 설정
-onIonViewWillEnter( async () =>{
-  const userInfo = await getUserInfo();
-  nameInput.value = userInfo?.name || '';
-})
 
 // Handle focus event
 const handleFocus = () => {
@@ -37,14 +32,12 @@ const validateName = (name: string) => {
 
 // 입력값이 변경될 때마다 유효성을 체크하고 버튼 활성화 상태 변경
 watch(nameInput, (newValue) => {
-  isButtonDisabled.value = !validateName(newValue); // 유효하면 버튼 활성화, 아니면 비활성화
+  isButtonDisabled.value = !validateName(newValue.trim()); // 유효하면 버튼 활성화, 아니면 비활성화
 });
 
 // 이름을 저장하고 loginGender로 라우팅
 const saveNameAndProceed = async () => {
-  const existingUserInfo = (await getUserInfo() || {});
-  await setUserInfo({...existingUserInfo, name:nameInput.value });
-
+  await store.dispatch("user/setName", nameInput.value);
   router.push('/loginGender');
 }
 

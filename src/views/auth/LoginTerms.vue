@@ -13,7 +13,12 @@ import {
 import LoginFooter from "@/views/auth/components/LoginFooter.vue";
 import {reactive, watch} from 'vue';
 import CheckmarkIcon from "@/components/common/CheckmarkIcon.vue";
-import {setUserInfo} from "@/store/secureStorage";
+import {useStore} from "vuex";
+
+const store =useStore()
+
+// 라우터 변수 선언
+const router = useIonRouter();
 
 // 각 체크박스의 상태 관리
 const checkboxes = reactive({
@@ -21,9 +26,6 @@ const checkboxes = reactive({
   serviceTerms: false,
   privacyPolicy: false
 });
-
-// 라우터 변수 선언
-const router = useIonRouter();
 
 const toggleCheckbox = (key: keyof typeof checkboxes) => {
   checkboxes[key] = !checkboxes[key];
@@ -44,11 +46,7 @@ watch([() => checkboxes.serviceTerms, () => checkboxes.privacyPolicy], () => {
 
 // userInfo 초기화 및 loginName 라우팅
 const initUserInfoAndProceed = async () => {
-  await setUserInfo({
-    name: '',
-    gender: '',
-    school: ''
-  });
+  await store.dispatch("user/resetUserInfo");
   router.push('/loginName');
 }
 
