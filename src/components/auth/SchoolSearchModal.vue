@@ -17,6 +17,7 @@ import {
 } from '@ionic/vue';
 import {  ref } from 'vue';
 import {closeOutline,checkmarkCircle,searchOutline} from "ionicons/icons";
+import {get} from "@/api/httpService";
 const schoolName = ref();
 const schoolSearchResults = ref<SchoolDetails[]>([]);
 const isSearchEmpty = ref(false);
@@ -47,39 +48,46 @@ const onBlur = (event) =>{
   event.target.style.borderColor = '#EBECEE';
 }
 
-// todo: axios 함수 정의 해야함
-const fetchSerchResults = async (query) => {
-  // 여기서 실제 API를 호출해야 합니다.
-  // 임시로 빈 배열 또는 결과 배열을 반환
-  if (query === 'empty') {
+// districtAddress에서 특정 키워드 이후의 부분만 남기는 함수
+function formatDistrictAddress(districtAddress) {
+  // 구 단어를 기준으로 자르기 위한 키워드 설정
+  const keyword = "구";
+  const keywordIndex = districtAddress.indexOf(keyword);
+
+  // 키워드가 발견되면 해당 키워드 이후의 문자열을 반환
+  if (keywordIndex !== -1) {
+    return districtAddress.substring(keywordIndex + 1).trim();
+  }
+
+  // 키워드가 없으면 원래 districtAddress를 반환
+  return districtAddress;
+}
+
+// 학교 검색 api 함수
+const fetchSearchResults = async (query : string) => {
+  try {
+    const endpoint = 'schools/search';
+    const params = {query}
+    const response = await get(endpoint, params);
+
+    // 응답 데이터에서 districtAddress만 포맷팅
+    const formattedResults = response.map(item => ({
+      ...item,
+      districtAddress: formatDistrictAddress(item.districtAddress)
+    }));
+    return formattedResults || [];
+  } catch (error) {
+    console.error('검색 결과 오류', error);
     return [];
-  } else {
-    return[
-      { id: 1, name: '서초초등학교', roadAddress: '서초구 반포대로13길 48', districtAddress: '서초동 1310-6' },
-      { id: 2, name: '서초중학교', roadAddress: '서초구 서초로 178', districtAddress: '서초동 1528' },
-      { id: 3, name: '서울고등학교', roadAddress: '서울특별시 강남구 학동로 117', districtAddress: '논현동 218-9' },
-      { id: 4, name: '대치초등학교', roadAddress: '서울특별시 강남구 대치동 512-2', districtAddress: '대치동 512-2' },
-      { id: 5, name: '대치중학교', roadAddress: '서울특별시 강남구 선릉로 345', districtAddress: '대치동 912-1' },
-      { id: 6, name: '양재초등학교', roadAddress: '서울특별시 서초구 양재대로 69', districtAddress: '양재동 1024-8' },
-      { id: 7, name: '반포고등학교', roadAddress: '서울특별시 서초구 반포동 258', districtAddress: '반포동 258-1' },
-      { id: 8, name: '잠실초등학교', roadAddress: '서울특별시 송파구 올림픽로 35길 132', districtAddress: '잠실동 19-8' },
-      { id: 9, name: '풍납초등학교', roadAddress: '서울특별시 송파구 풍납동 237-9', districtAddress: '풍납동 237-9' },
-      { id: 10, name: '청담중학교', roadAddress: '서울특별시 강남구 청담동 46-1', districtAddress: '청담동 46-1' },
-      { id: 11, name: '서초고등학교', roadAddress: '서울특별시 서초구 서초대로 255', districtAddress: '서초동 257-4' },
-      { id: 12, name: '신림초등학교', roadAddress: '서울특별시 관악구 신림로 165', districtAddress: '신림동 412-2' },
-      { id: 13, name: '송파중학교', roadAddress: '서울특별시 송파구 송파대로 107', districtAddress: '송파동 23-4' },
-      { id: 14, name: '압구정초등학교', roadAddress: '서울특별시 강남구 압구정로 215', districtAddress: '압구정동 124-7' },
-      { id: 15, name: '도곡초등학교', roadAddress: '서울특별시 강남구 도곡로 317', districtAddress: '도곡동 115-6' },
-  ];
   }
 };
 
 // 입력 핸들러 = 검색어가 입력될 떄 호출
-const handleInput = async (event) =>{
+const handleInput = async (event : CustomEvent) =>{
   const query = event.detail.value;
   if(query){
     isSearchPerformed.value = true;
-    const results = await fetchSerchResults(query);
+    const results = await fetchSearchResults(query);
     schoolSearchResults.value = results;
     isSearchEmpty.value = results.length == 0;
   } else {

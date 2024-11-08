@@ -1,7 +1,5 @@
 /* For information on how to create your own theme, please see:
 http://ionicframework.com/docs/theming/ */
-
-
 html {
     color-scheme: light; /* 다크 모드를 무시하고 라이트 모드 강제 적용 */
 }

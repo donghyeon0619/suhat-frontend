@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">boardgame</string>
+    <string name="title_activity_main">boardgame</string>
+    <string name="package_name">com.coders.boardgame</string>
+    <string name="custom_url_scheme">com.coders.boardgame</string>
+</resources>

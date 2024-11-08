@@ -1,11 +1,18 @@
 <script setup lang="ts">
 import LoginHeader from "@/views/auth/components/LoginHeader.vue";
-import {IonPage, IonContent, IonInput,IonText} from "@ionic/vue";
+import {IonPage, IonContent, IonInput, IonText, useIonRouter,} from "@ionic/vue";
 import LoginFooter from "@/views/auth/components/LoginFooter.vue";
 import {ref, watch} from "vue";
+import {useStore} from "vuex";
 
+
+const store = useStore();
 // State to track focus
 const isFocused = ref(false);
+// 이름 입력값 상태 관리
+const nameInput = ref(store.getters["user/userInfo"].name || '');
+const isButtonDisabled = ref(true);
+const router = useIonRouter();
 
 // Handle focus event
 const handleFocus = () => {
@@ -17,10 +24,6 @@ const handleBlur = () => {
   isFocused.value = false;
 };
 
-// 이름 입력값 상태 관리
-const nameInput = ref('');
-const isButtonDisabled = ref(true);
-
 // 입력한 이름이 적절한지 검증
 const validateName = (name: string) => {
   const maxLength = 6; // 글자수 제한 6자
@@ -29,8 +32,14 @@ const validateName = (name: string) => {
 
 // 입력값이 변경될 때마다 유효성을 체크하고 버튼 활성화 상태 변경
 watch(nameInput, (newValue) => {
-  isButtonDisabled.value = !validateName(newValue); // 유효하면 버튼 활성화, 아니면 비활성화
+  isButtonDisabled.value = !validateName(newValue.trim()); // 유효하면 버튼 활성화, 아니면 비활성화
 });
+
+// 이름을 저장하고 loginGender로 라우팅
+const saveNameAndProceed = async () => {
+  await store.dispatch("user/setName", nameInput.value);
+  router.push('/loginGender');
+}
 
 </script>
 
@@ -62,7 +71,7 @@ watch(nameInput, (newValue) => {
       ></IonInput>
       </div>
     </IonContent>
-    <LoginFooter :isButtonDisabled="isButtonDisabled"></LoginFooter>
+    <LoginFooter :isButtonDisabled="isButtonDisabled" :onConfirm="saveNameAndProceed"/>
   </IonPage>
 </template>
 

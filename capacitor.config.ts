@@ -1,9 +1,14 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'io.ionic.starter',
-  appName: 'boardgame-frontend',
-  webDir: 'dist'
+  appId: 'com.coders.boardgame',
+  appName: 'boardgame',
+  webDir: 'public',
+  plugins: {
+    CapacitorHttp:{
+      enabled:true,
+    }
+  }
 };
 
 export default config;
