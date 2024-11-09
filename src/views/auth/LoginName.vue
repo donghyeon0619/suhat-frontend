@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import LoginHeader from "@/views/auth/components/LoginHeader.vue";
+import LoginHeader from "@/components/common/BackButtonHeader.vue";
 import {IonPage, IonContent, IonInput, IonText, useIonRouter,} from "@ionic/vue";
 import LoginFooter from "@/views/auth/components/LoginFooter.vue";
 import {ref, watch} from "vue";

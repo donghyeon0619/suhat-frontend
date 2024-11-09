@@ -1,11 +1,7 @@
 <script setup lang="ts">
 import{
   IonLabel,
-  IonChip,
-  IonAvatar,
-  IonImg,
 } from "@ionic/vue";
-import SuhatImg from "@/assets/img/suhat_smal.svg";
 import SuhatChip from "@/components/common/SuhatChip.vue";
 
 const props = defineProps({
@@ -51,14 +47,15 @@ const props = defineProps({
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  margin-top: 10vh;
+  width:100%;
 }
 
 .speech-bubble{
   position: relative;
   background: rgba(255, 255, 255, 0.8);
   border-radius: 16px;
-  padding: 2vh;
+  padding: 2.5vh 2vh;
+  width: 100%;
   ion-label{
     font-weight: 700;
     font-size: 1.125rem;
@@ -70,7 +67,7 @@ const props = defineProps({
 .speech-bubble::after {
   content: '';
   position: absolute;
-  bottom: 0;
+  bottom: 1px;
   left: 15%;
   width: 0;
   height: 0;

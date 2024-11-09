@@ -13,22 +13,20 @@ import {
   IonCardContent,
   IonCardHeader,
   IonLabel,
-  IonChip,
-  IonAvatar,
-  actionSheetController,
+  actionSheetController, useIonRouter,
 } from "@ionic/vue";
 import {useRoute} from "vue-router";
 
 import goHome from "@/assets/icons/common/icon-go-home.svg"
 import trophy from "@/assets/icons/common/icon-trophy.svg"
 import lock from "@/assets/icons/common/icon-lock.svg"
-import suhat from "@/assets/img/suhat_smal.svg"
 import EnvelopFront from "@/assets/img/common/front-envelope.svg"
 import EnvelopBack from "@/assets/img/common/back-envelope.svg"
 import singleIcon from "@/assets/icons/common/singleplay-icon.svg"
 import multiIcon from "@/assets/icons/common/multiplay-icon.svg"
-import SuhatChip from "@/components/common/SuhatChip.vue";
+import ChatBubble from "@/components/common/ChatBubble.vue";
 
+const router = useIonRouter();
 
 const showGameModeActionSheet = async () => {
   const actionSheet = await actionSheetController.create({
@@ -40,6 +38,7 @@ const showGameModeActionSheet = async () => {
         cssClass: 'select-mode-action-sheet-button ',
         handler() {
           console.log("혼자하기 선택");
+          router.push("/sologame/intro")
         },
         icon: singleIcon
       },
@@ -113,17 +112,14 @@ const score = route.query.score;
         </IonCard>
         </div>
       </div>
-      <div class="chat-wrapper">
+      <div class="chat-bubble-wrapper">
         <!-- 말풍선 -->
-        <div class="speech-bubble">
-          <IonLabel>
-            너의 스마트폰 이용습관 점수는 96점이네!<br>
-            그럼 본격적으로 게임을 시작해볼까?
-          </IonLabel>
-        </div>
-        <SuhatChip/>
+        <chat-bubble
+          message=
+            "너의 스마트폰 이용습관 접수는 96점이네!
+            <br>그럼 본격적으로 게임을 시작해볼까?"
+        />
       </div>
-
     </IonContent>
     <IonFooter class="ion-no-border">
       <div class="action-button">
@@ -140,48 +136,6 @@ const score = route.query.score;
 </template>
 
 <style scoped>
-.suhat-chip{
-  position: absolute;
-  top: -3vh;
-  z-index: 2;
-}
-
-.chat-wrapper{
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  margin-top: 10vh;
-}
-
-.speech-bubble{
-  position: relative;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 16px;
-  padding: 2vh;
-  ion-label{
-    font-weight: 700;
-    font-size: 1.125rem;
-    line-height: 1.75;
-  }
-}
-
-/* 꼬리 만들기 */
-.speech-bubble::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 15%;
-  width: 0;
-  height: 0;
-  border: 15px solid transparent;
-  border-top-color: white;
-  border-bottom: 0;
-  margin-left: -15px;
-  margin-bottom: -15px;
-}
-
-
 .ion-page {
   background: #F6F7F9
 }
@@ -301,10 +255,17 @@ ion-item{
 }
 
 
+.chat-bubble-wrapper{
+  position: absolute;
+  bottom: 3%; /* Adjust as needed to place it above the footer */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 91%; /* Make it take up most of the content width */
+}
+
 ion-footer{
   height: 13%;
 }
-
 
 .action-button{
   margin: 1vh 2vh 1vh 2vh;

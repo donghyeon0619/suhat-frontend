@@ -17,6 +17,8 @@ import TypeTestResult from "@/views/typetest/TypeTestResult.vue";
 import TypeTestSummary from "@/views/typetest/TypeTestSummary.vue";
 import HomePage from "@/views/home/HomePage.vue";
 import {getSessionId} from "@/store/secureStorage";
+import SoloGameIntro from "@/views/game/solo/SoloGameIntro.vue";
+import SoloGamePlay from "@/views/game/solo/SoloGamePlay.vue";
 
 const routes: Array<RouteRecordRaw> = [
     {
@@ -115,6 +117,17 @@ const routes: Array<RouteRecordRaw> = [
         name: 'TypeTestSummary',
         component: TypeTestSummary,
     },
+  {
+    path: '/sologame/intro',
+    name: 'SoloGameIntro',
+    component: SoloGameIntro
+  },
+  {
+    path: '/sologame/play',
+    name: 'SoloGamePlay',
+    component: SoloGamePlay,
+  }
+
 
 ]
 

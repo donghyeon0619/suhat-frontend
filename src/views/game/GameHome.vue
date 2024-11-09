@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {IonPage, IonContent, IonImg, IonText, IonButton} from "@ionic/vue"
-import Header from "@/views/auth/components/LoginHeader.vue";
+import Header from "@/components/common/BackButtonHeader.vue";
 </script>
 
 <template>
