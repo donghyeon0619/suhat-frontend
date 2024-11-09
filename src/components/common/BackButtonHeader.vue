@@ -14,6 +14,10 @@ import { chevronBackOutline } from 'ionicons/icons';
 </template>
 
 <style scoped>
+ion-toolbar{
+  --background: transparent;
+}
+
 ion-buttons{
   margin-left: 0;
 }
