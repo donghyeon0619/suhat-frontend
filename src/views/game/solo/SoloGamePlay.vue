@@ -1,17 +1,63 @@
 <script setup lang="ts">
-import {IonPage, IonContent, IonText, IonFooter} from "@ionic/vue";
+import {IonPage, IonContent, IonText, IonFooter, modalController, useIonRouter} from "@ionic/vue";
 import BackButtonHeader from "@/components/common/BackButtonHeader.vue";
 import PuzzleProgressChip from "@/components/game/PuzzleProgressChip.vue";
 import BaseDoubleButton from "@/components/common/BaseDoubleButton.vue";
 import GameCardBg from "@/assets/img/game/bg-game-card.svg"
 import testImg from "@/assets/img/game/img-test-phone.png"
+import PuzzleSuccessModal from "@/components/game/PuzzleSuccessModal.vue";
+import PuzzleFailureModal from "@/components/game/PuzzleFailureModal.vue";
+import {enterAnimation, leaveAnimation} from "@/utils/puzzleModalAnimations";
+import {ref} from "vue";
+import BaseDoubleButtonFooter from "@/components/common/BaseDoubleButtonFooter.vue";
+
+const currentPieces =ref(0);
+const maxPieces = ref(6);
+const router = useIonRouter();
+
+// 모든 퍼즐이 모이면 퍼즐 완성화면으로 라우팅
+const goPuzzleCompletion = () => {
+    router.replace("/puzzlecompletion");
+};
+
+// 퍼즐 성공 모달 오픈 함수
+const openSuccessModal = async () => {
+  const modal = await modalController.create({
+    component: PuzzleSuccessModal,
+    cssClass: 'puzzle-acquired-modal',
+    enterAnimation: enterAnimation,
+    leaveAnimation: leaveAnimation,
+  });
+  await modal.present();
+
+  const {data, role} = await modal.onDidDismiss();
+
+  // 현재 퍼즐 갯수 증가
+  if(role === 'confirm'){
+    currentPieces.value++;
+    if (currentPieces.value >= maxPieces.value) {
+      goPuzzleCompletion();
+    }
+  }
+};
+
+// 퍼즐 획득 모달 오픈 함수
+const openFailureModal = async () => {
+  const modal = await modalController.create({
+    component: PuzzleFailureModal,
+    cssClass: 'puzzle-acquired-modal',
+  });
+  await modal.present();
+  await modal.onDidDismiss();
+};
+
 </script>
 <template>
 <IonPage>
   <BackButtonHeader></BackButtonHeader>
   <IonContent class="ion-padding" scroll-y="false">
     <div class="puzzle-progress-wrapper">
-      <PuzzleProgressChip :currentPieces="0" :totalPieces="6"/>
+      <PuzzleProgressChip :currentPieces="currentPieces" :totalPieces="maxPieces"/>
     </div>
     <div class="card-container">
       <div class="text-card">
@@ -27,9 +73,10 @@ import testImg from "@/assets/img/game/img-test-phone.png"
       <IonText class="question-box-text"> 이야기를 들은 당신의 생각은?</IonText>
     </div>
   </IonContent>
-  <IonFooter class="ion-no-border">
-    <BaseDoubleButton isButtonDisabled="false"></BaseDoubleButton>
-  </IonFooter>
+  <BaseDoubleButtonFooter
+    @button1Click="openFailureModal"
+    @button2Click="openSuccessModal"
+    />
 </IonPage>
 </template>
 
@@ -101,10 +148,4 @@ ion-content::part(background) {
     line-height: 1.75;
   }
 }
-
-ion-footer{
-  height: 15%;
-  padding-top: 1vh;
-}
-
 </style>

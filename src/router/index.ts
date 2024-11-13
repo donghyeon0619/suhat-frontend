@@ -19,6 +19,8 @@ import HomePage from "@/views/home/HomePage.vue";
 import {getSessionId} from "@/store/secureStorage";
 import SoloGameIntro from "@/views/game/solo/SoloGameIntro.vue";
 import SoloGamePlay from "@/views/game/solo/SoloGamePlay.vue";
+import PuzzleCompletion from "@/views/game/PuzzleCompletion.vue";
+import GameRanking from "@/views/game/multiplayer/GameRanking.vue";
 
 const routes: Array<RouteRecordRaw> = [
     {
@@ -126,9 +128,17 @@ const routes: Array<RouteRecordRaw> = [
     path: '/sologame/play',
     name: 'SoloGamePlay',
     component: SoloGamePlay,
+  },
+  {
+    path: '/puzzlecompletion',
+    name: 'PuzzleCompletion',
+    component: PuzzleCompletion,
+  },
+  {
+    path: '/multi/gameranking',
+    name: 'GameRanking',
+    component: GameRanking,
   }
-
-
 ]
 
 const router = createRouter({

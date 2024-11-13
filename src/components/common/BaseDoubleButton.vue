@@ -16,12 +16,22 @@ const props = defineProps({
     default: '동의'
   }
 })
+
+const emit = defineEmits(['button1Click', 'button2Click']);
+
+const handleButton1Click = () => {
+  emit('button1Click');
+};
+
+const handleButton2Click = () => {
+  emit('button2Click');
+};
 </script>
 
 <template>
   <div class="button-container">
-    <ion-button class="small-button" expand="block">{{ buttonText1 }}</ion-button>
-    <ion-button class="medium-button" :disabled="isButtonDisabled" expand="block">{{ buttonText2 }}</ion-button>
+    <ion-button class="small-button" expand="block" @click="handleButton1Click">{{ buttonText1 }}</ion-button>
+    <ion-button class="medium-button" :disabled="isButtonDisabled" expand="block" @click="handleButton2Click">{{ buttonText2 }}</ion-button>
   </div>
 </template>
 
