@@ -261,7 +261,7 @@ ion-buttons{
   border: 15px solid transparent;
   border-top-color:rgba(255, 255, 255, 0.8); /* 말풍선 배경 색상 */
   border-bottom: 0;
-  margin-left: -15px;
+  margin-left: -4vw;
   margin-bottom: -14px;
   z-index:3;
 }
@@ -276,7 +276,7 @@ ion-buttons{
   border: 17px solid transparent;
   border-top-color: #F2F2F2; /* 테두리 색상 */
   border-bottom: 0;
-  margin-left: -17px;
+  margin-left: -4.7vw;
   margin-bottom: -17px;
   z-index: 1;
 }
