@@ -13,6 +13,7 @@ import {
   IonCol,
   IonThumbnail,
   IonLabel,
+  IonText,
   actionSheetController, useIonRouter,
 } from "@ionic/vue";
 import {useRoute} from "vue-router";

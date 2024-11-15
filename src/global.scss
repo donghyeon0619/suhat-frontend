@@ -49,6 +49,26 @@ html {
   --background: transparent;
 }
 
+.time-input-modal{
+  --backdrop-opacity: 0.8;
+  --background: transparent;
+}
+
+.top-toast {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.57;
+  --background: rgba(51, 61, 75, 0.8);
+  --border-radius: 12px;
+    --width: 90%;
+}
+
+.toast-txt-center{
+  .toast-container{
+    text-align: center;
+  }
+}
+
 /*
 Copyright (c) 2021 Kil Hyung-jin, with Reserved Font Name Pretendard.
 https://github.com/orioncactus/pretendard

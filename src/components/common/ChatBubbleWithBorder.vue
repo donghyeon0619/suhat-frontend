@@ -16,6 +16,14 @@ const props = defineProps({
   hasTail:{
     type: Boolean,
     default: true
+  },
+  textAlign:{
+    type:String,
+    default: "start",
+  },
+  showChip:{
+    type: Boolean,
+    default: true
   }
 })
 
@@ -27,11 +35,11 @@ const props = defineProps({
     <div
       class="speech-bubble"
       :class="{ 'no-tail': !hasTail}"
-      :style="{ borderRadius: customRadius }"
+      :style="{ borderRadius: customRadius, textAlign: textAlign }"
     >
       <IonLabel v-html="message"></IonLabel>
     </div>
-    <SuhatChip/>
+    <SuhatChip v-if="showChip"/>
   </div>
 </template>
 
@@ -53,13 +61,14 @@ const props = defineProps({
 .speech-bubble{
   position: relative;
   background: rgba(255, 255, 255, 0.8);
-  border: 4px solid #F2F2F2;
+  border: 4px solid #ffffff;
   padding: 2.3vh 2vh;
   width: 100%;
   ion-label{
     font-weight: 700;
     font-size: 1.125rem;
     line-height: 1.5;
+    color: #333D4B;
   }
   z-index: 2;
 }
@@ -89,7 +98,7 @@ const props = defineProps({
 
 .speech-bubble::before {
   border: 17px solid transparent;
-  border-top-color: #F2F2F2;
+  border-top-color: #ffffff;
   border-bottom: 0;
   margin-left: -4.7vw;
   margin-bottom: -2.1vh;
@@ -98,7 +107,7 @@ const props = defineProps({
 
 
 /* 꼬리를 비활성화하는 경우, content 값을 none으로 설정 */
-.speech-bubble.no-tail::after {
+.speech-bubble.no-tail::after, .speech-bubble.no-tail::before {
   content: none;
 }
 
