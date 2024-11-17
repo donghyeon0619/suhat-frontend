@@ -16,6 +16,8 @@ import TypeTestPage from "@/views/typetest/TypeTestPage.vue";
 import TypeTestResult from "@/views/typetest/TypeTestResult.vue";
 import TypeTestSummary from "@/views/typetest/TypeTestSummary.vue";
 import HomePage from "@/views/home/HomePage.vue";
+import GameWaiting from "@/views/game/GameWaiting.vue";
+import GameRoomScanner from "@/views/game/GameRoomScanner.vue";
 
 const routes: Array<RouteRecordRaw> = [
     {
@@ -94,6 +96,17 @@ const routes: Array<RouteRecordRaw> = [
       path: '/game/home',
       name: 'GameHome',
       component:GameHome
+    },
+    {
+        path: '/game/waiting',
+        name: 'GameWaiting',
+        component:GameWaiting,
+        props: true
+    },
+    {
+        path: '/game/join',
+        name: 'GameRoomScanner',
+        component:GameRoomScanner
     },
     {
         path: '/typeTestPage',
