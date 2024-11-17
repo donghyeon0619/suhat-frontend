@@ -18,8 +18,17 @@ import TypeTestSummary from "@/views/typetest/TypeTestSummary.vue";
 import HomePage from "@/views/home/HomePage.vue";
 import GameWaiting from "@/views/game/GameWaiting.vue";
 import GameRoomScanner from "@/views/game/GameRoomScanner.vue";
+import {getSessionId} from "@/store/secureStorage";
+import SoloGameIntro from "@/views/game/solo/SoloGameIntro.vue";
+import SoloGamePlay from "@/views/game/solo/SoloGamePlay.vue";
+import PuzzleCompletion from "@/views/game/PuzzleCompletion.vue";
+import GameRanking from "@/views/game/multiplayer/GameRanking.vue";
 
 const routes: Array<RouteRecordRaw> = [
+    {
+      path:'/',
+      redirect: '/home'
+    },
     {
         path: '/home',
         name: 'HomePage',
@@ -123,12 +132,43 @@ const routes: Array<RouteRecordRaw> = [
         name: 'TypeTestSummary',
         component: TypeTestSummary,
     },
-
+  {
+    path: '/sologame/intro',
+    name: 'SoloGameIntro',
+    component: SoloGameIntro
+  },
+  {
+    path: '/sologame/play',
+    name: 'SoloGamePlay',
+    component: SoloGamePlay,
+  },
+  {
+    path: '/puzzlecompletion',
+    name: 'PuzzleCompletion',
+    component: PuzzleCompletion,
+  },
+  {
+    path: '/multi/gameranking',
+    name: 'GameRanking',
+    component: GameRanking,
+  }
 ]
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes
+})
+
+// 전역 네비게이션 가드 실행
+router.beforeEach(async (to, from, next)=>{
+  const sessionId = await getSessionId();
+
+  // /home 경로에 접근하려고 할 때 세션이 없으면 /loginTerms로 리다이렉트
+  if ((to.path === "/" || to.path === "/home") && !sessionId ) {
+    next('/loginTerms'); // 세션이 없으면 로그인 동의 화면으로 이동
+  } else {
+    next(); // 세션이 있으면 정상적으로 진행
+  }
 })
 
 export default router

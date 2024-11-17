@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {IonPage, IonContent, IonImg, IonText, IonInput, IonButton, IonModal, modalController, IonGrid, IonRow, IonCol} from "@ionic/vue"
-import Header from "@/views/auth/components/LoginHeader.vue";
+import Header from "@/components/common/BackButtonHeader.vue";
 import BaseButton from "@/components/common/BaseButton.vue";
 import {ref} from "vue";
 import router from "@/router";

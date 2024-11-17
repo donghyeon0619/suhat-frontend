@@ -43,7 +43,7 @@ ion-avatar {
 
 .chip-text {
   line-height: 1.25rem;
-  font-family: "Haan Wing2";
+  font-family: "HappinessSans",serif;
   font-weight: 700;
   color: #ffffff;
 }

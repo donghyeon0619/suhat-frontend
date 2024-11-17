@@ -1,23 +1,41 @@
 <script setup lang="ts">
-import LoginHeader from "@/views/auth/components/LoginHeader.vue";
-import {IonPage, IonContent, IonText, IonRadioGroup, IonList, IonItem, IonRadio} from "@ionic/vue";
+import LoginHeader from "@/components/common/BackButtonHeader.vue";
+import {
+  IonPage,
+  IonContent,
+  IonText,
+  IonRadioGroup,
+  IonItem,
+  IonRadio,
+  useIonRouter,
+} from "@ionic/vue";
 import LoginFooter from "@/views/auth/components/LoginFooter.vue";
-import {ref, watch} from "vue";
+import { ref, watch} from "vue";
+import {useStore} from "vuex";
 
+// 스토어 변수 선언
+const store = useStore();
 // 성별 선택 관리
-const selectedGender= ref('');
+const selectedGender= ref<number|null>(store.getters["user/userInfo"].gender ?? null);
 //버튼 비활성화 상태
-const isButtonDisabled = ref(true);
-
+const isButtonDisabled = ref(selectedGender.value === null);
+// 라우터 변수 정의
+const router = useIonRouter();
 
 // 성별이 선택되었는지에 따라 버튼 활성화
-watch(selectedGender, (newValue) => {
-  isButtonDisabled.value = newValue === ''; // 유효하면 버튼 활성화, 아니면 비활성화
+watch(selectedGender,(newValue) => {
+  isButtonDisabled.value = newValue == null; // 유효하면 버튼 활성화, 아니면 비활성화
 });
 
 // 선택된 성별 값을 다루는 이벤트 함수 함수
 const handleSelectionChange= (event) =>{
-  selectedGender.value = event.detail.value || ''; // 선택 취소 및 변경 시 selectedGender값 변경
+  selectedGender.value = event.detail.value; // 선택 취소 및 변경 시 selectedGender값 변경
+}
+
+// 성별을 저장하고 LoginSchool로 라우팅
+const saveGenderAndProceed = async () => {
+  await store.dispatch("user/setGender", selectedGender.value);
+  router.push('/loginSchool');
 }
 
 </script>
@@ -35,16 +53,16 @@ const handleSelectionChange= (event) =>{
       </div>
       <div class="input-wrapper">
         <ion-radio-group v-model="selectedGender" allow-empty-selection="true" @ionChange=handleSelectionChange>
-          <ion-item :class="{ 'item-selected': selectedGender=== 'man'}" lines="none">
-            <ion-radio value="man" justify="space-between">남자</ion-radio>
+          <ion-item :style="{'--border-color': selectedGender == 0 ? '#13BD7E' : '#EBECEE' }" lines="none">
+            <ion-radio value="0" justify="space-between">남자</ion-radio>
           </ion-item>
-          <ion-item :class="{ 'item-selected': selectedGender === 'woman' }" lines="none">
-            <ion-radio value="woman" justify="space-between">여자</ion-radio>
+          <ion-item :style="{'--border-color': selectedGender == 1 ? '#13BD7E' : '#EBECEE' }" lines="none">
+            <ion-radio value="1" justify="space-between">여자</ion-radio>
           </ion-item>
         </ion-radio-group>
       </div>
     </IonContent>
-    <LoginFooter :isButtonDisabled="isButtonDisabled"></LoginFooter>
+    <LoginFooter :isButtonDisabled="isButtonDisabled" :onConfirm="saveGenderAndProceed"/>
   </IonPage>
 </template>
 
@@ -88,12 +106,21 @@ ion-radio.radio-checked::part(mark) {
 
 /* 기본 상태의 스타일 */
 ion-item {
-  border: 2px solid #EBECEE;
+  --border-color: #EBECEE;
+  border-color: #EBECEE;
+  --border-style: solid;
+  --border-width: 2px;
   margin-bottom: 3vh;
-  border-radius: 12px;
+  --border-radius: 12px;
   --padding-top: 0.3vh;
   --padding-bottom: 0.3vh;
 }
+
+ion-item[data-selected="true"] {
+  --border-color: #13BD7E; /* Selected border color */
+  border-color: #13BD7E; /* Directly set border color as well */
+}
+
 
 ion-radio::part(label) {
   color: #A3A9B0; /* 기본 글씨 색상 */
@@ -102,12 +129,8 @@ ion-radio::part(label) {
   font-weight: 500;
 }
 
-/* 선택된 상태의 스타일 */
-.item-selected {
-  border-color: #13BD7E !important;
-}
 
-.item-selected ion-radio::part(label) {
+ion-radio.radio-checked::part(label) {
   color: #13BD7E !important; /* 선택된 상태의 글씨 색상 */
   font-weight: 500;
 }

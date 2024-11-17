@@ -36,9 +36,12 @@ import '@ionic/vue/css/display.css';
 import './theme/variables.css';
 import './global.scss';
 
+import store from "./store";
+
 const app = createApp(App)
   .use(IonicVue)
-  .use(router);
+  .use(router)
+  .use(store);
 
 router.isReady().then(() => {
   app.mount('#app');

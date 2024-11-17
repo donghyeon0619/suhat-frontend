@@ -44,6 +44,10 @@ html {
   }
 }
 
+.puzzle-acquired-modal{
+  --backdrop-opacity: 0.8;
+  --background: transparent;
+}
 
 /*
 Copyright (c) 2021 Kil Hyung-jin, with Reserved Font Name Pretendard.
@@ -62,4 +66,17 @@ http://scripts.sil.org/OFL
   src: url('./assets/fonts/PretendardVariable.woff2') format('woff2-variations');
 }
 
+@font-face {
+  font-family: 'HappinessSans';
+  font-weight: 400 900;
+  font-style: normal;
+  src : url('./assets/fonts/HappinessSansVF.woff2') format('woff2-variations');
+}
+
+@font-face {
+  font-family: 'Jalnan';
+  src: url('./assets/fonts/Jalnan2TTF.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
 

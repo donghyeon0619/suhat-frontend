@@ -106,7 +106,7 @@ const goSummary = () => {
     </IonContent>
     <IonFooter class="ion-no-border">
       <div class="action-button">
-        <IonButton expand="block" @click="goSummary">시작하기</IonButton>
+        <IonButton expand="block" @click="goSummary">내 유형 보러가기</IonButton>
       </div>
     </IonFooter>
   </IonPage>

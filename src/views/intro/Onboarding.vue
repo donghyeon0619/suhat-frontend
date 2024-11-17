@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import {IonPage, IonContent, IonText, IonImg, IonFooter,IonThumbnail} from "@ionic/vue";
 import { Swiper, SwiperSlide } from 'swiper/vue';
-import onboardImage1 from '@/assets/intro/onboard1.png';
-import onboardImage2 from '@/assets/intro/onboard2.png';
-import onboardImage3 from '@/assets/intro/onboard3.png';
+import onboardImage1 from '@/assets/img/intro/onboard1.png';
+import onboardImage2 from '@/assets/img/intro/onboard2.png';
+import onboardImage3 from '@/assets/img/intro/onboard3.png';
 
 // Import Swiper styles
 import 'swiper/css';
