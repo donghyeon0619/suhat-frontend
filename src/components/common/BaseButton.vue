@@ -19,7 +19,7 @@ const props = defineProps({
 
 <style scoped>
 ion-button {
-  width: 90%;
+  width: 100%;
   margin: auto;
   --background: #13BD7E;
   --border-radius: 16px;

@@ -1,6 +1,53 @@
 <script setup lang="ts">
-import {IonPage, IonContent, IonImg, IonText, IonButton, IonModal} from "@ionic/vue"
+import {IonPage, IonContent, IonImg, IonText, IonInput, IonButton, IonModal, modalController, IonGrid, IonRow, IonCol} from "@ionic/vue"
 import Header from "@/views/auth/components/LoginHeader.vue";
+import BaseButton from "@/components/common/BaseButton.vue";
+import {ref} from "vue";
+import router from "@/router";
+import axios from "axios";
+
+const roomName = ref('');
+const selectedHeadCount = ref<number | null>(null);
+
+function createGameRoom() {
+  try {
+    const response = axios.post("/games", {
+      roomName: roomName.value,
+      headCount: selectedHeadCount.value,
+    });
+    const roomId = response.data.roomId;
+
+    closeModal();
+
+    router.push({
+      path: "/game/waiting",
+      params: {id: roomId}
+    });
+  } catch (error) {
+    console.log('방 생성 오류 발생 : ', error);
+  }
+}
+
+function scanBarcode() {
+  router.push({
+    path: "/game/join"
+  });
+
+  closeModal();
+}
+
+function selectHeadCount(num: number) {
+  selectedHeadCount.value = num;
+}
+
+function reset() {
+  selectedHeadCount.value = null;
+  roomName.value = '';
+}
+
+function closeModal() {
+  modalController.dismiss();
+}
 </script>
 
 <template>
@@ -17,7 +64,7 @@ import Header from "@/views/auth/components/LoginHeader.vue";
         <ion-text class="title">게임 유형</ion-text>
         <div class="btn-container">
           <!-- 방 만들기 버튼 -->
-          <ion-button class="btn" id="open-modal" onclick="createGameRoom">
+          <ion-button class="btn" id="create-room-modal" @click="createGameRoom">
             <div class="btn-content">
               <ion-img class="icon" src="src/assets/icons/house.svg"></ion-img>
               <ion-text class="btn-title">방 만들기</ion-text>
@@ -26,7 +73,7 @@ import Header from "@/views/auth/components/LoginHeader.vue";
           </ion-button>
 
           <!-- 입장하기 버튼 -->
-          <ion-button class="btn" onclick="enterGameRoom">
+          <ion-button class="btn" id="join-room-modal">
             <div class="btn-content">
               <ion-img class="icon" src="src/assets/icons/flag.svg"></ion-img>
               <ion-text class="btn-title">입장하기</ion-text>
@@ -37,17 +84,76 @@ import Header from "@/views/auth/components/LoginHeader.vue";
       </ion-card>
   </IonPage>
 
-  <ion-modal trigger="open-modal" :initial-breakpoint="1" :breakpoints="[0, 1]">
+
+<!-- 방 만들기 modal 화면 -->
+  <ion-modal trigger="create-room-modal" :initial-breakpoint="1" :breakpoints="[0, 1]" @didDismiss="reset">
     <div class="block">
       <ion-title class="modal-title">방만들기</ion-title>
 
       <ion-title class="modal-title modal-sub-title ion-no-padding">방 이름</ion-title>
-      <ion-input fill="outline" placeholder="방 이름을 입력하세요(8자 이하, 특수문자 제외)"></ion-input>
+      <ion-input class="default input-name ion-margin-top ion-margin-bottom"
+                 v-model="roomName"
+                 fill="outline"
+                 placeholder="방 이름을 입력하세요(8자 이하, 특수문자 제외)"></ion-input>
 
       <ion-title class="modal-title modal-sub-title ion-no-padding">인원</ion-title>
-      <ion-checkbox class="checkbox">
+      <div class="btn-container">
+        <!-- 3인 게임 선택 버튼 -->
+        <ion-button class="btn default"
+                    :class="{ 'selected': selectedHeadCount === 3 }"
+                    fill="outline"
+                    id="open-modal"
+                    @click="selectHeadCount(3)">
+          <div class="btn-content">
+            <ion-img class="icon" src="src/assets/icons/common/multiplay-icon.svg"></ion-img>
+            <ion-text class="btn-title">3인 게임</ion-text>
+          </div>
+        </ion-button>
 
-      </ion-checkbox>
+        <!-- 4인 게임 선택 버튼 -->
+        <ion-button class="btn default"
+                    :class="{ 'selected': selectedHeadCount === 4 }"
+                    fill="outline"
+                    @click="selectHeadCount(4)">
+          <div class="btn-content">
+            <ion-img class="icon" src="src/assets/icons/common/4-multiplay-icon.svg"></ion-img>
+            <ion-text class="btn-title">4인 게임</ion-text>
+          </div>
+        </ion-button>
+      </div>
+
+      <BaseButton class="ion-no-margin"
+                  :isButtonDisabled="!roomName || !selectedHeadCount"
+                  button-text="방 만들기"
+                  @click="createGameRoom">
+      </BaseButton>
+    </div>
+  </ion-modal>
+
+  <!-- 입장하기 modal 화면 -->
+  <ion-modal trigger="join-room-modal" :initial-breakpoint="1" :breakpoints="[0, 1]">
+    <div class="block">
+      <ion-title class="ion-no-padding ion-margin-top ion-margin-bottom">게임 시작 전 아래의 권한을<br>허용해주세요.</ion-title>
+      <ion-card class="access-card ion-no-margin ion-margin-top ion-margin-bottom">
+        <ion-card-content>
+          <ion-grid>
+            <ion-row>
+              <ion-col class="camera-img" size="2">
+                <ion-img src="src/assets/icons/game/camera-icon.svg"></ion-img>
+              </ion-col>
+              <ion-col>
+                <ion-card-title class="ion-padding-start">카메라(필수)</ion-card-title>
+                <ion-card-subtitle class="ion-padding-start">방 입장 시 코드 스캔 또는 촬영</ion-card-subtitle>
+              </ion-col>
+            </ion-row>
+          </ion-grid>
+        </ion-card-content>
+      </ion-card>
+
+      <BaseButton class="ion-no-margin" @click="scanBarcode"></BaseButton>
+      <div class="cancel-btn">
+        <ion-button fill="clear" @click="closeModal">취소</ion-button>
+      </div>
     </div>
   </ion-modal>
 </template>
@@ -110,11 +216,16 @@ ion-content::part(background) {
 .btn-container {
   display: flex;
   justify-content: space-between;
-  margin: 20px 0;
+  margin: 16px 0;
+
+  .btn.selected {
+    --border-color: #13BD7E;
+  }
 }
 
 .btn {
   --background: #F4F6F8;
+  --ripple-color: white;
   --border-radius: 16px;
   --box-shadow: 0;
   --padding-top: 25px;
@@ -146,7 +257,7 @@ ion-content::part(background) {
 
 .block {
   width: 100%;
-  height: 300px;
+  height: max-content;
   padding: 20px;
 }
 
@@ -156,7 +267,7 @@ ion-modal {
 }
 
 .modal-title {
-  margin: 10px 0;
+  margin: 10px 0 0 0;
   text-align: center;
   font-size: 4.5vw;
   font-weight: bold;
@@ -168,11 +279,49 @@ ion-modal {
   text-align: left;
 }
 
+ion-input {
+  --border-radius: 12px !important;
+  --highlight-color-focused: #191F28;
+  --placeholder-font-weight: smaller;
+}
+
 ::v-deep ion-input::placeholder {
   font-size: 1px;
 }
 
-.checkbox {
-  border-radius: 10px;
+.default {
+  --background: white;
+  --border-color: #EBECEE;
+  --border-radius: 16px;
+  --border-width: 1.4px;
+  --background-activated: white;
+}
+
+.access-card {
+  margin: 30px 0;
+  border-radius: 12px;
+  border: 2px solid #EBECEE;
+  box-shadow: none;
+}
+
+.camera-img {
+  display: flex;
+}
+
+ion-card-title {
+  color: #333D4B;
+  font-size: 2.4vh;
+}
+
+ion-card-subtitle {
+  color: #A3A9B0;
+}
+
+.cancel-btn {
+  text-align: center;
+
+  ion-button {
+    color: #6A7382;
+  }
 }
 </style>
