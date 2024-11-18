@@ -24,7 +24,7 @@ const goPuzzleCompletion = () => {
 const openSuccessModal = async () => {
   const modal = await modalController.create({
     component: PuzzleSuccessModal,
-    cssClass: 'puzzle-acquired-modal',
+    cssClass: 'chat-bubble-modal',
     enterAnimation: enterAnimation,
     leaveAnimation: leaveAnimation,
   });
@@ -45,7 +45,7 @@ const openSuccessModal = async () => {
 const openFailureModal = async () => {
   const modal = await modalController.create({
     component: PuzzleFailureModal,
-    cssClass: 'puzzle-acquired-modal',
+    cssClass: 'chat-bubble-modal',
   });
   await modal.present();
   await modal.onDidDismiss();

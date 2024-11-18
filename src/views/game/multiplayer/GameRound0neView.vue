@@ -8,10 +8,17 @@ import ChatBubbleWithBorder from "@/components/common/ChatBubbleWithBorder.vue";
 import TimeInputModal from "@/components/game/multiplayer/TimeInputModal.vue";
 import GameCardBg from "@/assets/img/game/bg-game-card.svg";
 
+
+// 상위 컴포넌트로 보낼 이벤트 정의
+const emit = defineEmits(["nextRound"]);
+
 const currentPieces = ref(0)
 const maxPieces = ref(10)
 const usageTime = ref(0);
 const orderSelected = ref(true);
+const buttonText = ref("확인했어요"); // 버튼 텍스트 초기값
+
+
 const openTimeInputModal = async () => {
   const modal = await modalController.create({
     component: TimeInputModal,
@@ -29,6 +36,7 @@ const openTimeInputModal = async () => {
     usageTime.value = data;
     console.log(data, "111")
     await presentToast();
+    buttonText.value = "2라운드 시작" // 버튼 텍스트 변경
   }
 };
 
@@ -42,8 +50,18 @@ const presentToast = async () => {
   });
 
   await toast.present();
+}
 
+// 다음 라운드를 처리하는 함수
+const handleNextRound = async () => {
+  if (buttonText.value === "2라운드 시작"){
+    console.log("start round2...");
 
+    // 상위 컴포넌트로 nextRound 이벤트를 emit하여 라운드를 업데이트
+    emit("nextRound");
+  } else{
+    await openTimeInputModal();
+  }
 }
 
 </script>
@@ -85,7 +103,7 @@ const presentToast = async () => {
       </div>
     </div>
   </IonContent>
-  <BaseButtonFooter button-text="확인했어요" @buttonClick="openTimeInputModal" />
+  <BaseButtonFooter :button-text="buttonText" @buttonClick="handleNextRound" />
 </template>
 
 <style scoped>
@@ -97,6 +115,7 @@ ion-content::part(background) {
   align-items: center;
   justify-content: center;
 }
+
 .game-play-section{
   margin-top: 5vh;
   position: relative;
