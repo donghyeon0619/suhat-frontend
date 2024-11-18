@@ -16,6 +16,8 @@ import TypeTestPage from "@/views/typetest/TypeTestPage.vue";
 import TypeTestResult from "@/views/typetest/TypeTestResult.vue";
 import TypeTestSummary from "@/views/typetest/TypeTestSummary.vue";
 import HomePage from "@/views/home/HomePage.vue";
+import GameWaiting from "@/views/game/GameWaiting.vue";
+import GameRoomScanner from "@/views/game/GameRoomScanner.vue";
 import {getSessionId} from "@/store/secureStorage";
 import SoloGameIntro from "@/views/game/solo/SoloGameIntro.vue";
 import SoloGamePlay from "@/views/game/solo/SoloGamePlay.vue";
@@ -103,6 +105,17 @@ const routes: Array<RouteRecordRaw> = [
       path: '/game/home',
       name: 'GameHome',
       component:GameHome
+    },
+    {
+        path: '/game/waiting',
+        name: 'GameWaiting',
+        component:GameWaiting,
+        props: true
+    },
+    {
+        path: '/game/join',
+        name: 'GameRoomScanner',
+        component:GameRoomScanner
     },
     {
         path: '/typeTestPage',
