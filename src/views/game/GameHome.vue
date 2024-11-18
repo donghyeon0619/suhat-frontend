@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import {IonPage, IonContent, IonImg, IonText, IonInput, IonButton, IonModal, modalController, IonGrid, IonRow, IonCol} from "@ionic/vue"
+import {IonPage, IonContent, IonImg, IonIcon, IonText, IonInput, IonButton, IonModal, modalController, IonGrid, IonRow, IonCol} from "@ionic/vue"
 import Header from "@/components/common/BackButtonHeader.vue";
 import BaseButton from "@/components/common/BaseButton.vue";
 import {ref} from "vue";
 import router from "@/router";
 import axios from "axios";
+import {chevronForwardOutline} from "ionicons/icons";
 
 const roomName = ref('');
 const selectedHeadCount = ref<number | null>(null);
@@ -34,6 +35,12 @@ function scanBarcode() {
   });
 
   closeModal();
+}
+
+function gameDescription() {
+  router.push({
+    path: "/game/description"
+  });
 }
 
 function selectHeadCount(num: number) {
@@ -66,7 +73,7 @@ function closeModal() {
           <!-- 방 만들기 버튼 -->
           <ion-button class="btn" id="create-room-modal" @click="createGameRoom">
             <div class="btn-content">
-              <ion-img class="icon" src="src/assets/icons/house.svg"></ion-img>
+              <ion-img class="icon" src="src/assets/icons/icon-house.svg"></ion-img>
               <ion-text class="btn-title">방 만들기</ion-text>
               <ion-text class="btn-description">직접 게임을 만들어<br>친구들과 함께해봐요</ion-text>
             </div>
@@ -75,12 +82,16 @@ function closeModal() {
           <!-- 입장하기 버튼 -->
           <ion-button class="btn" id="join-room-modal">
             <div class="btn-content">
-              <ion-img class="icon" src="src/assets/icons/flag.svg"></ion-img>
+              <ion-img class="icon" src="src/assets/icons/home/icon-flag.svg"></ion-img>
               <ion-text class="btn-title">입장하기</ion-text>
               <ion-text class="btn-description">친구가 만든 게임에<br>참여할 수 있어요</ion-text>
             </div>
           </ion-button>
         </div>
+        <ion-text class="game-description-nav" @click="gameDescription">
+          게임 설명 보러가기
+          <ion-icon :icon="chevronForwardOutline"></ion-icon>
+        </ion-text>
       </ion-card>
   </IonPage>
 
@@ -237,6 +248,17 @@ ion-content::part(background) {
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+.game-description-nav {
+  color: #6B7684;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  ion-icon {
+    margin-left: 5px;
+  }
 }
 
 .btn-title {

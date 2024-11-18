@@ -11,7 +11,7 @@ import {
   modalController,
   IonLabel
 } from "@ionic/vue"
-import Header from "@/views/auth/components/LoginHeader.vue";
+import Header from "@/components/common/BackButtonHeader.vue";
 import { StreamBarcodeReader } from "vue-barcode-reader";
 import BaseButton from "@/components/common/BaseButton.vue";
 import axios from "axios";

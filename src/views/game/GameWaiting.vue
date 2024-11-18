@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {IonContent, IonPage, IonCard, IonCardContent, IonCardSubtitle, IonLabel, IonImg, IonText, IonList, IonFooter} from "@ionic/vue"
-import Header from "@/views/auth/components/LoginHeader.vue";
+import Header from "@/components/common/BackButtonHeader.vue";
 import JsBarcode from 'jsbarcode'
 import {ref, onMounted, computed} from 'vue'
 import UserItem from "@/components/game/UserItem.vue";
