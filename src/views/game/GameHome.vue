@@ -37,9 +37,9 @@ function scanBarcode() {
   closeModal();
 }
 
-function gameDescription() {
+function gameTutorial() {
   router.push({
-    path: "/game/description"
+    path: "/game/tutorial"
   });
 }
 
@@ -88,7 +88,7 @@ function closeModal() {
             </div>
           </ion-button>
         </div>
-        <ion-text class="game-description-nav" @click="gameDescription">
+        <ion-text class="game-description-nav" @click="gameTutorial">
           게임 설명 보러가기
           <ion-icon :icon="chevronForwardOutline"></ion-icon>
         </ion-text>

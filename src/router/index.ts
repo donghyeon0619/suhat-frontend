@@ -23,6 +23,7 @@ import SoloGameIntro from "@/views/game/solo/SoloGameIntro.vue";
 import SoloGamePlay from "@/views/game/solo/SoloGamePlay.vue";
 import PuzzleCompletion from "@/views/game/PuzzleCompletion.vue";
 import GameRanking from "@/views/game/multiplayer/GameRanking.vue";
+import GameTutorial from "@/views/game/tutorial/GameTutorial.vue";
 
 const routes: Array<RouteRecordRaw> = [
     {
@@ -116,6 +117,11 @@ const routes: Array<RouteRecordRaw> = [
         path: '/game/join',
         name: 'GameRoomScanner',
         component:GameRoomScanner
+    },
+    {
+        path: '/game/tutorial',
+        name: 'GameTutorial',
+        component:GameTutorial
     },
     {
         path: '/typeTestPage',

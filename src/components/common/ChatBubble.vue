@@ -60,6 +60,7 @@ const props = defineProps({
     font-weight: 700;
     font-size: 1.125rem;
     line-height: 1.75;
+    color: #333D4B;
   }
 }
 
