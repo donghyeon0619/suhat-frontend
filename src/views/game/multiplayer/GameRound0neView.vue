@@ -2,12 +2,11 @@
 import {IonContent, modalController, IonLabel, IonButton, toastController } from "@ionic/vue";
 import PuzzleProgressChip from "@/components/game/PuzzleProgressChip.vue";
 import BaseButtonFooter from "@/components/common/BaseButtonFooter.vue";
-import {ref} from "vue";
+import {PropType, ref} from "vue";
 import PlayerProfile from "@/components/game/multiplayer/PlayerProfile.vue";
 import ChatBubbleWithBorder from "@/components/common/ChatBubbleWithBorder.vue";
 import TimeInputModal from "@/components/game/multiplayer/TimeInputModal.vue";
 import GameCardBg from "@/assets/img/game/bg-game-card.svg";
-
 
 // 상위 컴포넌트로 보낼 이벤트 정의
 const emit = defineEmits(["nextRound"]);
@@ -15,11 +14,25 @@ const emit = defineEmits(["nextRound"]);
 const currentPieces = ref(0)
 const maxPieces = ref(10)
 const usageTime = ref(0);
-const orderSelected = ref(true);
+const orderSelected = ref(false);
 const buttonText = ref("확인했어요"); // 버튼 텍스트 초기값
+
+const props = defineProps({
+  participants: {type: Array as PropType<
+      Array<{
+        name: string;
+        order: number;
+        currentPieces: number;
+      }>
+    >,
+    required: true,
+  },
+  }
+);
 
 
 const openTimeInputModal = async () => {
+  console.log('Opening TimeInputModal...');
   const modal = await modalController.create({
     component: TimeInputModal,
     cssClass: 'time-input-modal',
@@ -29,14 +42,17 @@ const openTimeInputModal = async () => {
   });
 
   await modal.present();
+  console.log('TimeInputModal presented.');
 
   const { data, role } = await modal.onWillDismiss();
+  console.log('TimeInputModal dismissed. Role:', role, 'Data:', data);
 
   if (role === 'confirm'){
     usageTime.value = data;
     console.log(data, "111")
     await presentToast();
     buttonText.value = "2라운드 시작" // 버튼 텍스트 변경
+    orderSelected.value = true;
   }
 };
 
@@ -75,10 +91,20 @@ const handleNextRound = async () => {
 
     <!-- 게임 영역 -->
     <div class="game-play-section">
-      <PlayerProfile class="player-profile left-top-profile"/>
-      <PlayerProfile class="player-profile right-top-profile"/>
-      <PlayerProfile class="player-profile left-bottom-profile"/>
-      <PlayerProfile class="player-profile right-bottom-profile"/>
+      <PlayerProfile
+        v-for="participant in participants"
+        :key="participant.name"
+        :player-name="participant.name"
+        :player-order="participant.order"
+        :piece-count="participant.currentPieces"
+        class="player-profile"
+        :class="{
+            'left-top-profile': participant.order === 1,
+            'right-top-profile': participant.order === 2,
+            'left-bottom-profile': participant.order === 3,
+            'right-bottom-profile': participant.order === 4
+          }"
+      />
       <div class="chat-bubble-wrapper">
         <ChatBubbleWithBorder v-if="!orderSelected"
           message="퍼즐을 완성시키세요!
@@ -86,11 +112,12 @@ const handleNextRound = async () => {
           :hasTail="false"
         />
         <ChatBubbleWithBorder
+          v-if="orderSelected"
           message="주어진 그림과 글자 카드의 연관성에 대해 시간 내에 설명해주세요"
           :has-tail="false"
           :show-chip="false"
         />
-        <div class="card-container">
+        <div class="card-container" v-if="orderSelected">
           <div class="text-card">
             <img :src="GameCardBg" alt="Background" class="card-background" />
             <IonLabel class="card-text">그림카드</IonLabel>
@@ -129,21 +156,21 @@ ion-content::part(background) {
 }
 
 .left-top-profile {
-  left: 5%;
+  left: 2%;
 }
 
 .right-top-profile {
-  right: 5%;
+  right: 2%;
 }
 
 .left-bottom-profile {
   bottom: -5%;
-  left: 5%;
+  left: 2%;
 }
 
 .right-bottom-profile {
   bottom: -5%;
-  right: 5%;
+  right: 2%;
 }
 
 .chat-bubble-wrapper {
@@ -175,6 +202,7 @@ ion-content::part(background) {
 
 .face-card{
   padding-right: 5vw;
+
 }
 
 .card-background {

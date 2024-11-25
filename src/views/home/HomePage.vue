@@ -69,6 +69,10 @@ const showGameModeActionSheet = async () => {
 const route = useRoute();
 const router = useIonRouter();
 
+const goSurveyPage = () =>{
+  router.push("/SurveyPage")
+}
+
 
 
 </script>
@@ -138,6 +142,7 @@ const router = useIonRouter();
             <IonButton
               expand="block"
               class="game-button"
+              @click="goSurveyPage"
             >
               <div class="button-content">
                 <IonThumbnail style="--size:38%;">

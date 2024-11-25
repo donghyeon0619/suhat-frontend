@@ -14,6 +14,10 @@ const props = defineProps({
   buttonColor:{
     type:String,
     default: '#13BD7E',
+  },
+  disabledColor: { // 추가: disabled 상태일 때의 색상
+    type: String,
+    default: '#13BD7E',
   }
 })
 
@@ -32,7 +36,8 @@ const handleButtonClick = () =>{
         expand="block"
         @click="handleButtonClick"
         :disabled="isButtonDisabled"
-        :style="{'--background': buttonColor}">
+        :style="{'--background': isButtonDisabled ? disabledColor : buttonColor}"
+      >
       {{buttonText}}
       </IonButton>
     </div>
@@ -56,4 +61,5 @@ ion-button {
   --padding-top: 2vh;
   --padding-bottom: 2vh;
 }
+
 </style>

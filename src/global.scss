@@ -54,6 +54,13 @@ html {
   --background: transparent;
 }
 
+.hint-modal{
+  --backdrop-opacity: 0.8;
+  --width: 85%;
+  --border-radius: 24px;
+  --height: auto;
+}
+
 .top-toast {
   font-size: 0.875rem;
   font-weight: 600;

@@ -13,36 +13,20 @@ import {
   IonGrid,
   IonRow,
   IonCol,
-  IonFooter, useIonRouter
+  IonFooter, useIonRouter, onIonViewDidEnter, onIonViewWillEnter
 } from "@ionic/vue";
 import {computed, ref, watch} from "vue";
 import { chevronBackOutline} from "ionicons/icons";
+import {signup} from "@/api/authService";
+import {get,} from "@/api/httpService";
 
-
-// 덤프 데이터: 질문 리스트
-const questions = ref([
-  "스마트폰의 사용목적을 분명히 하여 필요할 때만 사용한다",
-  "스마트폰 사용 중에 다른 업무에 집중하지 못한다",
-  "자기 전에 스마트폰을 자주 사용한다",
-  "스마트폰을 사용하지 않으면 불안함을 느낀다",
-  "다른 사람들과 있을 때 스마트폰을 자주 확인한다",
-  "스마트폰 사용 시간을 조절하기 어렵다",
-  "스마트폰을 사용하면서 중요한 일을 자주 놓친다",
-  "하루 중 많은 시간을 스마트폰에 투자한다",
-  "스마트폰 사용이 나의 일상에 지장을 준다",
-  "스마트폰 없이 지내는 것이 어렵다",
-  "스마트폰으로 인해 다른 사람들과의 관계가 소홀해진다",
-  "스마트폰으로 인해 학습이나 업무 성과가 낮아진다",
-  "스마트폰 사용을 줄이려고 노력해본 적이 있다",
-  "스마트폰 사용 시간이 다른 사람들보다 많다",
-  "스마트폰을 사용하지 않으면 지루함을 느낀다"
-]);
 
 // 현재 질문 번호와 선택된 답변들 저장
 const currentQuestionIndex = ref(0);
+
+const questions = ref<string[]>([]);// 선택지 데이터
 const selectedAnswers = ref<number[]>(Array(questions.value.length).fill(-1));
 
-// 선택지 데이터
 const options = ref([
   { text: '전혀<br>그렇지 않다', value:1 },
   { text: '<br>그렇지 않다', value:2 },
@@ -50,6 +34,22 @@ const options = ref([
   { text: '<br>그렇다', value:4 },
   { text: '매우<br>그렇다', value:5 },
 ]);
+
+
+const fetchSurveys = async () => {
+  try {
+    const response = await get("surveys", undefined); // params는 필요하지 않을 경우 undefined 전달
+    console.log(response, "111"); // 응답 데이터 확인
+    questions.value = response.map((survey: { content: string }) => survey.content); // content 필드 추출
+  } catch (error) {
+    console.error("Error fetching surveys:", error);
+  }
+};
+
+// Ionic 라이프사이클 훅에 API 호출 연결
+onIonViewWillEnter(() => {
+  fetchSurveys(); // 페이지가 보여질 때 설문 데이터 로드
+});
 
 // 현재 질문에 대해 답변이 선택되었는지 확인
 const isOptionSelected = computed(() => selectedAnswers.value[currentQuestionIndex.value] !== -1);

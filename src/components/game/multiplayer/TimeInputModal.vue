@@ -10,14 +10,10 @@ import {
   IonCard,
   IonCardContent,
   IonCardHeader,
-  RangeChangeEventDetail
 } from "@ionic/vue";
 import BaseButtonFooter from "@/components/common/BaseButtonFooter.vue";
 import {reactive, ref} from "vue";
 
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const cancel = () => modalController.dismiss(null, 'cancel');
 const confirm = () => modalController.dismiss(usageTime.value, 'confirm');
 
 // 스마트폰 이용시간 변수
@@ -102,6 +98,7 @@ ion-content::part(background) {
   background: #13BD7E;
   border-radius: 16px;
   padding: 0.8vh 1.5vh;
+  width: fit-content;
   ion-label{
     font-weight: 600;
     font-size: 0.875rem;
@@ -225,7 +222,7 @@ ion-range::part(knob) {
 @media(max-width: 360px) {
   .speech-bubble::after {
     margin-left: -4vw;
-    margin-bottom: -1.6vh;
+    margin-bottom: -1.4vh;
   }
 }
 

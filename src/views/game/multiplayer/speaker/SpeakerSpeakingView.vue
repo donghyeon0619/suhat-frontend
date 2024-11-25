@@ -19,9 +19,16 @@ import {searchSharp} from "ionicons/icons";
 import FlagIcon from "@/assets/icons/flag.svg"
 import TimerIcon from "@/components/game/multiplayer/TimerIcon.vue";
 import ChatBubbleModal from "@/components/common/ChatBubbleModal.vue";
+import HintModal from "@/components/game/multiplayer/HintModal.vue";
 
+const props = defineProps({
+  currentSpeaker : {
+    type : String,
+    required: true,
+  }
+})
 
-const playerName = ref("김루리")
+const emit = defineEmits(["nextPhase"]);
 
 // 타이머 샛업
 const initialTime = 180 // 3분 선언
@@ -54,13 +61,28 @@ const startTimer = () => {
         openCheerUpModal(message);
       }
     } else {
-      if (timerInterval !== null) {
-        clearInterval(timerInterval);
-        timerInterval = null; // Reset the interval to avoid reuse
-      }
+      stopTimer();
+      emit("nextPhase"); // 시간이 다 지나면 다음 단계로 전환
     }
   }, 1000);
 }
+
+// 타이머 정지 함수
+const stopTimer = async () => {
+  if (timerInterval !== null) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+  // 모든 열려 있는 모달 닫기
+  await closeAllModals();
+};
+
+// "말하기 종료" 버튼 클릭 시 타이머 정지 및 다음 phase 전환 함수
+const handleEndSpeaking = () => {
+  stopTimer();
+  emit("nextPhase"); // 다음 단계로 전환
+};
+
 
 // 시간 연장함수
 const extendTime = () => {
@@ -71,7 +93,7 @@ const extendTime = () => {
   }
 }
 
-// 힌트 모달 오픈함수
+// 응원 모달 오픈 함수
 const openCheerUpModal = async (message:string) => {
   const modal = await modalController.create({
     component: ChatBubbleModal,
@@ -83,6 +105,25 @@ const openCheerUpModal = async (message:string) => {
   await modal.onDidDismiss();
 };
 
+// 힌트 모달 오픈
+const openHintModal = async () => {
+  const modal = await modalController.create({
+    component: HintModal,
+    cssClass: 'hint-modal',
+  });
+
+  await modal.present();
+  await modal.onDidDismiss();
+};
+
+// 모든 모달 삭제
+const closeAllModals = async () => {
+  let activeModal = await modalController.getTop();
+  while (activeModal) {
+    await modalController.dismiss();
+    activeModal = await modalController.getTop();
+  }
+};
 // unmounted 될 때 타이머 멈춤
 onBeforeUnmount(() => {
   if (timerInterval !== null) {
@@ -104,7 +145,7 @@ onMounted(() => {
         <img :src="MikeIcon" alt="마이크">
       </IonAvatar>
       <IonChip class="player-chip">
-        <IonLabel class="player-name">{{playerName}}</IonLabel>
+        <IonLabel class="player-name">{{currentSpeaker}}</IonLabel>
       </IonChip>
     </div>
 
@@ -127,6 +168,7 @@ onMounted(() => {
       <IonButton
         shape="round"
         class="hint-button"
+        @click="openHintModal"
       >
         <ion-icon class="search-icon" slot="start" :icon="searchSharp" aria-hidden="true"></ion-icon>
       힌트 보기
@@ -157,6 +199,7 @@ onMounted(() => {
               <IonButton
                 expand="block"
                 class="control-button"
+                @click="handleEndSpeaking"
               >
                 <div class="button-content">
                   <IonThumbnail style="--size:45%;">
@@ -240,11 +283,11 @@ ion-content::part(background) {
   padding: 1.5vh;
   max-width: 90%;
   z-index: 2;
-  color: #000;
+  color: #ffffff;
   font-weight: bold;
+  font-size: 1.125rem;
+  line-height: 1.5;
 }
-
-
 
 .control-section{
   position: absolute; /* Fixed positioning at the bottom */
