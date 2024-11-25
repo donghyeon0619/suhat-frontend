@@ -23,6 +23,8 @@ import SoloGameIntro from "@/views/game/solo/SoloGameIntro.vue";
 import SoloGamePlay from "@/views/game/solo/SoloGamePlay.vue";
 import PuzzleCompletion from "@/views/game/PuzzleCompletion.vue";
 import GameRanking from "@/views/game/multiplayer/GameRanking.vue";
+import MultiGamePlayView from "@/views/game/multiplayer/MultiGamePlayView.vue";
+import TestView from "@/views/TestView.vue";
 import GameTutorial from "@/views/game/tutorial/GameTutorial.vue";
 
 const routes: Array<RouteRecordRaw> = [
@@ -154,9 +156,19 @@ const routes: Array<RouteRecordRaw> = [
     component: PuzzleCompletion,
   },
   {
-    path: '/multi/gameranking',
+    path: '/multi/ranking',
     name: 'GameRanking',
     component: GameRanking,
+  },
+  {
+    path: '/multi/play',
+    name: 'MultiGamePlay',
+    component: MultiGamePlayView
+  },
+  {
+    path: '/test',
+    name: 'Test',
+    component: TestView
   }
 ]
 

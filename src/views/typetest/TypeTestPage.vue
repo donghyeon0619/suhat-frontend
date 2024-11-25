@@ -113,7 +113,7 @@ const submitSurvey = () => {
               나와 가장 가까운 대답을 골라줘
             </IonLabel>
           </div>
-          <SuhatChip font-size="0.75rem"></SuhatChip>
+          <SuhatChip font-size="0.875rem"></SuhatChip>
         </div>
 
         <!-- 선택지 -->
@@ -243,7 +243,7 @@ ion-buttons{
   padding: 1.5% 10% 2% 6%;
   ion-label{
     font-weight: 900;
-    font-size: 0.75rem;
+    font-size: 0.875rem;
     line-height: 1.25;
     color: #333D4B;
   }

@@ -9,9 +9,8 @@ export async function signup(){
 
   if (response){
     await setSessionId(response);
+    console.log("가입완료");
   }
-
-  console.log(response, "111");
 
   return response
 }

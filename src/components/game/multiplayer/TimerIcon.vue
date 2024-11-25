@@ -1,0 +1,19 @@
+<script setup lang="ts">
+const props = defineProps({
+  fillColor:{
+    type:String,
+    default: '#5B8EF3'
+  }
+})
+</script>
+
+<template>
+  <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M16.0003 29.3332C23.3641 29.3332 29.3337 23.3636 29.3337 15.9998C29.3337 8.63604 23.3641 2.6665 16.0003 2.6665C8.63653 2.6665 2.66699 8.63604 2.66699 15.9998C2.66699 23.3636 8.63653 29.3332 16.0003 29.3332Z" :fill="fillColor"/>
+    <path fill-rule="evenodd" clip-rule="evenodd" d="M14.333 11.6667C14.333 10.7462 15.0792 10 15.9997 10C16.9201 10 17.6663 10.7462 17.6663 11.6667V15.8333L20.9997 18.3333C21.7361 18.8856 21.8853 19.9303 21.333 20.6667C20.7807 21.403 19.7361 21.5523 18.9997 21L14.333 17.5V11.6667Z" fill="white"/>
+  </svg>
+</template>
+
+<style scoped>
+
+</style>
