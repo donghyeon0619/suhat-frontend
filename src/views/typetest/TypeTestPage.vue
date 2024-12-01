@@ -22,41 +22,97 @@ import {
 import {computed, ref, reactive, watch} from "vue";
 import { chevronBackOutline} from "ionicons/icons";
 import SuhatChip from "@/components/common/SuhatChip.vue";
-import { surveyData } from "@/data/surveyData";
 import {useRoute} from "vue-router";
+import {get, post} from "@/api/httpService";
+
+// 인터페이스 정의
+interface TestOption {
+  id: number;
+  content: string;
+  score: number;
+}
+
+interface TestQuestion {
+  id: number;
+  content: string;
+  testOptions: TestOption[];
+}
+
 
 const router = useIonRouter();
-
 const route = useRoute();
-const serviceType= route.query.serviceType;
+const serviceType= route.query;
+const questions = reactive<TestQuestion[]>([]);
 
 // 현재 질문 번호와 선택된 답변들 저장
 const currentQuestionIndex = ref(0);
-const selectedAnswers = reactive<number[]>(Array<number>(surveyData.length).fill(-1));
 
-// 현재 질문에 대해 답변이 선택되었는지 확인
-const isOptionSelected = computed(() => selectedAnswers[currentQuestionIndex.value] !== -1);
+const selectedAnswers = reactive<{ id: number; score: number }[]>(
+  Array.from({ length: questions.length }, () => ({ id: -1, score: -1 }))
+);
 
-// 페이지 렌더링 시 현재 질문번호 및 선택된 답변 초기화
-onIonViewWillEnter(()=>{
-  currentQuestionIndex.value = 0;
-  selectedAnswers.fill(-1);
-})
+const isOptionSelected = computed(() =>
+  selectedAnswers[currentQuestionIndex.value]?.id !== undefined &&
+  selectedAnswers[currentQuestionIndex.value]?.id !== -1
+);
+// API 호출로 질문 데이터 로드
+const fetchQuestions = async () => {
+  try {
+    // URL 경로에 serviceTypeId 포함
+    const response: TestQuestion[] = await get(`test-questions/service-type/${serviceType.id}`);
+    console.log("응답 데이터:", response);
 
-// 선택된 답변 핸들러
-const selectOption = (value: number) => {
-  if (selectedAnswers[currentQuestionIndex.value] === value) {
-    // 동일한 옵션을 다시 선택하면 선택을 취소
-    selectedAnswers[currentQuestionIndex.value] = -1;
-  } else {
-    // 새로운 옵션을 선택하면 해당 값 저장
-    selectedAnswers[currentQuestionIndex.value] = value;
+    questions.splice(
+      0,
+      questions.length,
+      ...response.map((question) => ({
+        id: question.id,
+        content: question.content,
+        testOptions: question.testOptions.map((option) => ({
+          id: option.id,
+          content: option.content,
+          score: option.score,
+        })),
+      }))
+    );
+
+    selectedAnswers.splice(
+      0,
+      selectedAnswers.length,
+      ...Array.from({ length: questions.length }, () => ({ id: -1, score: -1 }))
+    );
+  } catch (error) {
+    console.error("질문 데이터를 가져오는데 실패했습니다:", error);
+    questions.splice(0, questions.length); // 비어 있는 상태로 설정
   }
 };
 
-const totalScore = computed(()=>{
-  return selectedAnswers.reduce((sum, current) => sum + (current !== -1 ? current : 0), 0)
+// 선택 로직: 선택된 옵션의 id와 score 저장
+const selectOption = (id: number, score: number) => {
+  const currentAnswer = selectedAnswers[currentQuestionIndex.value];
+  if (currentAnswer.id === id) {
+    // 동일한 옵션을 다시 선택하면 선택 취소
+    currentAnswer.id = -1;
+    currentAnswer.score = -1;
+  } else {
+    // 새로운 옵션 선택
+    currentAnswer.id = id;
+    currentAnswer.score = score;
+  }
+};
+
+// 총 점수 계산
+const totalScore = computed(() =>
+  selectedAnswers.reduce((sum, answer) => (answer.score !== -1 ? sum + answer.score : sum), 0)
+);
+
+// 페이지 렌더링 시 현재 질문번호 및 선택된 답변 초기화
+onIonViewWillEnter(async ()=>{
+  currentQuestionIndex.value = 0;
+  await fetchQuestions(); // 페이지가 보여질 때 설문 데이터 로드
+
 })
+
 
 // 이전 문제 버튼 클릭 핸들러
 const goToPreviousQuestion = () => {
@@ -67,18 +123,39 @@ const goToPreviousQuestion = () => {
 
 // 다음 문제 버튼 클릭 핸들러
 const goToNextQuestion = () => {
-  if (currentQuestionIndex.value < surveyData.length - 1) {
+  if (currentQuestionIndex.value < questions.length - 1) {
     currentQuestionIndex.value++;
   }
 };
 
 // 제출하기 버튼 클릭 핸들러
-const submitSurvey = () => {
-  // 제출 처리 후 결과 페이지로 이동
-  router.push({
-    name: "TypeTestResult",
-    query: {score:totalScore.value}
-  });
+const submitSurvey = async () =>  {
+  try{
+    // 1. 제출 데이터 구성
+    const requestData = {
+      serviceTypeId: Number(serviceType.id),
+      totalScore:totalScore.value,
+      selectedOptionIds: selectedAnswers.map(option => option.id ),
+    }
+    console.log("제출 데이터 ", requestData)
+    // 2. 서버에 제출
+    const response = await post("test-results", requestData);
+
+    console.log(" 응답 데이터: ", response);
+
+    // 제출 처리 후 결과 페이지로 이동
+    router.replace({
+      name: "TypeTestResult",
+      query: {
+        ...response,
+        totalScore: totalScore.value,
+
+      }
+    });
+  } catch (error) {
+    console.error("제출 실패 ", error);
+    alert("결과를 제출하는 중 오류가 발생하였습니다. 다시 시도해주세요" )
+  }
 };
 
 
@@ -91,18 +168,18 @@ const submitSurvey = () => {
         <IonButtons slot="start">
           <IonBackButton :icon="chevronBackOutline" default-href="/"></IonBackButton>
         </IonButtons>
-        <IonTitle class="page-title">{{serviceType}} 유형검사</IonTitle>
+        <IonTitle class="page-title">{{serviceType.name}} 유형검사</IonTitle>
       </IonToolbar>
     </IonHeader>
 
-    <IonContent class="ion-padding" scroll-y="false">
+    <IonContent v-if="questions.length > 0" class="ion-padding" scroll-y="false">
 
       <!-- 질문 영역 -->
       <div class="question-container">
         <IonText class="question-number">
           <IonLabel style="color: #13BD7E">{{currentQuestionIndex + 1}}</IonLabel>/15
         </IonText>
-        <IonLabel class="question-title">{{ surveyData[currentQuestionIndex].question}}</IonLabel>
+        <IonLabel class="question-title">{{ questions[currentQuestionIndex].content}}</IonLabel>
       </div>
 
       <div class="option-container">
@@ -121,13 +198,13 @@ const submitSurvey = () => {
           <IonCardContent>
             <IonList lines="none" class="option-list">
               <IonItem
-                  v-for="option in surveyData[currentQuestionIndex]?.options"
-                  :key="option.value"
+                  v-for="option in questions[currentQuestionIndex]?.testOptions || []"
+                  :key="option.id"
                   class="option-item"
-                  :class="{ 'selected-option' : selectedAnswers[currentQuestionIndex] === option.value}"
-                  @click="selectOption(option.value)"
+                  :class="{ 'selected-option' : selectedAnswers[currentQuestionIndex]?.id === option.id}"
+                  @click="selectOption(option.id, option.score)"
               >
-                <ion-label class="option-text">{{option.text}}</ion-label>
+                <ion-label class="option-text">{{option.content}}</ion-label>
               </IonItem>
             </IonList>
           </IonCardContent>
@@ -151,9 +228,9 @@ const submitSurvey = () => {
                 expand="block"
                 class="next-button"
                 :disabled="!isOptionSelected"
-                @click="currentQuestionIndex === surveyData.length - 1 ? submitSurvey() : goToNextQuestion()"
+                @click="currentQuestionIndex === questions.length - 1 ? submitSurvey() : goToNextQuestion()"
             >
-              {{ currentQuestionIndex === surveyData.length - 1 ? "제출하기" : "선택완료" }}
+              {{ currentQuestionIndex === questions.length - 1 ? "제출하기" : "선택완료" }}
             </ion-button>
           </ion-col>
         </ion-row>

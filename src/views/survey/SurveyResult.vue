@@ -17,7 +17,7 @@ import {
 } from "@ionic/vue";
 import {useRoute} from "vue-router";
 
-import goHome from "@/assets/icons/common/icon-go-home.svg"
+import goHomeIcon from "@/assets/icons/common/icon-go-home.svg"
 import trophy from "@/assets/icons/common/icon-trophy.svg"
 import lock from "@/assets/icons/common/icon-lock.svg"
 import EnvelopFront from "@/assets/img/common/front-envelope.svg"
@@ -47,6 +47,7 @@ const showGameModeActionSheet = async () => {
         cssClass: 'select-mode-action-sheet-button ',
         handler() {
           console.log("같이하기 선택");
+
         },
         icon: multiIcon
       }
@@ -59,6 +60,9 @@ const showGameModeActionSheet = async () => {
 const route = useRoute();
 const score = route.query.score;
 
+const goHome = () => {
+  router.replace('/');
+}
 
 </script>
 
@@ -67,8 +71,11 @@ const score = route.query.score;
     <IonHeader class="ion-no-border">
       <IonToolbar>
         <IonButtons slot="end">
-          <ion-button style="--padding-start: 4vw">
-            <ion-img :src="goHome"></ion-img>
+          <ion-button
+            style="--padding-start: 4vw"
+            @click="goHome"
+          >
+            <ion-img :src="goHomeIcon"></ion-img>
           </ion-button>
         </IonButtons>
       </IonToolbar>
@@ -115,9 +122,8 @@ const score = route.query.score;
       <div class="chat-bubble-wrapper">
         <!-- 말풍선 -->
         <chat-bubble
-          message=
-            "너의 스마트폰 이용습관 접수는 96점이네!
-            <br>그럼 본격적으로 게임을 시작해볼까?"
+          :message=
+            "`너의 스마트폰 이용습관 접수는 ${score}점이네!<br>그럼 본격적으로 게임을 시작해볼까?`"
         />
       </div>
     </IonContent>
@@ -126,12 +132,6 @@ const score = route.query.score;
         <IonButton expand="block" @click="showGameModeActionSheet">시작하기</IonButton>
       </div>
     </IonFooter>
-    <IonActionSheet
-        class="custom-action-sheet"
-        trigger="showGameModeActionSheet"
-        header="게임 방식을 선택해주세요"
-        :buttons="actionSheetButtons"
-    ></IonActionSheet>
   </IonPage>
 </template>
 

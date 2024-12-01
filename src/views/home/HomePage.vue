@@ -26,6 +26,12 @@ import PeopleIcon from "@/assets/icons/home/icon-people.svg"
 import GameIcon from "@/assets/icons/home/icon-game.svg"
 import VideoCamIcon from "@/assets/icons/home/icon-videocam.svg"
 
+const serviceTypes = [
+  {id: 1, name: "소셜 미디어"},
+  {id: 2, name: "동영상 플랫폼"},
+  {id: 3, name: "모바일 게임"}
+];
+
 const showGameModeActionSheet = async () => {
   const actionSheet = await actionSheetController.create({
     header: '가장 많이 사용하는',
@@ -38,7 +44,7 @@ const showGameModeActionSheet = async () => {
         cssClass: 'select-mode-action-sheet-button ',
         handler() {
           console.log("소셜 미디어 선택");
-          router.push({ name: 'TypeTestPage', query: { serviceType: '소셜 미디어' } })
+          router.push({ name: 'TypeTestPage', query: serviceTypes[0] })
         },
         icon: PeopleIcon
       },
@@ -47,7 +53,7 @@ const showGameModeActionSheet = async () => {
         cssClass: 'select-mode-action-sheet-button ',
         handler() {
           console.log("동영상 플랫폼 선택");
-          router.push({ name: 'TypeTestPage', query: { serviceType: '동영상 플랫폼' } })
+          router.push({ name: 'TypeTestPage', query: serviceTypes[1] })
         },
         icon: VideoCamIcon
       },
@@ -56,7 +62,7 @@ const showGameModeActionSheet = async () => {
         cssClass: 'select-mode-action-sheet-button ',
         handler() {
           console.log("모바일 게임 선택");
-          router.push({ name: 'TypeTestPage', query: { serviceType: '모바일 게임' } })
+          router.push({ name: 'TypeTestPage', query: serviceTypes[2] })
         },
         icon: GameIcon
       },
