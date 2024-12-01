@@ -24,14 +24,34 @@ import EnvelopBack from "@/assets/img/common/back-envelope.svg"
 
 const route = useRoute();
 const router = useIonRouter();
-const score = route.query.score;
+
+// 서버 응답 데이터와 totalScore
+const totalScore = route.query.totalScore; // 총 점수
+const suhatTypeId = route.query.suhatTypeId;
+const name = route.query.name;
+const description = route.query.description;
+const suggestion = route.query.suggestion;
 
 const goSummary = () => {
+  console.log("Navigating to TypeTestSummary with:", {
+    suhatTypeId,
+    name,
+    description,
+    suggestion,
+  });
+
   // 제출 처리 후 결과 페이지로 이동
-  router.push({
+  router.replace({
     name: "TypeTestSummary",
+    query:{
+      suhatTypeId:suhatTypeId,
+      name: name,
+      description: description,
+      suggestion: suggestion,
+    }
   });
 };
+
 
 </script>
 
@@ -88,7 +108,7 @@ const goSummary = () => {
                     <ion-img :src="trophy"></ion-img>
                   </IonThumbnail>
                   <IonLabel class="card-title">내 점수</IonLabel>
-                  <IonLabel slot="end" class="score">{{score}}점</IonLabel>
+                  <IonLabel slot="end" class="score">{{totalScore}}점</IonLabel>
                 </ion-item>
               </IonCardHeader>
               <IonCardContent>
@@ -195,11 +215,11 @@ ion-content::part(background) {
   left: 15%;
   width: 0;
   height: 0;
-  border: 10px solid transparent;
+  border: 12px solid transparent;
   border-top-color: #D9D9D9; /* 말풍선 배경 색상 */
   border-bottom: 0;
   margin-left: 0;
-  margin-bottom: -10px;
+  margin-bottom: -1.15vh;
   z-index:3;
 }
 
@@ -210,11 +230,11 @@ ion-content::part(background) {
   left: 15%;
   width: 0;
   height: 0;
-  border: 12px solid transparent;
+  border: 14px solid transparent;
   border-top-color: #F2F2F2; /* 테두리 색상 */
   border-bottom: 0;
   margin-left: -2px;
-  margin-bottom: -14px;
+  margin-bottom: -1.65vh;
   z-index: 1;
 }
 

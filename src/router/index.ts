@@ -24,7 +24,7 @@ import SoloGamePlay from "@/views/game/solo/SoloGamePlay.vue";
 import PuzzleCompletion from "@/views/game/PuzzleCompletion.vue";
 import GameRanking from "@/views/game/multiplayer/GameRanking.vue";
 import MultiGamePlayView from "@/views/game/multiplayer/MultiGamePlayView.vue";
-import TestView from "@/views/TestView.vue";
+import TestView from "@/views/TestView.vue"
 import GameTutorial from "@/views/game/tutorial/GameTutorial.vue";
 
 const routes: Array<RouteRecordRaw> = [

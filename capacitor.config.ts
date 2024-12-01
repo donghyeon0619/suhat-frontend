@@ -1,4 +1,5 @@
 import type { CapacitorConfig } from '@capacitor/cli';
+import {CapacitorCookies} from "@capacitor/core";
 
 const config: CapacitorConfig = {
   appId: 'com.coders.boardgame',
@@ -7,6 +8,9 @@ const config: CapacitorConfig = {
   plugins: {
     CapacitorHttp:{
       enabled:true,
+    },
+    CapacitorCookies:{
+      enabled:true
     }
   }
 };

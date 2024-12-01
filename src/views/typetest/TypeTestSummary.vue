@@ -20,10 +20,24 @@ import DigitalMaestro from "@/assets/img/typetest/img-digital-maestro.png"
 import WaveCard from "@/assets/img/typetest/bg-wave-card.svg"
 import VideoIcon from "@/assets/icons/typetest/icon-video.svg"
 import PhotoIcon from "@/assets/icons/typetest/icon-photo.svg"
+import {onMounted} from "vue";
 
 const route = useRoute();
 const router = useIonRouter();
-const score = route.query.score;
+
+const suhatTypeId = route.query.suhatTypeId;
+const name = route.query.name;
+const description = route.query.description;
+const suggestion = route.query.suggestion;
+
+onMounted( ()=> {
+  console.log("Navigating to TypeTestSummary with:", {
+    suhatTypeId,
+    name,
+    description,
+    suggestion,
+  });
+})
 
 const goToRetry = () => {
   // 제출 처리 후 결과 페이지로 이동
@@ -65,7 +79,7 @@ const goToEnd = () => {
             <IonImg :src="BulbIcon"/>
           </IonThumbnail>
           <IonLabel class="title-text">
-            디지털 마에스트로
+            {{name}}
           </IonLabel>
         </div>
       </div>
@@ -81,10 +95,10 @@ const goToEnd = () => {
             <img :src="PhotoIcon" alt="사진" class="photo-icon">
             <img :src="VideoIcon" alt="비디오" class="video-icon">
             <ion-label class="type-description">
-              디지털 기기를 똑똑하게 지휘해 스마트폰을 적절하게 사용하며, 공부와 친구들과의 시간을 균형 있게 잘 맞추는 사람
+              {{description}}
             </ion-label>
           </div>
-          <ion-label class="type-sub-description">당신의 스마트폰 사용 습관은 모범적이네요. 앞으로도 건강한 사용습관을 유지하세요!</ion-label>
+          <ion-label class="type-sub-description">{{suggestion}}</ion-label>
         </div>
       </div>
 
@@ -193,7 +207,6 @@ ion-content::part(background) {
 }
 
 .type-description, .type-sub-description{
-  font-family: Boogaloo;
   font-weight: 400;
   color:white;
   text-align: center;
@@ -207,7 +220,7 @@ ion-content::part(background) {
 
 .photo-icon, .video-icon{
   position: absolute;
-  top: -15%;
+  top: -2vh;
 }
 
 .photo-icon{
@@ -226,7 +239,7 @@ ion-content::part(background) {
 .type-description-wrapper::after {
   content: '';
   position: absolute;
-  top:23%;
+  top:3.2vh;
   left: 0;
   width: 80%;
   height: 1vh;

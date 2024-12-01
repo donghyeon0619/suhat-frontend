@@ -39,10 +39,10 @@ const options = ref([
 const fetchSurveys = async () => {
   try {
     const response = await get("surveys", undefined); // params는 필요하지 않을 경우 undefined 전달
-    console.log(response, "111"); // 응답 데이터 확인
+    console.log(response, "응답 완료"); // 응답 데이터 확인
     questions.value = response.map((survey: { content: string }) => survey.content); // content 필드 추출
   } catch (error) {
-    console.error("Error fetching surveys:", error);
+    console.error("설문지 패치 오류", error);
   }
 };
 

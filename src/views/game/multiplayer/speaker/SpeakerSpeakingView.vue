@@ -16,7 +16,7 @@ import MikeIcon from "@/assets/icons/game/icon-mike.svg"
 import GameCardBg from "@/assets/img/game/bg-game-card.svg";
 import testImg from "@/assets/img/game/img-test-phone.png";
 import {searchSharp} from "ionicons/icons";
-import FlagIcon from "@/assets/icons/flag.svg"
+import FlagIcon from "@/assets/icons/home/icon-flag.svg"
 import TimerIcon from "@/components/game/multiplayer/TimerIcon.vue";
 import ChatBubbleModal from "@/components/common/ChatBubbleModal.vue";
 import HintModal from "@/components/game/multiplayer/HintModal.vue";
