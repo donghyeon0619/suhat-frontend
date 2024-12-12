@@ -1,14 +1,17 @@
-// 로그인 api 함수
-import {post} from "@/api/httpService";
-import {setSessionId} from "@/store/secureStorage";
-import store from "@/store";
+/**
+ * 로그인 api 함수
+ */
+import {post, setJSessionId} from "@/api/httpService";
+import {useUserStore} from "@/store/user";
+import {toRaw} from "vue";
 
 export async function signup(){
-  const userInfo = store.getters["user/userInfo"];
+  const userStore = useUserStore();
+  const userInfo = toRaw(userStore.userInfo);
   const response = await post('users/signup', userInfo);
 
   if (response){
-    await setSessionId(response);
+    await setJSessionId(response);
     console.log("가입완료");
   }
 

@@ -26,6 +26,7 @@ import GameRanking from "@/views/game/multiplayer/GameRanking.vue";
 import MultiGamePlayView from "@/views/game/multiplayer/MultiGamePlayView.vue";
 import TestView from "@/views/TestView.vue"
 import GameTutorial from "@/views/game/tutorial/GameTutorial.vue";
+import {getJSessionId} from "@/api/httpService";
 
 const routes: Array<RouteRecordRaw> = [
     {
@@ -183,8 +184,10 @@ router.beforeEach(async (to, from, next)=>{
 
   // /home 경로에 접근하려고 할 때 세션이 없으면 /loginTerms로 리다이렉트
   if ((to.path === "/" || to.path === "/home") && !sessionId ) {
+    console.log("세션 정보 없음")
     next('/loginTerms'); // 세션이 없으면 로그인 동의 화면으로 이동
   } else {
+    console.log("세션 정보", sessionId)
     next(); // 세션이 있으면 정상적으로 진행
   }
 })

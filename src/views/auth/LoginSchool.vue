@@ -15,13 +15,13 @@ import LoginFooter from "@/views/auth/components/LoginFooter.vue";
 import {ref, watch} from "vue";
 import {closeCircle, searchSharp} from "ionicons/icons";
 import {signup} from "@/api/authService";
-import {useStore} from "vuex";
+import {useUserStore} from "@/store/user";
 
 // 스토어 변수 선언
-const store = useStore();
+const userStore = useUserStore();
 
 // 학교 이름 및 상세주소 관리
-const schoolName = ref(store.getters["user/userInfo"].school || '');
+const schoolName = ref(userStore.school || '');
 const isButtonDisabled = ref(true);
 
 // 라우터 변수 정의
@@ -49,16 +49,14 @@ const validateForm = () =>{
 
 // 학교를 저장하고 loginFinish로 이동
 const saveSchoolAndFinish = async () => {
-  await store.dispatch("user/setSchool", schoolName);
-
-  const userInfo = store.getters["user/userInfo"];
+  userStore.setSchool(schoolName.value);
   const response = await signup();
 
   if (response) {
     router.navigate(
       {
         name: "LoginFinish",
-        query: {username: userInfo.name}
+        query: {username: userStore.name}
       },
       'forward', 'replace');
   } else {
