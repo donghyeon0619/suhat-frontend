@@ -23,71 +23,47 @@ import {computed, ref, reactive, watch} from "vue";
 import { chevronBackOutline} from "ionicons/icons";
 import SuhatChip from "@/components/common/SuhatChip.vue";
 import {useRoute} from "vue-router";
-import {get, post} from "@/api/httpService";
-
-// 인터페이스 정의
-interface TestOption {
-  id: number;
-  content: string;
-  score: number;
-}
-
-interface TestQuestion {
-  id: number;
-  content: string;
-  testOptions: TestOption[];
-}
-
+import {post} from "@/api/httpService";
+import {useTypeTestStore} from "@/store/typeTest";
 
 const router = useIonRouter();
 const route = useRoute();
+const typeTestStore = useTypeTestStore();
 const serviceType= route.query;
-const questions = reactive<TestQuestion[]>([]);
 
-// 현재 질문 번호와 선택된 답변들 저장
+const questions = computed(() => typeTestStore.questionData[typeTestStore.currentServiceTypeId] || []);
+
+// 현재 질문 번호
 const currentQuestionIndex = ref(0);
 
+// 선택된 답변들 저장
 const selectedAnswers = reactive<{ id: number; score: number }[]>(
-  Array.from({ length: questions.length }, () => ({ id: -1, score: -1 }))
+  Array.from({ length: questions.value.length }, () => ({ id: -1, score: -1 }))
 );
 
+/**
+ * 질문지 변경 시 selectedAnswers 초기화
+ */
+watch(questions, (newQuestions) =>{
+  selectedAnswers.splice(
+    0,
+    selectedAnswers.length,
+    ...Array.from({length: newQuestions.length}, () => ({ id: -1, score: -1}))
+  );
+})
+
+/**
+ * 보기 선택됬는지 computed
+ */
 const isOptionSelected = computed(() =>
   selectedAnswers[currentQuestionIndex.value]?.id !== undefined &&
   selectedAnswers[currentQuestionIndex.value]?.id !== -1
 );
-// API 호출로 질문 데이터 로드
-const fetchQuestions = async () => {
-  try {
-    // URL 경로에 serviceTypeId 포함
-    const response: TestQuestion[] = await get(`test-questions/service-type/${serviceType.id}`);
-    console.log("응답 데이터:", response);
 
-    questions.splice(
-      0,
-      questions.length,
-      ...response.map((question) => ({
-        id: question.id,
-        content: question.content,
-        testOptions: question.testOptions.map((option) => ({
-          id: option.id,
-          content: option.content,
-          score: option.score,
-        })),
-      }))
-    );
 
-    selectedAnswers.splice(
-      0,
-      selectedAnswers.length,
-      ...Array.from({ length: questions.length }, () => ({ id: -1, score: -1 }))
-    );
-  } catch (error) {
-    console.error("질문 데이터를 가져오는데 실패했습니다:", error);
-    questions.splice(0, questions.length); // 비어 있는 상태로 설정
-  }
-};
-
-// 선택 로직: 선택된 옵션의 id와 score 저장
+/**
+ * 선택 로직: 선택된 옵션의 id와 score 저장
+ */
 const selectOption = (id: number, score: number) => {
   const currentAnswer = selectedAnswers[currentQuestionIndex.value];
   if (currentAnswer.id === id) {
@@ -101,34 +77,57 @@ const selectOption = (id: number, score: number) => {
   }
 };
 
-// 총 점수 계산
+/**
+ * 총 점수 계산 computed
+ */
 const totalScore = computed(() =>
   selectedAnswers.reduce((sum, answer) => (answer.score !== -1 ? sum + answer.score : sum), 0)
 );
 
-// 페이지 렌더링 시 현재 질문번호 및 선택된 답변 초기화
+/**
+ * 페이지 로드시 초기화
+ */
 onIonViewWillEnter(async ()=>{
-  currentQuestionIndex.value = 0;
-  await fetchQuestions(); // 페이지가 보여질 때 설문 데이터 로드
+  const serviceTypeId = Number(serviceType.id);
+  const serviceTypeName = serviceType.name as string;
 
+  typeTestStore.setCurrentServiceType(serviceTypeId, serviceTypeName);
+
+  try {
+    await typeTestStore.fetchQuestions(serviceTypeId);
+    currentQuestionIndex.value = 0; // 질문 번호 초기화
+    selectedAnswers.splice(
+      0,
+      selectedAnswers.length,
+      ...Array.from({ length: questions.value.length }, () => ({ id: -1, score: -1 }))
+    );
+  } catch (error) {
+    console.error("질문 데이터를 가져오는데 실패했습니다:", error);
+  }
 })
 
 
-// 이전 문제 버튼 클릭 핸들러
+/**
+ * 이전 문제 버튼 클릭 핸들러
+ */
 const goToPreviousQuestion = () => {
   if (currentQuestionIndex.value > 0) {
     currentQuestionIndex.value--;
   }
 };
 
-// 다음 문제 버튼 클릭 핸들러
+/**
+ * 다음 문제 버튼 클릭 핸들러
+ */
 const goToNextQuestion = () => {
-  if (currentQuestionIndex.value < questions.length - 1) {
+  if (currentQuestionIndex.value < questions.value.length - 1) {
     currentQuestionIndex.value++;
   }
 };
 
-// 제출하기 버튼 클릭 핸들러
+/**
+ * 제출하기 버튼 클릭 핸들러
+ */
 const submitSurvey = async () =>  {
   try{
     // 1. 제출 데이터 구성

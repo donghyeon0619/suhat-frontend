@@ -21,6 +21,7 @@ import WaveCard from "@/assets/img/typetest/bg-wave-card.svg"
 import VideoIcon from "@/assets/icons/typetest/icon-video.svg"
 import PhotoIcon from "@/assets/icons/typetest/icon-photo.svg"
 import {onMounted} from "vue";
+import {useTypeTestStore} from "@/store/typeTest";
 
 const route = useRoute();
 const router = useIonRouter();
@@ -39,15 +40,21 @@ onMounted( ()=> {
   });
 })
 
+const typeTestStore = useTypeTestStore();
 const goToRetry = () => {
   // 제출 처리 후 결과 페이지로 이동
   router.navigate({
     name: "TypeTestPage",
+    query: {
+      id: typeTestStore.currentServiceTypeId,
+      name: typeTestStore.currentServiceTypeName,
+    }
   },
     "back",
     "replace",
   );
 };
+
 const goToEnd = () => {
   // 제출 처리 후 결과 페이지로 이동
   router.navigate({

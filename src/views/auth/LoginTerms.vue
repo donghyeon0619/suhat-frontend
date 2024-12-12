@@ -13,9 +13,9 @@ import {
 import LoginFooter from "@/views/auth/components/LoginFooter.vue";
 import {reactive, watch} from 'vue';
 import CheckmarkIcon from "@/components/common/CheckmarkIcon.vue";
-import {useStore} from "vuex";
+import {useUserStore} from "@/store/user";
 
-const store =useStore()
+const userStore = useUserStore();
 
 // 라우터 변수 선언
 const router = useIonRouter();
@@ -46,10 +46,9 @@ watch([() => checkboxes.serviceTerms, () => checkboxes.privacyPolicy], () => {
 
 // userInfo 초기화 및 loginName 라우팅
 const initUserInfoAndProceed = async () => {
-  await store.dispatch("user/resetUserInfo");
+  userStore.resetUserInfo();
   router.push('/loginName');
 }
-
 
 </script>
 

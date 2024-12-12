@@ -3,14 +3,15 @@ import LoginHeader from "@/components/common/BackButtonHeader.vue";
 import {IonPage, IonContent, IonInput, IonText, useIonRouter,} from "@ionic/vue";
 import LoginFooter from "@/views/auth/components/LoginFooter.vue";
 import {ref, watch} from "vue";
-import {useStore} from "vuex";
+import {useUserStore} from "@/store/user";
 
+// Pinia 스토어 가져오기
+const userStore = useUserStore();
 
-const store = useStore();
 // State to track focus
 const isFocused = ref(false);
 // 이름 입력값 상태 관리
-const nameInput = ref(store.getters["user/userInfo"].name || '');
+const nameInput = ref(userStore.name || '');
 const isButtonDisabled = ref(true);
 const router = useIonRouter();
 
@@ -37,7 +38,7 @@ watch(nameInput, (newValue) => {
 
 // 이름을 저장하고 loginGender로 라우팅
 const saveNameAndProceed = async () => {
-  await store.dispatch("user/setName", nameInput.value);
+  userStore.setName(nameInput.value);
   router.push('/loginGender');
 }
 
