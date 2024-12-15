@@ -110,7 +110,7 @@ const routes: Array<RouteRecordRaw> = [
       component:GameHome
     },
     {
-        path: '/game/waiting',
+        path: '/game/waiting/:roomId',
         name: 'GameWaiting',
         component:GameWaiting,
         props: true

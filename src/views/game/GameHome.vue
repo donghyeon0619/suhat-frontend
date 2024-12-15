@@ -1,31 +1,33 @@
 <script setup lang="ts">
-import {IonPage, IonContent, IonImg, IonIcon, IonText, IonInput, IonButton, IonModal, modalController, IonGrid, IonRow, IonCol} from "@ionic/vue"
+import {IonPage, IonContent, IonImg, IonIcon, IonText, IonInput, IonButton, IonModal, modalController, IonGrid, IonRow, IonCol, useIonRouter} from "@ionic/vue"
 import Header from "@/components/common/BackButtonHeader.vue";
 import BaseButton from "@/components/common/BaseButton.vue";
 import {ref} from "vue";
-import router from "@/router";
-import axios from "axios";
 import {chevronForwardOutline} from "ionicons/icons";
+import {post} from "@/api/httpService";
 
 const roomName = ref('');
 const selectedHeadCount = ref<number | null>(null);
 
-function createGameRoom() {
+const router = useIonRouter();
+
+async function createGameRoom() {
   try {
-    const response = axios.post("/games", {
+    const response = await post("games/room", {
       roomName: roomName.value,
       headCount: selectedHeadCount.value,
     });
-    const roomId = response.data.roomId;
+
+    console.log("roomId: " + response);
+    const roomId = response;
 
     closeModal();
 
     router.push({
-      path: "/game/waiting",
-      params: {id: roomId}
+      path: `/game/waiting/${roomId}`,
     });
   } catch (error) {
-    console.log('방 생성 오류 발생 : ', error);
+    console.log('방 생성 오류 발생: ', error);
   }
 }
 
@@ -71,7 +73,7 @@ function closeModal() {
         <ion-text class="title">게임 유형</ion-text>
         <div class="btn-container">
           <!-- 방 만들기 버튼 -->
-          <ion-button class="btn" id="create-room-modal" @click="createGameRoom">
+          <ion-button class="btn" id="create-room-modal">
             <div class="btn-content">
               <ion-img class="icon" src="src/assets/icons/icon-house.svg"></ion-img>
               <ion-text class="btn-title">방 만들기</ion-text>

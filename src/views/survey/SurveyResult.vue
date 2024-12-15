@@ -47,7 +47,7 @@ const showGameModeActionSheet = async () => {
         cssClass: 'select-mode-action-sheet-button ',
         handler() {
           console.log("같이하기 선택");
-
+          router.push("/game/home")
         },
         icon: multiIcon
       }
