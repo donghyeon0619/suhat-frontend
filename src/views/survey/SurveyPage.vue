@@ -34,13 +34,13 @@ const options = ref([
   { text: '매우<br>그렇다', value:5 },
 ]);
 
+
 const fetchSurveys = async () => {
   try {
     const response = await get("surveys", undefined);
     console.log(response, "응답 완료");
     questions.value = response.map((survey: { content: string }) => survey.content);  // content 필드 추출
 
-    // `questions` 데이터에 맞게 `selectedAnswers` 초기화
     selectedAnswers.value = Array(questions.value.length).fill(-1);
   } catch (error) {
     console.error("설문지 패치 오류", error);
@@ -109,7 +109,6 @@ const submitSurvey = async () => {
     console.error('설문 결과 저장 실패', error);
   }
 };
-
 </script>
 
 <template>
@@ -207,7 +206,6 @@ const submitSurvey = async () => {
                 :disabled="!isOptionSelected"
                 @click="currentQuestionIndex === questions.length - 1 ? submitSurvey() : goToNextQuestion()"
             >
-              <!-- todo. 마지막 질문 렌더링 시 '제출하기' 버튼 활성화 되는 이슈 수정하기 -->
               {{ currentQuestionIndex === questions.length - 1 ? "제출하기" : "다음 문제" }}
             </ion-button>
           </ion-col>
@@ -243,7 +241,7 @@ ion-buttons{
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-height: 30vh;
+  margin-bottom: 25%;
 }
 
 .survey-number{
