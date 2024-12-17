@@ -47,6 +47,7 @@ const showGameModeActionSheet = async () => {
         cssClass: 'select-mode-action-sheet-button ',
         handler() {
           console.log("같이하기 선택");
+          router.push("/game/home")
 
         },
         icon: multiIcon
@@ -166,6 +167,7 @@ ion-title{
 }
 
 .envelope {
+  margin-top: 4vh;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -176,7 +178,7 @@ ion-title{
 
 .back-envelope {
   position: absolute;
-  bottom: 0;
+  bottom: 2%;
   left: 0;
   z-index: 1;
   width: 100%;
