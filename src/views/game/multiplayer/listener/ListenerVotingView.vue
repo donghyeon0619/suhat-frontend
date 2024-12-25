@@ -138,8 +138,11 @@ const currentMessage = computed(() => {
           :piece-count="participant.currentPieces"
           class="player-profile"
           :class="{
-            'left-top-profile': participant.order === 1,
-            'right-top-profile': participant.order === 2,
+            // 참여자 수가 3명일 떄의 상단 프로필 위치
+            'center-top-profile': participants.length === 3 && participant.order === 1,
+            // 참여자 수가 4명일 떄의 상단 프로필 위치
+            'left-top-profile': participants.length === 4 && participant.order === 1,
+            'right-top-profile': participants.length === 4 && participant.order === 2,
             'left-bottom-profile': participant.order === 3,
             'right-bottom-profile': participant.order === 4
           }"
@@ -199,6 +202,10 @@ ion-content::part(background) {
   position: absolute;
 }
 
+.center-top-profile {
+  left: 50%;
+  transform: translateX(-50%);
+}
 .left-top-profile {
   left: 2%;
 }

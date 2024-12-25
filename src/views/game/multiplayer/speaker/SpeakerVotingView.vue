@@ -138,8 +138,11 @@ const fetchReVoteResult = async () => {
           :piece-count="participant.currentPieces"
           class="player-profile"
           :class="{
-            'left-top-profile': participant.order === 1,
-            'right-top-profile': participant.order === 2,
+            // 참여자 수가 3명일 떄의 상단 프로필 위치
+            'center-top-profile': participants.length === 3 && participant.order === 1,
+            // 참여자 수가 4명일 떄의 상단 프로필 위치
+            'left-top-profile': participants.length === 4 && participant.order === 1,
+            'right-top-profile': participants.length === 4 && participant.order === 2,
             'left-bottom-profile': participant.order === 3,
             'right-bottom-profile': participant.order === 4
           }"
@@ -171,6 +174,7 @@ const fetchReVoteResult = async () => {
   </IonContent>
   <BaseButtonFooter
     v-if="currentPhase !== 'result' && currentPhase !== 'reVoteResult'"
+    :class="{ hidden: currentPhase === 'result' || currentPhase === 'reVoteResult' }"
     :is-button-disabled="true"
     disabled-color="#C7E399"
     :button-text="buttonText"
@@ -192,14 +196,21 @@ ion-content::part(background) {
   position: relative;
   min-height: 60vh; /* 최소 높이만 지정 */
   width: 100%;
+  transition: margin-top 0.5s ease-in-out; /* 애니메이션 효과 추가 */
 }
 
 .no-footer{
   min-height: 70vh;
+  transition: min-height 0.5s ease-in-out; /* 애니메이션 효과 추가 */
 }
 /* Player Profile Positions */
 .player-profile {
   position: absolute;
+}
+
+.center-top-profile {
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .left-top-profile {
@@ -226,5 +237,17 @@ ion-content::part(background) {
   left: 50%;
   transform: translate(-50%, -50%);
   width: 90%; /* Adjust width if necessary */
+}
+
+/* 버튼 숨김 애니메이션 */
+.base-button-footer {
+  transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.base-button-footer.hidden {
+  opacity: 0;
+  transform: translateY(100%);
 }
 </style>
