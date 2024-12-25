@@ -7,7 +7,6 @@ import LoginTerms from "@/views/auth/LoginTerms.vue";
 import LoginGender from "@/views/auth/LoginGender.vue";
 import LoginFinish from "@/views/auth/LoginFinish.vue";
 import LoginSchool from "@/views/auth/LoginSchool.vue";
-import Onboarding from "@/views/intro/Onboarding.vue";
 import Splash from "@/views/intro/Splash.vue";
 import SurveyPage from "@/views/survey/SurveyPage.vue";
 import SurveyResult from "@/views/survey/SurveyResult.vue";
@@ -18,7 +17,6 @@ import TypeTestSummary from "@/views/typetest/TypeTestSummary.vue";
 import HomePage from "@/views/home/HomePage.vue";
 import GameWaiting from "@/views/game/GameWaiting.vue";
 import GameRoomScanner from "@/views/game/GameRoomScanner.vue";
-import {getSessionId} from "@/store/secureStorage";
 import SoloGameIntro from "@/views/game/solo/SoloGameIntro.vue";
 import SoloGamePlay from "@/views/game/solo/SoloGamePlay.vue";
 import PuzzleCompletion from "@/views/game/PuzzleCompletion.vue";
@@ -26,7 +24,8 @@ import GameRanking from "@/views/game/multiplayer/GameRanking.vue";
 import MultiGamePlayView from "@/views/game/multiplayer/MultiGamePlayView.vue";
 import TestView from "@/views/TestView.vue"
 import GameTutorial from "@/views/game/tutorial/GameTutorial.vue";
-import {getJSessionId} from "@/api/httpService";
+import {validateSession} from "@/api/sessionService";
+import {useAppStateStore} from "@/store/appState";
 
 const routes: Array<RouteRecordRaw> = [
     {
@@ -34,9 +33,28 @@ const routes: Array<RouteRecordRaw> = [
       redirect: '/home'
     },
     {
-        path: '/home',
-        name: 'HomePage',
-        component: HomePage,
+      path: '/home',
+      name: 'HomePage',
+      component: HomePage,
+      beforeEnter: async (to, from, next) =>{
+        const appStateStore = useAppStateStore();
+
+        if (!appStateStore.hasSeenOnBoarding){
+          console.log("온보딩 화면으로 이동");
+          return next('/intro/onboarding');
+        }
+
+        // 세션 유효성 검사
+        const isValidSession = await validateSession();
+        if (isValidSession) {
+          console.log("세션 유효, 홈 화면으로 이동");
+          return next();
+
+        } else {
+          console.log("세션 없음, 로그인 화면으로 이동");
+           return next('/loginTerms');
+        }
+      }
     },
     {
         path: '/tabs/',
@@ -87,8 +105,8 @@ const routes: Array<RouteRecordRaw> = [
     },
     {
       path:'/intro/onboarding',
-      name: 'Onboadrding',
-      component:Onboarding
+      name: 'IntroOnboarding',
+      component: () => import('@/views/intro/IntroOnboarding.vue')
     },
     {
       path:'/intro/splash',
@@ -176,20 +194,6 @@ const routes: Array<RouteRecordRaw> = [
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes
-})
-
-// 전역 네비게이션 가드 실행
-router.beforeEach(async (to, from, next)=>{
-  const sessionId = await getSessionId();
-
-  // /home 경로에 접근하려고 할 때 세션이 없으면 /loginTerms로 리다이렉트
-  if ((to.path === "/" || to.path === "/home") && !sessionId ) {
-    console.log("세션 정보 없음")
-    next('/loginTerms'); // 세션이 없으면 로그인 동의 화면으로 이동
-  } else {
-    console.log("세션 정보", sessionId)
-    next(); // 세션이 있으면 정상적으로 진행
-  }
 })
 
 export default router

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {IonPage, IonContent, IonText, IonImg, IonFooter,IonThumbnail} from "@ionic/vue";
+import {IonPage, IonContent, IonText, IonImg, IonFooter, IonThumbnail, useIonRouter} from "@ionic/vue";
 import { Swiper, SwiperSlide } from 'swiper/vue';
 import onboardImage1 from '@/assets/img/intro/onboard1.png';
 import onboardImage2 from '@/assets/img/intro/onboard2.png';
@@ -9,12 +9,16 @@ import onboardImage3 from '@/assets/img/intro/onboard3.png';
 import 'swiper/css';
 import 'swiper/css/pagination';
 import {ref} from "vue";
+import {useAppStateStore} from "@/store/appState";
+
+/**
+ * 온보딩 state 및 라우터 변수 선언
+ */
+const appStateStore = useAppStateStore();
+const router = useIonRouter();
 
 // 슬라이드 데이터 선언
 const slides = ref([
-
-
-
   {
     image: onboardImage1,
     title: '두 카드 사이의 연결 고리 만들기',
@@ -39,6 +43,11 @@ const totalSlides = ref(slides.value.length); // 슬라이드 개수 설정
 const onSlideChange = (swiper) => {
   activeSlide.value = swiper.realIndex;
 };
+
+const completeOnboarding = async () => {
+  appStateStore.markOnboardingComplete(); // 온보딩 완료
+  router.replace('/home'); // 홈화면으로 이동
+}
 </script>
 
 <template>
@@ -79,7 +88,7 @@ const onSlideChange = (swiper) => {
     </IonContent>
     <IonFooter class="ion-no-border" >
       <div class="action-button">
-        <ion-button expand="block">시작하기</ion-button>
+        <ion-button expand="block" @click="completeOnboarding">시작하기</ion-button>
       </div>
     </IonFooter>
   </IonPage>

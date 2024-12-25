@@ -7,12 +7,12 @@ import SpeakerView from "@/views/game/multiplayer/speaker/SpeakerView.vue";
 import ListenerView from "@/views/game/multiplayer/listener/ListenerView.vue";
 
 const currentRound = ref(1);
-const isSpeaker = ref(false); // 발언자인지 여부 (서버에서 결정되거나 초기화)
+const isSpeaker = ref(true); // 발언자인지 여부 (서버에서 결정되거나 초기화)
 
 // 예시 참여자 데이터
 const Participants = ref([
   { name: "이예지", order: 1, currentPieces: 0 },
-  { name: "김루리", order: 2, currentPieces: 1 },
+  // { name: "김루리", order: 2, currentPieces: 1 },
   { name: "박성호", order: 3, currentPieces: 2 },
   { name: "이윤호", order: 4, currentPieces: 3 },
 ]);
@@ -67,7 +67,7 @@ const startNextRound = () => {
     />
     <!-- 듣는 이 화면 -->
     <ListenerView
-      v-if="currentRound ===2 && !isSpeaker"
+      v-if="currentRound === 2 && !isSpeaker"
       :participants="Participants"
     />
 </IonPage>

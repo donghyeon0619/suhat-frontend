@@ -1,9 +1,10 @@
 /**
  * 로그인 api 함수
  */
-import {post, setJSessionId} from "@/api/httpService";
+import {post} from "@/api/httpService";
 import {useUserStore} from "@/store/user";
 import {toRaw} from "vue";
+import {setJSessionId} from "@/api/sessionService";
 
 export async function signup(){
   const userStore = useUserStore();

@@ -1,49 +1,18 @@
-import {CapacitorHttp, HttpOptions, CapacitorCookies} from '@capacitor/core';
+import {CapacitorHttp, HttpOptions } from '@capacitor/core';
 import {useIonRouter, alertController} from "@ionic/vue";
-// import {getSessionId} from "@/store/secureStorage";
 
 const BASE_URL = 'http://localhost:8080/api/';
 
-// **쿠키 관리 함수**
-/**
- * JSESSIONID 설정하기
- */
-export async function setJSessionId(jsessionId: string) {
-  await CapacitorCookies.setCookie({
-    url: BASE_URL, // 백엔드 URL
-    key: 'JSESSIONID',
-    value: jsessionId,
-    path: '/', // Spring Security 기본 경로
-  });
-}
-
-/**
- * JSESSIONID 가져오기
- */
-export async function getJSessionId(): Promise<string | null> {
-  const result = await CapacitorCookies.getCookies({url: BASE_URL});
-  console.log(result);
-  console.log(result.cookies);
-  const cookies = result.cookies as unknown as { [key: string]: string }; // unknown으로 변환 후 캐스팅
-  return cookies['JSESSIONID'] || null; // JSESSIONID 가져오기
-}
-
-/**
- * JSESSIONID 삭제하기
- */
-async function deleteJSessionId() {
-  await CapacitorCookies.deleteCookie({
-    url: BASE_URL,
-    key: 'JSESSIONID',
-  });
-}
-
 // **HTTP 요청 함수**
-
 /**
  * 공통 HTTP 옵션 생성
+ * @param endpoint - API 엔드포인트
+ * @param method - HTTP 메서드 ('GET' | 'POST')
+ * @param data - 요청 본문 데이터 (POST 등에서 사용)
+ * @param params - 요청 URL 파라미터 (GET 등에서 사용)
+ * @returns HttpOptions
  */
-async function getHttpOptions(
+export async function getHttpOptions(
   endpoint: string,
   method: 'GET' | 'POST',
   data?: any,
@@ -63,7 +32,11 @@ async function getHttpOptions(
 /**
  * GET 요청
  */
-export async function get(endpoint: string, params?: any): Promise<any> {
+export async function get(
+  endpoint: string,
+  params?: any,
+  returnFullResponse: boolean = false // 옵션 추가: 전체 응답 반환 여부
+): Promise<any> {
   const options = await getHttpOptions(endpoint, 'GET', undefined, params);
 
   // 쿠키 전송 활성화
@@ -77,7 +50,8 @@ export async function get(endpoint: string, params?: any): Promise<any> {
 
     await validateHttpResponse(response);
 
-    return response.data;
+    // 전체 response 반환 여부에 따라 처리
+    return returnFullResponse ? response : response.data;
   } catch (error: any) {
     console.log("에러가 발생했습니다.", error)
     throw error;

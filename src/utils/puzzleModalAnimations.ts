@@ -17,7 +17,7 @@ export const enterAnimation = (baseEl: HTMLElement) => {
   return createAnimation()
     .addElement(baseEl)
     .easing('ease-out')
-    .duration(500)
+    .duration(300)
     .addAnimation([backdropAnimation, wrapperAnimation]);
 };
 
