@@ -4,7 +4,11 @@ import {IonButton, IonFooter} from "@ionic/vue";
 import {computed} from "vue";
 
 const props = defineProps({
-  isButtonDisabled: {
+  isButton1Disabled: {
+    type: Boolean,
+    default: false
+  },
+  isButton2Disabled: {
     type: Boolean,
     default: false
   },
@@ -38,7 +42,7 @@ const handleButton2Click = () => {
 
 // 버튼 비활성화, 활성화 computed
 const button2Style = computed(() => ({
-  '--background': props.isButtonDisabled ? '#BBE5A6' : props.button2Color, // Applies disabled color
+  '--background': props.isButton2Disabled ? '#BBE5A6' : props.button2Color, // Applies disabled color
 }));
 </script>
 
@@ -47,6 +51,7 @@ const button2Style = computed(() => ({
     <div class="button-container">
       <ion-button
         class="small-button"
+        :disabled="isButton1Disabled"
         expand="block"
         :style="{'--background': button1Color}"
         @click="handleButton1Click"
@@ -55,7 +60,7 @@ const button2Style = computed(() => ({
       </ion-button>
       <ion-button
         class="medium-button"
-        :disabled="isButtonDisabled"
+        :disabled="isButton2Disabled"
         expand="block"
         :style="button2Style"
         @click="handleButton2Click">

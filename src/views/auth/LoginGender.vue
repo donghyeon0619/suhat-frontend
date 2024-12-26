@@ -11,12 +11,13 @@ import {
 } from "@ionic/vue";
 import LoginFooter from "@/views/auth/components/LoginFooter.vue";
 import { ref, watch} from "vue";
-import {useStore} from "vuex";
+import {useUserStore} from "@/store/user";
 
 // 스토어 변수 선언
-const store = useStore();
+const userStore = useUserStore();
+
 // 성별 선택 관리
-const selectedGender= ref<number|null>(store.getters["user/userInfo"].gender ?? null);
+const selectedGender= ref<number|null>(userStore.gender ?? null);
 //버튼 비활성화 상태
 const isButtonDisabled = ref(selectedGender.value === null);
 // 라우터 변수 정의
@@ -34,7 +35,7 @@ const handleSelectionChange= (event) =>{
 
 // 성별을 저장하고 LoginSchool로 라우팅
 const saveGenderAndProceed = async () => {
-  await store.dispatch("user/setGender", selectedGender.value);
+  userStore.setGender(selectedGender.value);
   router.push('/loginSchool');
 }
 

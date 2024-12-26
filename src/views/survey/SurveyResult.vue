@@ -166,6 +166,7 @@ ion-title{
 }
 
 .envelope {
+  margin-top: 4vh;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -176,7 +177,7 @@ ion-title{
 
 .back-envelope {
   position: absolute;
-  bottom: 0;
+  bottom: 2%;
   left: 0;
   z-index: 1;
   width: 100%;

@@ -6,7 +6,7 @@ import {
   IonRow,
   IonCol,
   IonButton,
-  IonLabel,
+  IonLabel, toastController,
 } from "@ionic/vue";
 import {onBeforeUnmount, onMounted, ref} from "vue";
 import MikeIcon from "@/assets/icons/game/icon-mike.svg"
@@ -24,7 +24,7 @@ const props = defineProps({
 const emit = defineEmits(["nextPhase"]);
 
 // 타이머 샛업
-const initialTime = 180 // 3분 선언
+const initialTime = 60 // 3분 선언
 const timer = ref(initialTime); //타이머 3분에서 시작
 const formattedTime = ref(""); // "MM:SS"로 형식으로 화면에 보여줌
 let timerInterval: ReturnType<typeof setInterval> | null = null;
@@ -50,6 +50,19 @@ const startTimer = () => {
       emit("nextPhase"); // 시간이 다 지나면 다음 단계로 전환
     }
   }, 1000);
+}
+
+// 시간 연장시 상단 토스트 출현
+const presentToast = async () => {
+  const toast = await toastController.create({
+    message: '남은 시간이 연장되었어요',
+    cssClass: "top-toast toast-txt-center",
+    duration: 1500,
+    position: "top",
+    positionAnchor:"backButtonHeader"
+  });
+
+  await toast.present();
 }
 
 // unmounted 될 때 타이머 멈춤

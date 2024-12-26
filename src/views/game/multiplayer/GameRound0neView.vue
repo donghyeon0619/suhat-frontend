@@ -16,6 +16,7 @@ const maxPieces = ref(10)
 const usageTime = ref(0);
 const orderSelected = ref(false);
 const buttonText = ref("확인했어요"); // 버튼 텍스트 초기값
+const orderShow = ref(false);
 
 const props = defineProps({
   participants: {type: Array as PropType<
@@ -92,6 +93,7 @@ const handleNextRound = async () => {
     <!-- 게임 영역 -->
     <div class="game-play-section">
       <PlayerProfile
+        :order-show="orderShow"
         v-for="participant in participants"
         :key="participant.name"
         :player-name="participant.name"
@@ -99,8 +101,11 @@ const handleNextRound = async () => {
         :piece-count="participant.currentPieces"
         class="player-profile"
         :class="{
-            'left-top-profile': participant.order === 1,
-            'right-top-profile': participant.order === 2,
+             // 참여자 수가 3명일 떄의 상단 프로필 위치
+            'center-top-profile': participants.length === 3 && participant.order === 1,
+            // 참여자 수가 4명일 떄의 상단 프로필 위치
+            'left-top-profile': participants.length === 4 && participant.order === 1,
+            'right-top-profile': participants.length === 4 && participant.order === 2,
             'left-bottom-profile': participant.order === 3,
             'right-bottom-profile': participant.order === 4
           }"
@@ -118,13 +123,13 @@ const handleNextRound = async () => {
           :show-chip="false"
         />
         <div class="card-container" v-if="orderSelected">
-          <div class="text-card">
-            <img :src="GameCardBg" alt="Background" class="card-background" />
-            <IonLabel class="card-text">그림카드</IonLabel>
-          </div>
           <div class="face-card">
             <img :src="GameCardBg" alt="Background" class="card-background" />
             <IonLabel class="card-text">글자카드</IonLabel>
+          </div>
+          <div class="text-card">
+            <img :src="GameCardBg" alt="Background" class="card-background" />
+            <IonLabel class="card-text">그림카드</IonLabel>
           </div>
         </div>
       </div>
@@ -153,6 +158,11 @@ ion-content::part(background) {
 /* Player Profile Positions */
 .player-profile {
   position: absolute;
+}
+
+.center-top-profile {
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .left-top-profile {
@@ -197,11 +207,11 @@ ion-content::part(background) {
   justify-content: center;
 }
 .text-card{
-  padding-left: 5vw;
+  padding-right: 5vw;
 }
 
 .face-card{
-  padding-right: 5vw;
+  padding-left: 5vw;
 
 }
 

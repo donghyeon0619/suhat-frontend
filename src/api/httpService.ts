@@ -1,47 +1,18 @@
-import {CapacitorHttp, HttpOptions, CapacitorCookies} from '@capacitor/core';
+import {CapacitorHttp, HttpOptions } from '@capacitor/core';
 import {useIonRouter, alertController} from "@ionic/vue";
-// import {getSessionId} from "@/store/secureStorage";
 
 const BASE_URL = 'http://localhost:8080/api/';
 
-// **쿠키 관리 함수**
-/**
- * JSESSIONID 설정하기
- */
-async function setJSessionId(jsessionId: string) {
-  await CapacitorCookies.setCookie({
-    url: BASE_URL, // 백엔드 URL
-    key: 'JSESSIONID',
-    value: jsessionId,
-    path: '/', // Spring Security 기본 경로
-  });
-}
-
-/**
- * JSESSIONID 가져오기
- */
-async function getJSessionId(): Promise<string | null> {
-  const result = await CapacitorCookies.getCookies({url: BASE_URL});
-  const cookies = result.cookies as unknown as { [key: string]: string }; // unknown으로 변환 후 캐스팅
-  return cookies['JSESSIONID'] || null; // JSESSIONID 가져오기
-}
-
-/**
- * JSESSIONID 삭제하기
- */
-async function deleteJSessionId() {
-  await CapacitorCookies.deleteCookie({
-    url: BASE_URL,
-    key: 'JSESSIONID',
-  });
-}
-
 // **HTTP 요청 함수**
-
 /**
  * 공통 HTTP 옵션 생성
+ * @param endpoint - API 엔드포인트
+ * @param method - HTTP 메서드 ('GET' | 'POST')
+ * @param data - 요청 본문 데이터 (POST 등에서 사용)
+ * @param params - 요청 URL 파라미터 (GET 등에서 사용)
+ * @returns HttpOptions
  */
-async function getHttpOptions(
+export async function getHttpOptions(
   endpoint: string,
   method: 'GET' | 'POST',
   data?: any,
@@ -61,7 +32,11 @@ async function getHttpOptions(
 /**
  * GET 요청
  */
-export async function get(endpoint: string, params?: any): Promise<any> {
+export async function get(
+  endpoint: string,
+  params?: any,
+  returnFullResponse: boolean = false // 옵션 추가: 전체 응답 반환 여부
+): Promise<any> {
   const options = await getHttpOptions(endpoint, 'GET', undefined, params);
 
   // 쿠키 전송 활성화
@@ -71,9 +46,15 @@ export async function get(endpoint: string, params?: any): Promise<any> {
 
   try {
     const response = await CapacitorHttp.get(options);
-    return response.data;
+
+
+    await validateHttpResponse(response);
+
+    // 전체 response 반환 여부에 따라 처리
+    return returnFullResponse ? response : response.data;
   } catch (error: any) {
-    await handleErrorResponse(error);
+    console.log("에러가 발생했습니다.", error)
+    throw error;
   }
 }
 
@@ -90,25 +71,53 @@ export async function post(endpoint: string, data: any): Promise<any> {
 
   try {
     const response = await CapacitorHttp.post(options);
+
+    await validateHttpResponse(response)
+
     return response.data;
   } catch (error: any) {
-   await handleErrorResponse(error);
+    console.log("에러가 발생했습니다.", error)
+    throw error;
   }
 }
 
-// **공통 에러 처리**
-async function handleErrorResponse(error: any): Promise<void> {
-  if (error.response?.status === 401) {
-    console.error('권한없는 요청입니다. 로그인화면으로 리다이렉팅합니다.');
+/**
+ * HTTP 응답 검증 및 상태 코드 처리
+ * @param response - HTTP 응답 객체
+ */
+export async function validateHttpResponse(response: any): Promise<void> {
+  const status = response.status;
+
+  if (status === 401) {
+    console.warn("401 Unauthorized - 권한이 없습니다.");
     await handleUnauthorizedRequest();
-  } else {
-    console.error('API Error:', error.message || error);
+    return;
   }
-  throw error;
+
+  if (status === 403) {
+    console.warn("403 Forbidden - 접근 권한이 없습니다.");
+    throw new Error("403 Forbidden - 접근 권한이 없습니다.");
+  }
+
+  if (status >= 500) {
+    console.error(`500 Internal Server Error - 서버에서 문제가 발생했습니다.`);
+    throw new Error(`500 Server Error: ${response.data}`);
+  }
+
+  if (status >= 400) {
+    console.error(`400 Bad Request - 요청 오류가 발생했습니다.`);
+    throw new Error(`400 Bad Request: ${response.data}`);
+  }
+
+  console.log(`HTTP 상태 코드 ${status} - 응답이 유효합니다.`);
 }
 
-// 로그인화면으로 리다이렉트
+
+/**
+ * 세션이 만료 및 없을 시 로그인으로 리다이렉션
+ */
 export async function handleUnauthorizedRequest() {
+  console.log("로그인으로 리다이렉션")
   const router = useIonRouter(); // 함수 내부에서 호출
   router.replace('/loginName');
 }

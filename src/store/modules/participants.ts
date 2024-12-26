@@ -18,7 +18,7 @@ const participantsModule: Module<ParticipantsState, RootState> = {
   state: {
     participants: [
       { name: "이예지", order: 1, currentPieces: 0 },
-      { name: "김루리", order: 2, currentPieces: 1 },
+      // { name: "김루리", order: 2, currentPieces: 1 },
       { name: "박성호", order: 3, currentPieces: 2 },
       { name: "이윤호", order: 4, currentPieces: 3 },
     ],
@@ -40,7 +40,7 @@ const participantsModule: Module<ParticipantsState, RootState> = {
     initializeParticipants({ commit }) {
       const dummyData: Participant[] = [
         { name: "이예지", order: 1, currentPieces: 0 },
-        { name: "김루리", order: 2, currentPieces: 1 },
+        // { name: "김루리", order: 2, currentPieces: 1 },
         { name: "박성호", order: 3, currentPieces: 2 },
         { name: "이윤호", order: 4, currentPieces: 3 },
       ];
