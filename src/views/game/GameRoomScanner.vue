@@ -14,12 +14,14 @@ import {
 import Header from "@/components/common/BackButtonHeader.vue";
 import { StreamBarcodeReader } from "vue-barcode-reader";
 import BaseButton from "@/components/common/BaseButton.vue";
-import axios from "axios";
 import {ref} from "vue";
 import router from "@/router";
+import {get} from "@/api/httpService";
+import GameRoomInfoModal from "@/components/game/GameRoomInfoModal.vue";
 
 const roomId = ref('');
-const roomInfo = ref<{ roomName: string; headCount: number } | null>(null);
+const roomName = ref('방 이름');
+const headCount = ref(4);
 
 const findRoom = async () => {
   if (!roomId.value) {
@@ -28,15 +30,23 @@ const findRoom = async () => {
   }
 
   try {
-    const response = await axios.get(`/games/${roomId.value}`);
+    const response = await get(`games/room/${roomId.value}`);
 
-    if (response.data) {
-      roomInfo.value = {
-        roomName: response.data.name,
-        headCount: response.data.headCount,
-      };
+    if (response) {
+      roomName.value = response.roomName;
+      headCount.value = response.headCount;
 
-      closeModal();
+      const newModal = await modalController.create({
+        component: GameRoomInfoModal,
+        componentProps: {
+          roomId: roomId.value,
+          roomName: roomName.value,
+          headCount: headCount.value,
+        },
+        cssClass: "game-room-info-modal"
+      });
+
+      await newModal.present();
     } else {
       alert('해당 게임방이 존재하지 않습니다.');
     }

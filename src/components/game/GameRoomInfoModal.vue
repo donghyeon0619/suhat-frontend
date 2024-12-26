@@ -1,0 +1,152 @@
+<script setup lang="ts">
+import {
+  IonButton,
+  IonIcon,
+  IonInput,
+  IonLabel,
+  IonText,
+  IonTitle,
+  modalController, useIonRouter
+} from "@ionic/vue";
+import BaseButton from "@/components/common/BaseButton.vue";
+import {onMounted} from "vue";
+import {post} from "@/api/httpService";
+
+const props = defineProps({
+  roomId: {
+    type: String,
+    required: true,
+  },
+  roomName: {
+    type: String,
+    required: true,
+  },
+  headCount: {
+    type: Number,
+    required: true,
+  },
+});
+
+onMounted(() => {
+  console.log("쾅쾅쾅쾅쾅쾅쾅쾅쾅\n" +
+      "쾅쾅　　　　　쾅쾅\n" +
+      "쾅쾅（∩8ㅁ8）쾅쾅\n" +
+      "　＿/_ﾐつ/￣￣￣/\n" +
+      "　　 ＼/＿＿＿/");
+})
+
+const router = useIonRouter();
+
+async function enterGameRoom() {
+  console.log(props.roomId);
+
+  try {
+    const response = await post(`games/room/${props.roomId}/join`);
+
+    console.log("response: " + response);
+    router.navigate({
+      path: `/game/waiting/${props.roomId}`,
+    });
+  } catch (error) {
+    console.log('게임 방 입장 오류 발생: ', error);
+  }
+  // 게임 방 입장 처리 로직
+}
+
+function closeModal() {
+  console.log("closeModal 호출");
+  modalController.dismiss();
+}
+</script>
+
+<template>
+  <div class="block">
+    <IonTitle class="modal-title">방 입장하기</IonTitle>
+
+    <IonText class="modal-sub-title">
+      <IonIcon src="src/assets/icons/game/tag-icon.svg"></IonIcon>
+      방 이름
+    </IonText>
+    <IonInput class="input" fill="outline" :value="roomName" readonly></IonInput>
+
+    <div class="horizontal-division">
+      <IonText>
+        <IonIcon src="src/assets/icons/common/singleplay-icon.svg"></IonIcon>
+        인원 수<span class="vertical-division"></span>
+        <IonLabel>{{headCount}}인 게임</IonLabel>
+      </IonText>
+    </div>
+    <BaseButton button-text="입장하기" @click="enterGameRoom"></BaseButton>
+    <div class="cancel-btn">
+      <IonButton fill="clear" @click="closeModal">취소</IonButton>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.block {
+  background: white;
+  height: fit-content;
+  margin: auto 10px;
+  padding: 20px;
+  border-radius: 24px;
+}
+
+.input {
+  --border-color: #13BD7E;
+  --border-radius: 12px;
+  --border-width: 2px;
+  margin: 15px 0 20px 0;
+
+  --highlight-color-focused: #13BD7E;
+}
+
+.modal-title {
+  margin: 10px 0 30px 0;
+  text-align: center;
+  font-size: 4.5vw;
+  font-weight: bold;
+  --color: #6B7684;
+}
+
+.modal-sub-title {
+  display: flex;
+  align-items: center;
+
+  ion-icon {
+    margin-right: 7px;
+  }
+}
+
+.cancel-btn {
+  text-align: center;
+
+  ion-button {
+    color: #6A7382;
+  }
+}
+
+.horizontal-division {
+  border-top: 2px solid #F0F2F4;
+  padding: 25px 0;
+
+  ion-text {
+    color: #6B758F;
+    display: flex;
+    align-items: center;
+
+    ion-icon {
+      margin-right: 7px;
+    }
+
+    ion-label {
+      color: #191F28;
+    }
+  }
+}
+
+.vertical-division {
+  border-right: 2px solid #F0F2F4;
+  margin: 0 15px;
+}
+</style>

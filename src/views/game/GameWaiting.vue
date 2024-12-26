@@ -6,31 +6,69 @@ import {ref, onMounted, computed} from 'vue'
 import UserItem from "@/components/game/UserItem.vue";
 import BaseButton from "@/components/common/BaseButton.vue";
 import {useRoute} from "vue-router";
-import axios from "axios";
-
-const roomName = ref('방 이름');
-const headCount = ref(4);
+import {get} from "@/api/httpService";
 
 const route = useRoute();
+const roomId = route.params.roomId;
+const roomName = ref('방 이름');
+const headCount = ref(4);
+const participants = ref(Array(headCount.value).fill({ isUserJoined: false, name: '' }));
+
+const updatePlayerList = () => {
+  const eventSource = new EventSource('http://localhost:8070/');
+
+  eventSource.onmessage = (event) => {
+    try {
+      const updatedPlayers = JSON.parse(event.data);
+      participants.value = Array(headCount.value).fill({ isUserJoined: false, name: '' });
+
+      updatedPlayers.players.forEach((player, index) => {
+        if (index < participants.value.length) {
+          participants.value[index] = {
+            isUserJoined: true,
+            name: player.name
+          };
+        }
+      });
+    } catch (error) {
+      console.log('플레이어 리스트 업데이트 오류 발생: ', error);
+    }
+  };
+
+  eventSource.onerror = () => {
+    console.error('SSE 연결 오류');
+    eventSource.close();
+  };
+};
 
 onMounted(async () => {
+  // 초기 데이터 로드
   try {
-    const roomId = route.params.roomId;
+    const response = await get(`games/room/${roomId}`);
+    console.log("roomId: " + roomId);
 
-    const response = await axios.get(`/games/${roomId}`);
-    const roomInfo = response.data;
-
-    roomName.value = roomInfo.name;
-    headCount.value = roomInfo.headCount;
+    roomName.value = response.roomName;
+    headCount.value = response.headCount;
 
     createBarcode(roomId);
-    getParticipants(roomId);
+    participants.value = Array(headCount.value).fill({ isUserJoined: false, name: '' });
+
+    response.players.forEach((player, index) => {
+      if (index < participants.value.length) {
+        participants.value[index] = {
+          isUserJoined: true,
+          name: player.name
+        };
+      }
+    });
+
+    // 플레이어 리스트 업데이트
+    updatePlayerList();
   } catch (error) {
-    console.log('방 데이터를 가져오지 못했습니다. : ', error);
+    console.log('방 데이터를 가져오지 못했습니다: ', error);
   }
 });
 
-const participants = ref(Array(headCount.value).fill({ isUserJoined: false, name: '' }));
 const currentParticipantCount = computed(() => {
   return participants.value.filter(p => p.isUserJoined).length;
 });
@@ -40,19 +78,9 @@ const imageUrl = ref(null);
 
 const createBarcode = (roomId) => {
   const canvas = document.createElement('canvas');
-  JsBarcode(canvas, roomId, { height: 60, width: 3, lineColor: "#333D4B", displayValue: true, text: "방 코드 : " + id, textMargin: 4, fontSize: 11, fontOptions: "bold", margin: 2 });
+  JsBarcode(canvas, roomId, { height: 70, width: 2, lineColor: "#333D4B", displayValue: true, text: "방 코드 : " + roomId, textMargin: 4, fontSize: 11, fontOptions: "bold", margin: 2 });
   imageUrl.value = canvas.toDataURL('image/png'); // 캔버스를 이미지 URL로 변환
 };
-
-function getParticipants(roomId) {
-  const response = axios.get(`/games/${roomId}/participants`);
-  const participantsList = response.data;
-
-  participants.value = participantsList.map((participant, index) => ({
-    isUserJoined: true,
-    name: participant.name
-  }));
-}
 </script>
 
 <template>
@@ -106,6 +134,7 @@ function getParticipants(roomId) {
 
     <ion-footer class="ion-padding-start ion-padding-end ion-padding-bottom">
       <ion-img class="start-speech-bubble ion-margin-start" v-if="isRoomFull" src="src/assets/icons/game/speech-bubble.svg"></ion-img>
+      <!-- fixme : buttonText 수정 필요. 생성 플레이어는 "게임시작", 그 외 플레이어는 "게임 나가기" -->
       <BaseButton buttonText="게임시작" :isButtonDisabled="!isRoomFull"></BaseButton>
     </ion-footer>
   </IonPage>
@@ -132,6 +161,10 @@ ion-content::part(background) {
   --padding: 10px;
   border-radius: 16px;
   border: 2px solid #C7E399;
+
+  ion-list {
+    min-height: 35vh;
+  }
 }
 
 .current-participant {

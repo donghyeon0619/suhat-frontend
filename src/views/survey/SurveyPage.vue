@@ -13,12 +13,11 @@ import {
   IonGrid,
   IonRow,
   IonCol,
-  IonFooter, useIonRouter, onIonViewDidEnter, onIonViewWillEnter
+  IonFooter, useIonRouter, onIonViewWillEnter
 } from "@ionic/vue";
-import {computed, ref, watch} from "vue";
+import {computed, ref,} from "vue";
 import { chevronBackOutline} from "ionicons/icons";
-import {signup} from "@/api/authService";
-import {get,} from "@/api/httpService";
+import {get, post,} from "@/api/httpService";
 
 
 // 현재 질문 번호와 선택된 답변들 저장
@@ -38,9 +37,11 @@ const options = ref([
 
 const fetchSurveys = async () => {
   try {
-    const response = await get("surveys", undefined); // params는 필요하지 않을 경우 undefined 전달
-    console.log(response, "응답 완료"); // 응답 데이터 확인
-    questions.value = response.map((survey: { content: string }) => survey.content); // content 필드 추출
+    const response = await get("surveys", undefined);
+    console.log(response, "응답 완료");
+    questions.value = response.map((survey: { content: string }) => survey.content);  // content 필드 추출
+
+    selectedAnswers.value = Array(questions.value.length).fill(-1);
   } catch (error) {
     console.error("설문지 패치 오류", error);
   }
@@ -52,8 +53,9 @@ onIonViewWillEnter(() => {
 });
 
 // 현재 질문에 대해 답변이 선택되었는지 확인
-const isOptionSelected = computed(() => selectedAnswers.value[currentQuestionIndex.value] !== -1);
-
+const isOptionSelected = computed(() => {
+  return selectedAnswers.value[currentQuestionIndex.value] !== -1;
+});
 
 // 선택된 답변 핸들러
 const selectOption = (value: number) => {
@@ -87,12 +89,25 @@ const goToNextQuestion = () => {
 // 제출하기 버튼 클릭 핸들러
 const router = useIonRouter();
 
-const submitSurvey = () => {
-  // 제출 처리 후 결과 페이지로 이동
-  router.push({
-    name: "SurveyResult",
-    query: {score:totalScore.value}
-  });
+const submitSurvey = async () => {
+  try {
+    const endpoint = 'surveys/results';
+
+    await post(endpoint, {
+      selectedOptions: selectedAnswers.value.map((value, index) => ({
+        surveyId: index + 1,
+        score: value,
+      })),
+      totalScore: totalScore.value});
+    console.log('설문 결과 데이터 전송 성공');
+
+    router.push({
+      name: 'SurveyResult',
+      query: { score: totalScore.value },
+    });
+  } catch (error) {
+    console.error('설문 결과 저장 실패', error);
+  }
 };
 </script>
 

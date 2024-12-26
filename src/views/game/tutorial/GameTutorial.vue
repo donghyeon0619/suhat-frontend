@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import {IonPage, IonContent, IonText, IonImg, IonFooter} from "@ionic/vue"
+import {IonPage, IonContent, IonText, IonImg, IonFooter, useIonRouter} from "@ionic/vue"
 import Header from "@/components/common/BackButtonHeader.vue";
 import ChatBubble from "@/components/common/ChatBubble.vue";
 import BaseButton from "@/components/common/BaseButton.vue";
 import {ref, watch} from "vue";
-import router from "@/router";
 
 const currentScreen = ref(1);
 const isDimmed = ref(false);
@@ -19,6 +18,8 @@ watch(currentScreen, (newVal) => {
     }, 3000);
   }
 });
+
+const router = useIonRouter();
 
 const handleButtonClick = () => {
   isDimmed.value = false;

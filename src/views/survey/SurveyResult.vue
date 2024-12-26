@@ -48,7 +48,6 @@ const showGameModeActionSheet = async () => {
         handler() {
           console.log("같이하기 선택");
           router.push("/game/home")
-
         },
         icon: multiIcon
       }
