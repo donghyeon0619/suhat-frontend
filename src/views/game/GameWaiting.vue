@@ -1,39 +1,63 @@
 <script setup lang="ts">
-import {IonContent, IonPage, IonCard, IonCardContent, IonCardSubtitle, IonLabel, IonImg, IonText, IonList, IonFooter} from "@ionic/vue"
+import {IonContent, IonPage, IonCard, IonCardContent, IonCardSubtitle, IonLabel, IonImg, IonText, IonList, IonFooter, useIonRouter} from "@ionic/vue"
 import Header from "@/components/common/BackButtonHeader.vue";
 import JsBarcode from 'jsbarcode'
 import {ref, onMounted, computed} from 'vue'
 import UserItem from "@/components/game/UserItem.vue";
 import BaseButton from "@/components/common/BaseButton.vue";
 import {useRoute} from "vue-router";
-import {get} from "@/api/httpService";
+import {deleteRequest, get, post} from "@/api/httpService";
 
 const route = useRoute();
+const router = useIonRouter();
 const roomId = route.params.roomId;
 const roomName = ref('방 이름');
 const headCount = ref(4);
+const isHost = ref(false);
 const participants = ref(Array(headCount.value).fill({ isUserJoined: false, name: '' }));
 
-const updatePlayerList = () => {
-  const eventSource = new EventSource('http://localhost:8070/');
+//연결되면 플레이어 목록 불러오기
+const connectToRoom = () => {
+  const eventSource = new EventSource(`http://localhost:8070/api/rooms/connect/${roomId}`, {
+    withCredentials: true,
+  });
 
   eventSource.onmessage = (event) => {
     try {
-      const updatedPlayers = JSON.parse(event.data);
-      participants.value = Array(headCount.value).fill({ isUserJoined: false, name: '' });
+      const data = JSON.parse(event.data);
+      console.log(data.message);
 
-      updatedPlayers.players.forEach((player, index) => {
-        if (index < participants.value.length) {
-          participants.value[index] = {
-            isUserJoined: true,
-            name: player.name
-          };
-        }
-      });
     } catch (error) {
-      console.log('플레이어 리스트 업데이트 오류 발생: ', error);
+      console.error('SSE 연결 오류 발생: ', error);
     }
   };
+
+  eventSource.addEventListener('connected', function(event) {
+    console.log('connected 이벤트 수신:', event.data);
+    isHost.value = JSON.parse(event.data).host;
+    console.log('isHost: ', isHost.value);
+  });
+
+  eventSource.addEventListener('player-joined', function(event) {
+    console.log('player-joined 이벤트 수신:', event.data);
+    updatePlayer(event.data);
+  });
+
+  eventSource.addEventListener('game-started', function(event) {
+    console.log('game-started 이벤트 수신:', event.data);
+    router.push({
+      path: '/multi/play'
+    });
+  });
+
+  eventSource.addEventListener('player-left', function(event) {
+    console.log('player-left 이벤트 수신:', event.data);
+    updatePlayer(event.data);
+  });
+
+  eventSource.addEventListener('player-order-assigned', function(event) {
+    console.log('player-order-assigned 이벤트 수신:', event.data);
+  });
 
   eventSource.onerror = () => {
     console.error('SSE 연결 오류');
@@ -41,29 +65,87 @@ const updatePlayerList = () => {
   };
 };
 
+const updatePlayer = (data) => {
+  const newPlayer = JSON.parse(data).playerInfo;
+  console.log('new player: ');
+  // 새로운 유저 정보를 participants 리스트에 추가
+  const emptySlotIndex = participants.value.findIndex(p => !p.isUserJoined);
+  if (emptySlotIndex !== -1) {
+    participants.value[emptySlotIndex] = {
+      isUserJoined: true,
+      name: newPlayer.name,
+    };
+  }
+}
+
+const buttonClickHandler = () => {
+  if (isHost.value) {
+    // 방장인 경우 게임 시작 로직
+    startGame();
+  } else {
+    // 일반 플레이어인 경우 게임방 나가기 로직
+    leaveRoom();
+  }
+}
+
+const startGame = async () => {
+  try{
+    const response = await post(`games/${roomId}/round/1/state`, null);
+
+    if(response) {
+      console.log('게임 시작 요청 성공');
+    } else {
+      console.error('게임 시작 요청 실패');
+    }
+    
+  } catch (error) {
+    console.error('게임 시작 요청 실패: ', error);
+  }
+};
+
+const leaveRoom = async () => {
+  try{
+    const response = await deleteRequest(`rooms/${roomId}/players`, true);
+
+    if(response.status == "200") {
+      console.log('게임방 나가기 요청 성공');
+
+      router.push ({
+        path: '/game/home'
+      });
+    } else {
+      console.error('게임 나가기 요청 실패', response);
+    }
+
+  } catch (error) {
+    console.error('게임방 나가기 요청 성공: ', error);
+  }
+};
+
 onMounted(async () => {
   // 초기 데이터 로드
   try {
-    const response = await get(`games/room/${roomId}`);
-    console.log("roomId: " + roomId);
+    const response = await get(`rooms/${roomId}`);
 
     roomName.value = response.roomName;
-    headCount.value = response.headCount;
+    headCount.value = response.totalPlayers;
 
     createBarcode(roomId);
-    participants.value = Array(headCount.value).fill({ isUserJoined: false, name: '' });
 
-    response.players.forEach((player, index) => {
+    // SSE 연결
+    connectToRoom();
+
+    participants.value = Array(headCount.value).fill({ isUserJoined: false, name: '' });
+    console.log(response.players);
+    Object.values(response.players).forEach((player, index) => {
       if (index < participants.value.length) {
         participants.value[index] = {
           isUserJoined: true,
-          name: player.name
+          name: player.playerInfo.name // 전달받은 player의 name 필드
         };
       }
     });
 
-    // 플레이어 리스트 업데이트
-    updatePlayerList();
   } catch (error) {
     console.log('방 데이터를 가져오지 못했습니다: ', error);
   }
@@ -78,7 +160,7 @@ const imageUrl = ref(null);
 
 const createBarcode = (roomId) => {
   const canvas = document.createElement('canvas');
-  JsBarcode(canvas, roomId, { height: 70, width: 2, lineColor: "#333D4B", displayValue: true, text: "방 코드 : " + roomId, textMargin: 4, fontSize: 11, fontOptions: "bold", margin: 2 });
+  JsBarcode(canvas, roomId, { height: 60, width: 2, lineColor: "#333D4B", displayValue: true, text: "방 코드 : " + roomId, textMargin: 4, fontSize: 15, fontOptions: "bold", margin: 2 });
   imageUrl.value = canvas.toDataURL('image/png'); // 캔버스를 이미지 URL로 변환
 };
 </script>
@@ -109,11 +191,6 @@ const createBarcode = (roomId) => {
       <!-- 참여자 안내 화면 -->
       <ion-card class="container no-shadow">
         <ion-card-content>
-<!--          <ion-card-header class="ion-no-padding">-->
-<!--          <ion-card-title>입장 인원</ion-card-title>-->
-<!--          </ion-card-header>-->
-<!--          <ion-text class="current-participant"><span>{{ currentParticipantCount }}</span>/{{headCount}}</ion-text>-->
-
           <div class="title-wrap">
             <ion-text class="title">입장 인원</ion-text>
             <ion-text class="current-participant"><span>{{ currentParticipantCount }}</span>/{{headCount}}명</ion-text>
@@ -134,8 +211,7 @@ const createBarcode = (roomId) => {
 
     <ion-footer class="ion-padding-start ion-padding-end ion-padding-bottom">
       <ion-img class="start-speech-bubble ion-margin-start" v-if="isRoomFull" src="src/assets/icons/game/speech-bubble.svg"></ion-img>
-      <!-- fixme : buttonText 수정 필요. 생성 플레이어는 "게임시작", 그 외 플레이어는 "게임 나가기" -->
-      <BaseButton buttonText="게임시작" :isButtonDisabled="!isRoomFull"></BaseButton>
+      <BaseButton :buttonText="isHost ? '게임시작' : '게임 나가기'" :isButtonDisabled="isHost ? !isRoomFull : false" @click="buttonClickHandler"></BaseButton>
     </ion-footer>
   </IonPage>
 </template>

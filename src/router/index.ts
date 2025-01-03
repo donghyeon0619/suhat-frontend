@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { RouteRecordRaw } from 'vue-router';
 import TabsPage from '../views/TabsPage.vue'
-import path from "path";
 import LoginName from "@/views/auth/LoginName.vue";
 import LoginTerms from "@/views/auth/LoginTerms.vue";
 import LoginGender from "@/views/auth/LoginGender.vue";
@@ -16,7 +15,6 @@ import TypeTestResult from "@/views/typetest/TypeTestResult.vue";
 import TypeTestSummary from "@/views/typetest/TypeTestSummary.vue";
 import HomePage from "@/views/home/HomePage.vue";
 import GameWaiting from "@/views/game/GameWaiting.vue";
-import GameRoomScanner from "@/views/game/GameRoomScanner.vue";
 import SoloGameIntro from "@/views/game/solo/SoloGameIntro.vue";
 import SoloGamePlay from "@/views/game/solo/SoloGamePlay.vue";
 import PuzzleCompletion from "@/views/game/PuzzleCompletion.vue";
@@ -133,11 +131,6 @@ const routes: Array<RouteRecordRaw> = [
         name: 'GameWaiting',
         component:GameWaiting,
         props: true
-    },
-    {
-        path: '/game/join',
-        name: 'GameRoomScanner',
-        component:GameRoomScanner
     },
     {
         path: '/game/tutorial',
