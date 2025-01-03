@@ -55,10 +55,6 @@ const connectToRoom = () => {
     updatePlayer(event.data);
   });
 
-  eventSource.addEventListener('player-order-assigned', function(event) {
-    console.log('player-order-assigned 이벤트 수신:', event.data);
-  });
-
   eventSource.onerror = () => {
     console.error('SSE 연결 오류');
     eventSource.close();
