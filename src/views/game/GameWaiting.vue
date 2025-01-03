@@ -160,7 +160,7 @@ const imageUrl = ref(null);
 
 const createBarcode = (roomId) => {
   const canvas = document.createElement('canvas');
-  JsBarcode(canvas, roomId, { height: 60, width: 2, lineColor: "#333D4B", displayValue: true, text: "방 코드 : " + roomId, textMargin: 4, fontSize: 15, fontOptions: "bold", margin: 2 });
+  JsBarcode(canvas, roomId, { height: 50, width: 2, lineColor: "#333D4B", displayValue: true, text: "방 코드 : " + roomId, textMargin: 3, fontSize: 20, fontOptions: "bold", margin: 2 });
   imageUrl.value = canvas.toDataURL('image/png'); // 캔버스를 이미지 URL로 변환
 };
 </script>
