@@ -11,6 +11,8 @@ import {
 import BaseButton from "@/components/common/BaseButton.vue";
 import {onMounted} from "vue";
 import {post} from "@/api/httpService";
+import {useUserStore} from "@/store/user";
+import {useSurveyStore} from "@/store/survey";
 
 const props = defineProps({
   roomId: {
@@ -36,14 +38,19 @@ onMounted(() => {
 })
 
 const router = useIonRouter();
+const userStore = useUserStore();
+const surveyStore = useSurveyStore();
 
 async function enterGameRoom() {
   console.log(props.roomId);
 
   try {
-    const response = await post(`games/room/${props.roomId}/join`);
+    const response = await post(`rooms/${props.roomId}/players`, {userInfo: userStore.userInfo, score: surveyStore.latestScore});
 
     console.log("response: " + response);
+
+    closeModal();
+
     router.navigate({
       path: `/game/waiting/${props.roomId}`,
     });
@@ -53,9 +60,13 @@ async function enterGameRoom() {
   // 게임 방 입장 처리 로직
 }
 
-function closeModal() {
+async function closeModal() {
   console.log("closeModal 호출");
-  modalController.dismiss();
+  let topModal = await modalController.getTop(); // 최상위 모달 가져오기
+  while (topModal) {
+    await modalController.dismiss(); // 현재 모달 닫기
+    topModal = await modalController.getTop(); // 다음 최상위 모달 확인
+  }
 }
 </script>
 
