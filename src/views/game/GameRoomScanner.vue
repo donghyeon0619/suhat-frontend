@@ -17,7 +17,6 @@ const findRoom = async () => {
     return;
   }
 
-  console.log("roomId: " + roomId.value);
   try {
     const response = await get(`rooms/${roomId.value}`);
 
@@ -46,7 +45,6 @@ const findRoom = async () => {
 };
 
 function closeModal() {
-  roomId.value = '';
   modalController.dismiss();
 }
 </script>
