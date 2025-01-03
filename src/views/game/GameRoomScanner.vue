@@ -9,7 +9,6 @@ import {
   IonModal,
   IonButton,
   modalController,
-  IonLabel
 } from "@ionic/vue"
 import Header from "@/components/common/BackButtonHeader.vue";
 import { StreamBarcodeReader } from "vue-barcode-reader";
@@ -29,12 +28,13 @@ const findRoom = async () => {
     return;
   }
 
+  console.log("roomId: " + roomId.value);
   try {
-    const response = await get(`games/room/${roomId.value}`);
+    const response = await get(`rooms/${roomId.value}`);
 
     if (response) {
       roomName.value = response.roomName;
-      headCount.value = response.headCount;
+      headCount.value = response.totalPlayers;
 
       const newModal = await modalController.create({
         component: GameRoomInfoModal,
@@ -57,20 +57,14 @@ const findRoom = async () => {
 };
 
 function closeModal() {
+  roomId.value = '';
   modalController.dismiss();
-}
-
-function close() {
-  router.push({
-    path: "/game/home"
-  });
 }
 </script>
 
 <template>
-  <IonPage>
-    <Header></Header>
-    <ion-content class=" background" scroll-y="false">
+  <Header></Header>
+    <ion-content class="background">
       <ion-title class="title">방 입장하기</ion-title>
       <ion-text class="description">아래 사각형 안에 바코드가<br>꽉차도록 맞춰주세요</ion-text>
 
@@ -90,51 +84,24 @@ function close() {
         </ion-text>
       </div>
 
-      <ion-icon class="cancel-icon" src="src/assets/icons/game/cancel-icon.svg" @click="close()"></ion-icon>
-    </ion-content>
-  </IonPage>
+      <ion-icon class="cancel-icon" src="src/assets/icons/game/cancel-icon.svg" @click="closeModal"></ion-icon>
 
-  <!-- 방 바코드 입력 모달 -->
-  <ion-modal trigger="enter-room-id">
-    <div class="block">
-      <ion-title class="modal-title">방 입장하기</ion-title>
+    <ion-modal class="ion-no-margin" trigger="enter-room-id">
+      <div class="block">
+        <ion-title class="modal-title">방 입장하기</ion-title>
 
-      <ion-text class="modal-sub-title">
-        <ion-icon src="src/assets/icons/game/search-icon.svg"></ion-icon>
-        방 바코드 번호
-      </ion-text>
-      <ion-input class="input" fill="outline" v-model="roomId"></ion-input>
-      <BaseButton id="check-game-room" button-text="검색" @click="findRoom"></BaseButton>
-      <div class="cancel-btn">
-        <ion-button fill="clear" @click="closeModal">취소</ion-button>
-      </div>
-    </div>
-  </ion-modal>
-
-  <!-- 게임방 확인 모달 -->
-  <ion-modal trigger="check-game-room">
-    <div class="block">
-      <ion-title class="modal-title">방 입장하기</ion-title>
-
-      <ion-text class="modal-sub-title">
-        <ion-icon src="src/assets/icons/game/tag-icon.svg"></ion-icon>
-        방 이름
-      </ion-text>
-      <ion-input class="input" fill="outline" readonly>{{roomName}}</ion-input>
-
-      <div class="horizontal-division">
-        <ion-text>
-          <ion-icon src="src/assets/icons/common/singleplay-icon.svg"></ion-icon>
-          인원 수<span class="vertical-division"></span>
-          <ion-label>{{headCount}}인 게임</ion-label>
+        <ion-text class="modal-sub-title">
+          <ion-icon src="src/assets/icons/game/search-icon.svg"></ion-icon>
+          방 바코드 번호
         </ion-text>
+        <ion-input class="input" fill="outline" v-model="roomId"></ion-input>
+        <BaseButton id="check-game-room" button-text="검색" @click="findRoom"></BaseButton>
+        <div class="cancel-btn">
+          <ion-button fill="clear" @click="closeModal">취소</ion-button>
+        </div>
       </div>
-      <BaseButton button-text="입장하기" @click="findRoom"></BaseButton>
-      <div class="cancel-btn">
-        <ion-button fill="clear" @click="closeModal">취소</ion-button>
-      </div>
-    </div>
-  </ion-modal>
+    </ion-modal>
+  </ion-content>
 </template>
 
 <style scoped>
@@ -230,7 +197,8 @@ function close() {
 ion-modal {
   --height: auto;
   --border-radius: 24px;
-  margin: 10px;
+  --margin: 0;
+  padding: 10px;
 }
 
 .block {
