@@ -210,7 +210,7 @@ const createBarcode = (roomId) => {
     </ion-content>
 
     <ion-footer class="ion-padding-start ion-padding-end ion-padding-bottom">
-      <ion-img class="start-speech-bubble ion-margin-start" v-if="isRoomFull" src="src/assets/icons/game/speech-bubble.svg"></ion-img>
+      <ion-img class="start-speech-bubble ion-margin-start" v-if="isHost && isRoomFull" src="src/assets/icons/game/speech-bubble.svg"></ion-img>
       <BaseButton :buttonText="isHost ? '게임시작' : '게임 나가기'" :isButtonDisabled="isHost ? !isRoomFull : false" @click="buttonClickHandler"></BaseButton>
     </ion-footer>
   </IonPage>
