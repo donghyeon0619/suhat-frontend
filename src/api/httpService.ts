@@ -1,7 +1,7 @@
 import {CapacitorHttp, HttpOptions } from '@capacitor/core';
 import {useIonRouter, alertController} from "@ionic/vue";
 
-const BASE_URL = 'http://localhost:8080/api/';
+const BASE_URL = 'http://localhost:8070/api/';
 
 // **HTTP 요청 함수**
 /**
@@ -14,7 +14,7 @@ const BASE_URL = 'http://localhost:8080/api/';
  */
 export async function getHttpOptions(
   endpoint: string,
-  method: 'GET' | 'POST',
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE',
   data?: any,
   params?: any
 ): Promise<HttpOptions> {
@@ -24,7 +24,7 @@ export async function getHttpOptions(
       'Content-Type': 'application/json',
     },
     params: params || undefined,
-    data: data || undefined,
+    data: method !== 'DELETE' ? data || undefined : undefined,
     method,
   };
 }
@@ -75,6 +75,47 @@ export async function post(endpoint: string, data: any): Promise<any> {
     await validateHttpResponse(response)
 
     return response.data;
+  } catch (error: any) {
+    console.log("에러가 발생했습니다.", error)
+    throw error;
+  }
+}
+
+export async function put(endpoint: string, data: any): Promise<any> {
+  const options = await getHttpOptions(endpoint, 'PUT', data);
+
+  // 쿠키 전송 활성화
+  options.webFetchExtra = {
+    credentials: 'include', // 쿠키 포함 설정
+  };
+
+  try {
+    const response = await CapacitorHttp.put(options);
+
+    await validateHttpResponse(response)
+
+    return response.data;
+  } catch (error: any) {
+    console.log("에러가 발생했습니다.", error)
+    throw error;
+  }
+}
+
+export async function deleteRequest(endpoint: string, returnFullResponse: boolean = false // 옵션 추가: 전체 응답 반환 여부
+): Promise<any> {
+  const options = await getHttpOptions(endpoint, 'DELETE');
+
+  // 쿠키 전송 활성화
+  options.webFetchExtra = {
+    credentials: 'include', // 쿠키 포함 설정
+  };
+
+  try {
+    const response = await CapacitorHttp.delete(options);
+
+    await validateHttpResponse(response)
+
+    return returnFullResponse ? response : response.data;
   } catch (error: any) {
     console.log("에러가 발생했습니다.", error)
     throw error;

@@ -2,24 +2,52 @@
 import {IonPage, IonContent, IonImg, IonIcon, IonText, IonInput, IonButton, IonModal, modalController, IonGrid, IonRow, IonCol, useIonRouter} from "@ionic/vue"
 import Header from "@/components/common/BackButtonHeader.vue";
 import BaseButton from "@/components/common/BaseButton.vue";
-import {ref} from "vue";
+import {onMounted, ref} from "vue";
 import {chevronForwardOutline} from "ionicons/icons";
 import {post} from "@/api/httpService";
+import {useUserStore} from "@/store/user";
+import {useSurveyStore} from "@/store/survey";
+import GameRoomScanner from "@/views/game/GameRoomScanner.vue";
 
 const roomName = ref('');
+const errorMessage = ref('');
 const selectedHeadCount = ref<number | null>(null);
 
 const router = useIonRouter();
+const userStore = useUserStore();
+const surveyStore = useSurveyStore();
+
+function validateRoomName() {
+  const maxLength = 8;
+  const validPattern = /^[a-zA-Z0-9가-힣]*$/; // 영문, 숫자, 한글만 허용
+
+  // 길이 초과 방지
+  if (roomName.value.length > maxLength) {
+    roomName.value = roomName.value.slice(0, maxLength);
+    errorMessage.value = `방 이름은 최대 ${maxLength}자까지 입력 가능합니다.`;
+  }
+
+  // 특수문자 제거
+  if (!validPattern.test(roomName.value)) {
+    roomName.value = roomName.value.replace(/[^a-zA-Z0-9가-힣]/g, '');
+    errorMessage.value = '특수문자는 사용할 수 없습니다.';
+  }
+
+  errorMessage.value = '';
+}
 
 async function createGameRoom() {
+  console.log("createGameRoom");
   try {
-    const response = await post("games/room", {
+    const response = await post("rooms", {
       roomName: roomName.value,
-      headCount: selectedHeadCount.value,
+      totalPlayers: selectedHeadCount.value,
+      hostInfo: userStore.userInfo,
+      surveyScore: surveyStore.latestScore
     });
 
-    console.log("roomId: " + response);
-    const roomId = response;
+    console.log("roomId: " + response.roomId);
+    const roomId = response.roomId;
 
     closeModal();
 
@@ -103,7 +131,9 @@ function closeModal() {
         <ion-input class="default input-name ion-margin-top ion-margin-bottom"
                    v-model="roomName"
                    fill="outline"
-                   placeholder="방 이름을 입력하세요(8자 이하, 특수문자 제외)"></ion-input>
+                   placeholder="방 이름을 입력하세요(8자 이하, 특수문자 제외)"
+                   @input="validateRoomName"></ion-input>
+        <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
 
         <ion-title class="modal-title modal-sub-title ion-no-padding">인원</ion-title>
         <div class="btn-container">
