@@ -167,12 +167,15 @@ const createBarcode = (roomId) => {
 
 <template>
   <IonPage>
-    <Header></Header>
+    <Header
+      :show-title="true"
+      :header-title="'게임 대기'"
+    ></Header>
     <ion-content class="ion-padding" scroll-y="false">
       <!-- 바코드 화면 -->
       <ion-card class="container no-shadow">
         <ion-card-content>
-          <ion-img class="barcode" v-if="imageUrl" :src="imageUrl" alt="바코드 이미지" style="width: 200px; height: auto;"></ion-img>
+          <ion-img class="barcode" v-if="imageUrl" :src="imageUrl" alt="바코드 이미지" style="width: 80%; height: auto;"></ion-img>
           <ion-card class="description ion-no-margin no-shadow">
             <ion-img class="scan-icon" src="src/assets/icons/game/scan-icon.svg"></ion-img>
             해당 바코드를 스캔 후 방에 입장할 수 있어요
@@ -209,7 +212,7 @@ const createBarcode = (roomId) => {
       </ion-card>
     </ion-content>
 
-    <ion-footer class="ion-padding-start ion-padding-end ion-padding-bottom">
+    <ion-footer class="ion-padding-start ion-padding-end ion-padding-bottom ion-no-border">
       <ion-img class="start-speech-bubble ion-margin-start" v-if="isRoomFull" src="src/assets/icons/game/speech-bubble.svg"></ion-img>
       <BaseButton :buttonText="isHost ? '게임시작' : '게임 나가기'" :isButtonDisabled="isHost ? !isRoomFull : false" @click="buttonClickHandler"></BaseButton>
     </ion-footer>
@@ -285,6 +288,12 @@ ion-card-title {
 ion-card-subtitle {
   --color: #6B758F;
   margin: 10px 0 0 0;
+}
+
+ion-card-subtitle ion-label{
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.425;
 }
 
 .barcode {

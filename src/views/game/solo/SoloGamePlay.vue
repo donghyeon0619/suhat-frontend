@@ -2,14 +2,14 @@
 import {IonPage, IonContent, IonText, IonFooter, modalController, useIonRouter} from "@ionic/vue";
 import BackButtonHeader from "@/components/common/BackButtonHeader.vue";
 import PuzzleProgressChip from "@/components/game/PuzzleProgressChip.vue";
-import BaseDoubleButton from "@/components/common/BaseDoubleButton.vue";
 import GameCardBg from "@/assets/img/game/bg-game-card.svg"
-import testImg from "@/assets/img/game/img-test-phone.png"
 import PuzzleSuccessModal from "@/components/game/PuzzleSuccessModal.vue";
 import PuzzleFailureModal from "@/components/game/PuzzleFailureModal.vue";
 import {enterAnimation, leaveAnimation} from "@/utils/puzzleModalAnimations";
 import {computed, nextTick, ref} from "vue";
 import BaseDoubleButtonFooter from "@/components/common/BaseDoubleButtonFooter.vue";
+import {smartphoneTexts, TextOption} from "@/data/smartphoneTexts";
+import {smartphonePicture, PictureOption} from "@/data/smartphonePicture";
 
 const currentPieces =ref(0);
 const maxPieces = ref(6);
@@ -17,36 +17,32 @@ const router = useIonRouter();
 const isFlipped = ref(false);
 const isResetting = ref(false);
 const cardRefs = ref<HTMLElement[]>([]);
-
 const cards = ref([
   { id: 1, isFlipped: false, type: 'text', content: ''},
   { id: 2, isFlipped: false, type: 'image', content: ''},
 ])
 
 /**
- * 랜덤 데이터 설정
+ * 퍼즐 이미지 id 저장
  */
-const textOptions = [
-  '스마트폰을 <br> 손에서 놓지 않음',
-  '운동 부족',
-  '책을 읽지 않음',
-  '잠을 잘 못 잠'
-];
-const imageOptions = [
-  testImg, // 현재 사용 중인 이미지
-  'https://via.placeholder.com/150', // 테스트용 이미지
-  'https://via.placeholder.com/200',
-  'https://via.placeholder.com/250'
-];
+const puzzleImgId = ref<number>(1);
+
+/**
+ * todo 퍼즐 랜덤 부여 함수 선언
+ */
+
 
 /**
  * 카드의 랜덤 데이터를 설정하는 함수
  */
 const setRandomCardContent = (card: any) =>{
   if (card.type ==='text'){
-    card.content = textOptions[Math.floor(Math.random() * textOptions.length)];
+    // 스마트폰 텍스트 옵션 중 무작위로 선택
+    const randomIndex = Math.floor(Math.random() * smartphoneTexts.length);
+    card.content = smartphoneTexts[randomIndex].text;
   } else if (card.type === 'image'){
-    card.content = imageOptions[Math.floor(Math.random() * imageOptions.length)];
+    const randomIndex = Math.floor(Math.random() * smartphonePicture.length);
+    card.content = smartphonePicture[randomIndex].url;
   }
 }
 
@@ -104,7 +100,15 @@ const resetCards = () => {
  *  모든 퍼즐이 모이면 퍼즐 완성화면으로 라우팅
  */
 const goPuzzleCompletion = () => {
-    router.replace("/puzzlecompletion");
+    router.replace(
+      {
+        path: "/puzzlecompletion",
+        query: {
+          mode : "solo",
+          puzzleImgId: String(puzzleImgId)
+        }
+      }
+    );
 };
 
 /**
@@ -291,6 +295,7 @@ ion-content::part(background) {
   text-align: center;
   padding: 1.5vh;
   max-width: 90%;
+  min-width: 85%;
   z-index: 2;
   font-weight: 700;
   font-size: 1.2rem;

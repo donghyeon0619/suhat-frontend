@@ -1,7 +1,8 @@
 import {CapacitorHttp, HttpOptions } from '@capacitor/core';
-import {useIonRouter, alertController} from "@ionic/vue";
+import {useRouter} from "vue-router";
+import router from "@/router";
 
-const BASE_URL = 'http://localhost:8070/api/';
+const BASE_URL = 'http://localhost:8080/api/';
 
 // **HTTP 요청 함수**
 /**
@@ -149,8 +150,6 @@ export async function validateHttpResponse(response: any): Promise<void> {
     console.error(`400 Bad Request - 요청 오류가 발생했습니다.`);
     throw new Error(`400 Bad Request: ${response.data}`);
   }
-
-  console.log(`HTTP 상태 코드 ${status} - 응답이 유효합니다.`);
 }
 
 
@@ -159,6 +158,5 @@ export async function validateHttpResponse(response: any): Promise<void> {
  */
 export async function handleUnauthorizedRequest() {
   console.log("로그인으로 리다이렉션")
-  const router = useIonRouter(); // 함수 내부에서 호출
-  router.replace('/loginName');
+  await router.replace('/loginName');
 }

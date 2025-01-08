@@ -17,7 +17,7 @@ import {
   IonCol,
   IonList,
   IonItem,
-  IonFooter, useIonRouter, onIonViewWillEnter,
+  IonFooter, useIonRouter, onIonViewWillEnter, alertController,
 } from "@ionic/vue";
 import {computed, ref, reactive, watch} from "vue";
 import { chevronBackOutline} from "ionicons/icons";
@@ -152,11 +152,20 @@ const submitSurvey = async () =>  {
       }
     });
   } catch (error) {
-    console.error("제출 실패 ", error);
-    alert("결과를 제출하는 중 오류가 발생하였습니다. 다시 시도해주세요" )
+    await presentAlert("제출 실패", "결과를 제출하는 중 오류가 발생하였습니다. 다시 시도해주세요" )
   }
 };
 
+//
+const presentAlert = async (header: string, message: string) => {
+  const alert = await alertController.create({
+    header: header,
+    message: message,
+    buttons: ['확인'],
+  });
+
+  await alert.present();
+};
 
 </script>
 

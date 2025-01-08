@@ -166,6 +166,9 @@ function closeModal() {
                     button-text="방 만들기"
                     @click="createGameRoom">
         </BaseButton>
+        <div class="cancel-btn">
+          <ion-button fill="clear" @click="closeModal">취소</ion-button>
+        </div>
       </div>
     </ion-modal>
 

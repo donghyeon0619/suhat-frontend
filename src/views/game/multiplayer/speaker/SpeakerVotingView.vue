@@ -1,12 +1,20 @@
 <script setup lang="ts">
-import {IonContent, IonLabel, IonButton, IonRow, IonCol,IonText, IonCard,IonCardContent, IonCardTitle, IonCardHeader } from "@ionic/vue";
+import {
+  IonContent,
+  modalController, useIonRouter
+} from "@ionic/vue";
 import PuzzleProgressChip from "@/components/game/PuzzleProgressChip.vue";
 import BaseButtonFooter from "@/components/common/BaseButtonFooter.vue";
-import {computed, PropType, ref} from "vue";
+import {onMounted, onUnmounted, PropType, ref} from "vue";
 import PlayerProfile from "@/components/game/multiplayer/PlayerProfile.vue";
 import ChatBubbleWithBorder from "@/components/common/ChatBubbleWithBorder.vue";
 import ReVoteDetails from "@/components/game/multiplayer/ReVoteDetails.vue";
 import VotingResult from "@/components/game/multiplayer/VotingResult.vue";
+import {useRoute} from "vue-router";
+import PuzzleSuccessModal from "@/components/game/PuzzleSuccessModal.vue";
+import {enterAnimation, leaveAnimation} from "@/utils/puzzleModalAnimations";
+import PuzzleFailureModal from "@/components/game/PuzzleFailureModal.vue";
+import {useEventSourceStore} from "@/store/eventSourceStore";
 
 const props = defineProps({
   participants: {type: Array as PropType<
@@ -25,21 +33,43 @@ const props = defineProps({
   }
 );
 
+
+
+interface RankingPlayer {
+  playerId: number; // 플레이어 ID
+  playerName: string; // 플레이어 이름
+  puzzlePieces: number; // 퍼즐 조각 개수
+}
+
 // 상위 컴포넌트로 보낼 이벤트 정의
-const emit = defineEmits(["nextRound"]);
+const emit = defineEmits<{
+  (e: "nextTurn", nextSpeakerId: number, myRole: "speaker" | "listener"): void;
+}>();
+
+// 타이머 ID 저장 변수
+let timeoutId: ReturnType<typeof  setTimeout> | null = null;
+
+// 라우트 관리
+const route = useRoute();
+const roomId = route.params.roomId;
+const router = useIonRouter();
 
 // 현재 상태 관리
-const currentPhase = ref("result"); // "voting", "reVoteResult", "result", reVoting
+const currentPhase = ref("voting"); // "voting", "result", reVoting
+const currentResult = ref("");
 const currentPieces = ref(0);
 const maxPieces = ref(13);
 
 // 투표 데이터
 const agreeCounts = ref(2);
 const disagreeCounts = ref(1);
-const disagreeUsers = ref([]); // 비동의한 사용자 배열
-const isVotingComplete = ref(false);
-const isReVoting = ref(false);
+const disagreePlayers = ref([]); // 비동의한 사용자 배열
+const isFooterVisible = ref(true); // 버튼 표시 여부
+const currentMessage = ref("게임이 아직 진행 중입니다.");
 const buttonText = ref("투표 진행중"); // 버튼 텍스트 초기값
+
+// SSE 관리
+const eventSourceStore = useEventSourceStore();
 
 // 메시지를 객체로 관리
 const chatBubbleMessages = {
@@ -50,70 +80,175 @@ const chatBubbleMessages = {
   reVoteResultAgree: `재투표 결과, 과반수 이상 동의로 '${props.currentSpeaker}'가 퍼즐 조각을 획득하셨어요!`,
   reVoteResultDisagree: `재투표 결과, 과반수 이상 비동의로 '${props.currentSpeaker}'가 퍼즐 조각 획득을 실패하였어요!`,
 };
-// 현재 메시지를 상태에 따라 가져오기
-const currentMessage = computed(() => {
-  if (currentPhase.value === "voting") {
-    return chatBubbleMessages.voting;
-  }
-  if (currentPhase.value === "result") {
-    return agreeCounts.value > disagreeCounts.value
-      ? chatBubbleMessages.resultAgree
-      : chatBubbleMessages.resultDisagree;
-  }
-  if(currentPhase.value === "reVoting"){
-    return chatBubbleMessages.reVoting
-  }
-  if (currentPhase.value === "reVoteResult") {
-    return agreeCounts.value > disagreeCounts.value
-      ? chatBubbleMessages.reVoteResultAgree
-      : chatBubbleMessages.reVoteResultDisagree;
-  }
-  return "게임이 아직 진행중입니다";
-});
 
-// 백엔드에서 투표 결과를 가져오는 함수
-const fetchVotingResult = async () => {
-  // 예시 데이터
-  agreeCounts.value = 3;
-  disagreeCounts.value = 1;
-  disagreeUsers.value = ["이예지"]; // 비동의 사용자
+/**
+ * SSE 이벤트 핸들링 함수
+ * @param event 이벤트 객체
+ */
+const handleSseEvent = (event: MessageEvent) => {
+  const data = JSON.parse(event.data);
+  switch(data.result){
+    // "puzzle-acquired-next-turn" 이벤트를 받았을 때 처리
+    case "puzzle-acquired-next-turn": {
+      currentPhase.value = "result";
+      currentResult.value = "agree";
+      agreeCounts.value = data.agreeCounts;
+      disagreeCounts.value = data.disagreeCounts;
+      const nextSpeakerId = data.nextSpeakerId;
+      const myNextRole = data.nextRole;
 
-  if (agreeCounts.value > disagreeCounts.value) {
-    // 과반수 이상 동의
-    currentPhase.value = "result";
-    isVotingComplete.value = true;
-    setTimeout(() => {
-      emit("nextRound"); // 다음 라운드로 이동
-    }, 1000);
-  } else {
-    // 과반수 이하 동의 (재투표 필요)
-    currentPhase.value = "revote";
-    isVotingComplete.value = false;
-    isReVoting.value = true;
+      currentMessage.value = data.hasReVoted
+        ? chatBubbleMessages.reVoteResultDisagree // 재투표 성공 메시지
+        : chatBubbleMessages.resultAgree // 초기 투표 성공 메시지
+
+      // 3초 후 퍼즐 획득 모달 띄움
+      timeoutId = setTimeout(() => {
+        openSuccessModal(undefined, undefined, () => {
+          // 모달 확인 시 다음 턴으로 emit
+          emit("nextTurn", nextSpeakerId, myNextRole as "speaker" | "listener")
+        });
+      }, 3000);
+      break;
+    }
+
+    // "re-vote"를 받았을 때 처리
+    case "re-vote": {
+      currentPhase.value = "result";
+      currentResult.value = "disagree";
+      agreeCounts.value = data.agreeCounts;
+      disagreeCounts.value = data.disagreeCounts;
+      currentMessage.value = chatBubbleMessages.resultDisagree;
+
+      timeoutId = setTimeout(() => {
+        currentPhase.value = "reVoting";
+        disagreePlayers.value = data.disagreePlayer; // 비동의한 인원 업데이트
+        currentMessage.value = chatBubbleMessages.reVoting;
+        isFooterVisible.value = true;
+      }, 4000);
+      break;
+    }
+
+    // "puzzle-failed-next-turn" 이벤트를 받았을 떄 처리
+    case "puzzle-failed-next-turn": {
+      currentPhase.value = "result";
+      currentPhase.value = "disagree";
+      agreeCounts. value = data.agreeCounts;
+      disagreeCounts.value = data.disagreeCounts;
+      const nextSpeakerId = data.nextSpeakerId;
+      const myNextRole = data.nextRole;
+
+      currentMessage.value = chatBubbleMessages.reVoteResultDisagree;
+
+      // 일정 시간 이후 퍼즐조각 획득 실패 모달 띄움
+      timeoutId = setTimeout(() => {
+        openFailureModal(() => {
+          // 모달 확인 시 다음 턴으로 emit
+          emit("nextTurn", nextSpeakerId, myNextRole as "speaker" | "listener")
+        });
+      }, 3000);
+      break;
+    }
+
+    // "game-completed" 이벤트를 받았을 때 처리
+    case "game-completed": {
+      currentPhase.value = "completed";
+      currentResult.value = "agree";
+      agreeCounts.value = data.agreeCounts;
+      disagreeCounts.value = data.disagreeCounts;
+      currentMessage.value = data.hasReVoted
+        ? chatBubbleMessages.reVoteResultDisagree // 재투표 성공 메시지
+        : chatBubbleMessages.resultAgree; // 초기 투표 성공 메시지
+
+      const rankingData = data.rankingData;
+      const puzzleImgId = data.puzzleImgId;
+
+      // 3초 이후 퍼즐 획득 모달 띄움
+      timeoutId = setTimeout(() => {
+        openSuccessModal(rankingData, puzzleImgId);
+      }, 3000);
+      break;
+    }
+  }
+}
+
+/**
+ * 퍼즐 획득 성공 모달 오픈 함수
+ * @param rankingData - 게임 완료 시 필요한 랭킹 데이터
+ * @param puzzleImgId - 퍼즐 이미지 ID
+ * @param onConfirm - 모달에서 '확인' 버튼을 눌렀을 때 실행할 콜백 함수
+ */
+const openSuccessModal = async (
+  rankingData?: Array<RankingPlayer>,
+  puzzleImgId?: number,
+  onConfirm?: () => void
+) => {
+  const modal = await modalController.create({
+    component: PuzzleSuccessModal,
+    cssClass: 'chat-bubble-modal',
+    enterAnimation: enterAnimation,
+    leaveAnimation: leaveAnimation,
+  });
+  await modal.present();
+
+  const { role } = await modal.onDidDismiss();
+
+  // 현재 퍼즐 갯수 증가
+  if(role === 'confirm'){
+    currentPieces.value++;
+    // speakerPuzzlePieces.value++;
+    // 퍼즐이 모두 모였을 경우 랭킹 화면으로 이동
+    if (currentPieces.value >= maxPieces.value && rankingData && puzzleImgId !== undefined) {
+      goPuzzleCompletion(rankingData, puzzleImgId);
+    }
+    // 콜백함수가 있을 시 실행
+    if(onConfirm) {
+      onConfirm();
+    }
   }
 };
 
-// 재투표 결과 처리 함수
-const fetchReVoteResult = async () => {
-  agreeCounts.value = 2; // 예시 재투표 결과
-  disagreeCounts.value = 2;
+/**
+ * 퍼즐 획득 실패 모달 오픈 함수
+ * @param onConfirm - 모달에서 '확인' 버튼을 눌렀을 때 실행할 콜백 함수
+ */
+const openFailureModal = async (onConfirm?: () => void) => {
+  const modal = await modalController.create({
+    component: PuzzleFailureModal,
+    cssClass: 'chat-bubble-modal',
+  });
 
-  if (agreeCounts.value > disagreeCounts.value) {
-    // 재투표 결과 동의 과반수
-    currentPhase.value = "result";
-    isVotingComplete.value = true;
-    setTimeout(() => {
-      emit("nextRound"); // 다음 라운드로 이동
-    }, 1000);
-  } else {
-    // 재투표 결과 비동의 과반수
-    currentPhase.value = "result";
-    isVotingComplete.value = true;
-    setTimeout(() => {
-      emit("nextRound"); // 다음 라운드로 이동
-    }, 1000);
+  await modal.present();
+  const { role } = await modal.onDidDismiss();
+
+  if(role === 'confirm') {
+    if(onConfirm) {
+      onConfirm();
+    }
   }
 };
+/**
+ * 퍼즐 완료 후 랭킹 화면으로 이동
+ */
+const goPuzzleCompletion = (rankingData: Array<RankingPlayer>, puzzleImgId: number) => {
+  router.push({
+    path: "/puzzlecompletion",
+    query: {
+      rankingData: JSON.stringify(rankingData),
+      puzzleImgId: String(puzzleImgId),
+      mode: "multi"
+    }
+  })
+}
+
+onMounted(() => {
+  eventSourceStore.addEventListener("vote-result", handleSseEvent);
+})
+
+onUnmounted(() => {
+  if(timeoutId) {
+    clearTimeout(timeoutId);
+  }
+})
 </script>
 
 <template>
@@ -126,7 +261,7 @@ const fetchReVoteResult = async () => {
     <!-- 게임 영역 -->
     <div
       class="game-play-section"
-      :class="{'no-footer': isVotingComplete || currentPhase === 'result' || currentPhase ==='reVoteResult' }">
+      :class="{'no-footer': currentPhase === 'result'}">
 
       <!-- 참여자 프로필 -->
       <div class="player-profiles">
@@ -159,22 +294,21 @@ const fetchReVoteResult = async () => {
 
         <!-- 상태에 따른 컴포넌트 렌더링 -->
         <VotingResult
-          v-if="currentPhase === 'result' || currentPhase === 'reVoteResult'"
-          :agreeCounts="agreeCounts"
-          :disagreeCounts="disagreeCounts"
+          v-if="currentPhase === 'result'"
+          :agree-counts="agreeCounts"
+          :disagree-counts="disagreeCounts"
         />
 
         <ReVoteDetails
           v-if="currentPhase === 'reVoting'"
-          :disagreeCounts="disagreeCounts"
-          :disagree-users="disagreeUsers"
+          :disagree-counts="disagreeCounts"
+          :disagree-players="disagreePlayers"
         />
       </div>
     </div>
   </IonContent>
   <BaseButtonFooter
-    v-if="currentPhase !== 'result' && currentPhase !== 'reVoteResult'"
-    :class="{ hidden: currentPhase === 'result' || currentPhase === 'reVoteResult' }"
+    v-if="isFooterVisible"
     :is-button-disabled="true"
     disabled-color="#C7E399"
     :button-text="buttonText"
@@ -237,17 +371,5 @@ ion-content::part(background) {
   left: 50%;
   transform: translate(-50%, -50%);
   width: 90%; /* Adjust width if necessary */
-}
-
-/* 버튼 숨김 애니메이션 */
-.base-button-footer {
-  transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.base-button-footer.hidden {
-  opacity: 0;
-  transform: translateY(100%);
 }
 </style>

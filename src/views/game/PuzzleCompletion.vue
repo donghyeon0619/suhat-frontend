@@ -20,13 +20,54 @@ import PuzzleCompletionBadge from "@/assets/icons/game/icon-completion-badge.svg
 import TestPuzzleImg from "@/assets/img/game/puzzle/img-test-puzzle.png"
 import SuhatSign from "@/assets/img/common/img-suhat-sign.svg"
 import BaseButtonFooter from "@/components/common/BaseButtonFooter.vue";
+import {useRoute} from "vue-router";
 
 
 const router = useIonRouter();
+const route = useRoute();
 
+const mode = route.query.mode || "solo"; // solo 또는 multi 모드
+const puzzleImgId = Number(route.query.puzzleImgId);
+
+// 랭킹 데이터는 multi 모드에서만 파싱
+const rankingData = route.query.rankingData
+  ? JSON.parse(route.query.rankingData as string)
+  : []; // multi 모드일 때만 처리
+
+/**
+ * 홈 리우팅 함수
+ */
 const goHome = () =>{
+  console.log("홈으로 이동")
   router.push("/home");
 }
+
+/**
+ * 랭킹 페이지로 이동 함수
+ */
+const goRanking = () => {
+  if(rankingData.length > 0){
+    router.push({
+      path: "/multi/ranking",
+      query: {
+        rankingData: JSON.stringify(rankingData),
+      }
+    })
+  } else {
+    console.error("랭킹 데이터가 없습니다.")
+  }
+}
+
+/**
+ * 버튼 클릭 이벤트 핸들러함수
+ */
+const handleButtonClick = () => {
+  if (mode === 'solo') {
+    goHome();
+  } else {
+    goRanking();
+  }
+};
 </script>
 
 <template>
@@ -70,9 +111,9 @@ const goHome = () =>{
     </div>
   </IonContent>
   <BaseButtonFooter
-    buttonText="끝내기"
+    :buttonText="mode === 'solo' ? '끝내기' : '내 순위 확인하기'"
     buttonColor="#13BD7E"
-    @buttonClick="goHome"
+    @buttonClick="handleButtonClick"
   />
 </IonPage>
 </template>
