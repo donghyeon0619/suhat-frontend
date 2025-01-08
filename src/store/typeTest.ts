@@ -31,22 +31,29 @@ export const useTypeTestStore = defineStore('typeTest',{
       if (this.questionData[serviceTypeId]) {
         return this.questionData[serviceTypeId];
       }
+      try {
+        // API 요청으로 데이터 가져오기
+        const response: TestQuestion[] = await get(`test-questions/service-type/${serviceTypeId}`);
 
-      // API 요청으로 데이터 가져오기
-      const response : TestQuestion[] = await get(`test-questions/service-type/${serviceTypeId}`);
-      const mappedQuestions = response.map((question) =>({
-        id: question.id,
-        content: question.content,
-        testOptions: question.testOptions.map((option) =>({
-          id: option.id,
-          content: option.content,
-          score: option.score,
-        })),
-      }));
+        // 데이터 매핑
+        const mappedQuestions = response.map((question) => ({
+          id: question.id,
+          content: question.content,
+          testOptions: question.testOptions.map((option) => ({
+            id: option.id,
+            content: option.content,
+            score: option.score,
+          })),
+        }));
 
-      this.questionData[serviceTypeId] = mappedQuestions; // 매핑된 데이터를 저장
-      return mappedQuestions;
+        // 매핑된 데이터를 저장
+        this.questionData[serviceTypeId] = mappedQuestions;
 
+        return mappedQuestions;
+      } catch (error) {
+        console.error('유형검사 조회 중 오류 발생', error);
+        throw error;
+      }
     },
     setCurrentServiceType(serviceTypeId: number, serviceTypeName: string){
       this.currentServiceTypeId = serviceTypeId;
