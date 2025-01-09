@@ -59,12 +59,15 @@ async function createGameRoom() {
   }
 }
 
-function scanBarcode() {
-  router.push({
-    path: "/game/join"
+async function scanBarcode() {
+  closeModal();
+
+  const newModal = await modalController.create({
+    component: GameRoomScanner,
+    cssClass: "game-room-scanner-modal"
   });
 
-  closeModal();
+  await newModal.present();
 }
 
 function gameTutorial() {
@@ -85,6 +88,10 @@ function reset() {
 function closeModal() {
   modalController.dismiss();
 }
+
+onMounted(() => {
+  console.log('pinia userInfo: ', userStore.userInfo);
+})
 </script>
 
 <template>

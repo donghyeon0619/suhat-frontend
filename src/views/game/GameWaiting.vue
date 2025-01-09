@@ -55,10 +55,6 @@ const connectToRoom = () => {
     updatePlayer(event.data);
   });
 
-  eventSource.addEventListener('player-order-assigned', function(event) {
-    console.log('player-order-assigned 이벤트 수신:', event.data);
-  });
-
   eventSource.onerror = () => {
     console.error('SSE 연결 오류');
     eventSource.close();
@@ -160,7 +156,7 @@ const imageUrl = ref(null);
 
 const createBarcode = (roomId) => {
   const canvas = document.createElement('canvas');
-  JsBarcode(canvas, roomId, { height: 60, width: 2, lineColor: "#333D4B", displayValue: true, text: "방 코드 : " + roomId, textMargin: 4, fontSize: 15, fontOptions: "bold", margin: 2 });
+  JsBarcode(canvas, roomId, { height: 50, width: 2, lineColor: "#333D4B", displayValue: true, text: "방 코드 : " + roomId, textMargin: 3, fontSize: 20, fontOptions: "bold", margin: 2 });
   imageUrl.value = canvas.toDataURL('image/png'); // 캔버스를 이미지 URL로 변환
 };
 </script>
@@ -213,7 +209,7 @@ const createBarcode = (roomId) => {
     </ion-content>
 
     <ion-footer class="ion-padding-start ion-padding-end ion-padding-bottom ion-no-border">
-      <ion-img class="start-speech-bubble ion-margin-start" v-if="isRoomFull" src="src/assets/icons/game/speech-bubble.svg"></ion-img>
+      <ion-img class="start-speech-bubble ion-margin-start" v-if="isHost && isRoomFull" src="src/assets/icons/game/speech-bubble.svg"></ion-img>
       <BaseButton :buttonText="isHost ? '게임시작' : '게임 나가기'" :isButtonDisabled="isHost ? !isRoomFull : false" @click="buttonClickHandler"></BaseButton>
     </ion-footer>
   </IonPage>
