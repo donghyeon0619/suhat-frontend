@@ -9,7 +9,7 @@ import {setJSessionId} from "@/api/sessionService";
 export async function signup(){
   const userStore = useUserStore();
   const userInfo = toRaw(userStore.userInfo);
-  const response = await post('users/signup', userInfo);
+  const response = await post('users', userInfo);
 
   if (response){
     await setJSessionId(response);

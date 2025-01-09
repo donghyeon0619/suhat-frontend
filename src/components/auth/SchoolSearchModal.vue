@@ -66,7 +66,7 @@ function formatDistrictAddress(districtAddress) {
 // 학교 검색 api 함수
 const fetchSearchResults = async (query : string) => {
   try {
-    const endpoint = 'schools/search';
+    const endpoint = 'schools';
     const params = {query}
     const response = await get(endpoint, params);
 

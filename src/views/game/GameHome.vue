@@ -123,6 +123,8 @@ function closeModal() {
           <ion-icon :icon="chevronForwardOutline"></ion-icon>
         </ion-text>
       </ion-card>
+
+    <!-- 방만들기 모달 -->
     <ion-modal trigger="create-room-modal" :initial-breakpoint="1" :breakpoints="[0, 1]" @didDismiss="reset">
       <div class="block">
         <ion-title class="modal-title">방만들기</ion-title>
