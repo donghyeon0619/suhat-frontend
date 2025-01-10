@@ -1,10 +1,7 @@
 <script setup lang="ts">
-import BackButtonHeader from "@/components/common/BackButtonHeader.vue";
 import {
   IonPage,
   IonContent,
-  IonFooter,
-  IonButton,
   IonCard,
   IonCardContent,
   IonCardHeader,
@@ -13,21 +10,22 @@ import {
   IonThumbnail,
   IonRow,
   IonCol,
-  useIonRouter
+  useIonRouter, IonHeader, IonToolbar
 } from "@ionic/vue";
 import ChatBubbleWithBorder from "@/components/common/ChatBubbleWithBorder.vue";
 import PuzzleCompletionBadge from "@/assets/icons/game/icon-completion-badge.svg"
-import TestPuzzleImg from "@/assets/img/game/puzzle/img-test-puzzle.png"
+import SoloPuzzleImg from "@/assets/img/game/puzzle/img-solo-puzzle.png"
+import MultiPuzzleImg from "@/assets/img/game/puzzle/img-multi-puzzle.png"
 import SuhatSign from "@/assets/img/common/img-suhat-sign.svg"
 import BaseButtonFooter from "@/components/common/BaseButtonFooter.vue";
 import {useRoute} from "vue-router";
-
 
 const router = useIonRouter();
 const route = useRoute();
 
 const mode = route.query.mode || "solo"; // solo 또는 multi 모드
-const puzzleImgId = Number(route.query.puzzleImgId);
+
+const puzzleImage = mode === "solo" ? SoloPuzzleImg : MultiPuzzleImg;
 
 // 랭킹 데이터는 multi 모드에서만 파싱
 const rankingData = route.query.rankingData
@@ -72,7 +70,9 @@ const handleButtonClick = () => {
 
 <template>
 <IonPage>
-  <BackButtonHeader back-button-color="white"></BackButtonHeader>
+  <IonHeader class="ion-no-border">
+    <IonToolbar></IonToolbar>
+  </IonHeader>
   <IonContent class="ion-padding" scroll-y="false">
     <!-- Congratulatory Title -->
     <div class="title-section">
@@ -88,7 +88,7 @@ const handleButtonClick = () => {
         </IonCardHeader>
         <IonCardContent class="card-content">
           <IonThumbnail class="puzzle-img-wrapper">
-            <IonImg :src="TestPuzzleImg" class="puzzle-img"/>
+            <IonImg :src="puzzleImage" class="puzzle-img"/>
           </IonThumbnail>
           <IonRow class="ion-align-items-center">
             <IonCol size="9" class="puzzle-description-col">
@@ -119,6 +119,10 @@ const handleButtonClick = () => {
 </template>
 
 <style scoped>
+ion-toolbar{
+  --background: transparent;
+}
+
 .ion-page{
   background-image: url('../../assets/img/typetest/bg-type-test-page-dark.png'); /* 이미지를 직접 넣는 방법 */
 }

@@ -86,6 +86,19 @@ html {
   --background: transparent;
 }
 
+.my-custom-alert-class .alert-wrapper{
+  border: #13BD7E 3px solid;
+  border-radius: 15px;
+  .alert-button-group{
+    justify-content: center;
+    gap: 5vw;
+  }
+}
+
+.my-custom-alert-button-class{
+  color: #13BD7E !important;
+  font-weight: 600;
+}
 /*
 Copyright (c) 2021 Kil Hyung-jin, with Reserved Font Name Pretendard.
 https://github.com/orioncactus/pretendard

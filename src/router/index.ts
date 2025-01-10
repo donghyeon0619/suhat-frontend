@@ -173,7 +173,7 @@ const routes: Array<RouteRecordRaw> = [
     component: GameRanking,
   },
   {
-    path: '/multi/play',
+    path: '/multi/play/:roomId',
     name: 'MultiGamePlay',
     component: MultiGamePlayView
   },

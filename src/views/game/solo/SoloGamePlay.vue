@@ -22,15 +22,6 @@ const cards = ref([
   { id: 2, isFlipped: false, type: 'image', content: ''},
 ])
 
-/**
- * 퍼즐 이미지 id 저장
- */
-const puzzleImgId = ref<number>(1);
-
-/**
- * todo 퍼즐 랜덤 부여 함수 선언
- */
-
 
 /**
  * 카드의 랜덤 데이터를 설정하는 함수
@@ -104,8 +95,7 @@ const goPuzzleCompletion = () => {
       {
         path: "/puzzlecompletion",
         query: {
-          mode : "solo",
-          puzzleImgId: String(puzzleImgId)
+          mode: "solo",
         }
       }
     );

@@ -160,11 +160,10 @@ const handleSseEvent = (event: MessageEvent) => {
         : chatBubbleMessages.resultAgree; // 초기 투표 성공 메시지
 
       const rankingData = data.rankingData;
-      const puzzleImgId = data.puzzleImgId;
 
       // 3초 이후 퍼즐 획득 모달 띄움
       timeoutId = setTimeout(() => {
-        openSuccessModal(rankingData, puzzleImgId);
+        openSuccessModal(rankingData);
       }, 3000);
       break;
     }
@@ -174,12 +173,10 @@ const handleSseEvent = (event: MessageEvent) => {
 /**
  * 퍼즐 획득 성공 모달 오픈 함수
  * @param rankingData - 게임 완료 시 필요한 랭킹 데이터
- * @param puzzleImgId - 퍼즐 이미지 ID
  * @param onConfirm - 모달에서 '확인' 버튼을 눌렀을 때 실행할 콜백 함수
  */
 const openSuccessModal = async (
   rankingData?: Array<RankingPlayer>,
-  puzzleImgId?: number,
   onConfirm?: () => void
 ) => {
   const modal = await modalController.create({
@@ -197,8 +194,8 @@ const openSuccessModal = async (
     currentPieces.value++;
     // speakerPuzzlePieces.value++;
     // 퍼즐이 모두 모였을 경우 랭킹 화면으로 이동
-    if (currentPieces.value >= maxPieces.value && rankingData && puzzleImgId !== undefined) {
-      goPuzzleCompletion(rankingData, puzzleImgId);
+    if (currentPieces.value >= maxPieces.value && rankingData) {
+      goPuzzleCompletion(rankingData);
     }
     // 콜백함수가 있을 시 실행
     if(onConfirm) {
@@ -229,12 +226,11 @@ const openFailureModal = async (onConfirm?: () => void) => {
 /**
  * 퍼즐 완료 후 랭킹 화면으로 이동
  */
-const goPuzzleCompletion = (rankingData: Array<RankingPlayer>, puzzleImgId: number) => {
+const goPuzzleCompletion = (rankingData: Array<RankingPlayer>) => {
   router.push({
     path: "/puzzlecompletion",
     query: {
       rankingData: JSON.stringify(rankingData),
-      puzzleImgId: String(puzzleImgId),
       mode: "multi"
     }
   })

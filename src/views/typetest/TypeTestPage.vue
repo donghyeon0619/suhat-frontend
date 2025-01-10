@@ -21,10 +21,10 @@ import {
 } from "@ionic/vue";
 import {computed, ref, reactive, watch} from "vue";
 import { chevronBackOutline} from "ionicons/icons";
-import SuhatChip from "@/components/common/SuhatChip.vue";
 import {useRoute} from "vue-router";
 import {post} from "@/api/httpService";
 import {useTypeTestStore} from "@/store/typeTest";
+import SpeechBubbleimg  from "@/assets/img/typetest/img-typetest-speech-bubble.svg"
 
 const router = useIonRouter();
 const route = useRoute();
@@ -156,7 +156,11 @@ const submitSurvey = async () =>  {
   }
 };
 
-//
+/**
+ *
+ * @param header
+ * @param message
+ */
 const presentAlert = async (header: string, message: string) => {
   const alert = await alertController.create({
     header: header,
@@ -181,7 +185,6 @@ const presentAlert = async (header: string, message: string) => {
     </IonHeader>
 
     <IonContent v-if="questions.length > 0" class="ion-padding" scroll-y="false">
-
       <!-- 질문 영역 -->
       <div class="question-container">
         <IonText class="question-number">
@@ -192,15 +195,15 @@ const presentAlert = async (header: string, message: string) => {
 
       <div class="option-container">
         <!-- 대화형 말풍선 -->
-        <div class="chat-bubble">
-          <div class="speech-bubble">
-            <IonLabel>
-              나와 가장 가까운 대답을 골라줘
-            </IonLabel>
-          </div>
-          <SuhatChip font-size="0.875rem"></SuhatChip>
-        </div>
-
+<!--        <div class="chat-bubble">-->
+<!--          <div class="speech-bubble">-->
+<!--            <IonLabel>-->
+<!--              나와 가장 가까운 대답을 골라줘-->
+<!--            </IonLabel>-->
+<!--          </div>-->
+<!--          <SuhatChip font-size="0.875rem"></SuhatChip>-->
+<!--        </div>-->
+        <img class="chat-bubble" :src="SpeechBubbleimg" alt="말풍선 이미지" style="width: 65%"/>
         <!-- 선택지 -->
         <IonCard>
           <IonCardContent>
@@ -305,19 +308,17 @@ ion-buttons{
   color: #333D4B;
 }
 
+.chat-bubble{
+  display: flex;
+  margin-top: 15%;
+}
+
+/*
 .suhat-chip{
   position: absolute;
   top: -85%;
   left: 3%;
   z-index: 4;
-}
-
-.chat-bubble{
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  margin-top: 15%;
 }
 
 .speech-bubble{
@@ -335,7 +336,6 @@ ion-buttons{
   z-index: 2;
 }
 
-/* 꼬리 만들기 */
 .speech-bubble::after {
   content: '';
   position: absolute;
@@ -344,7 +344,7 @@ ion-buttons{
   width: 0;
   height: 0;
   border: 15px solid transparent;
-  border-top-color:rgba(255, 255, 255, 0.8); /* 말풍선 배경 색상 */
+  border-top-color:rgba(255, 255, 255, 0.8);
   border-bottom: 0;
   margin-left: -4vw;
   margin-bottom: -14px;
@@ -359,12 +359,13 @@ ion-buttons{
   width: 0;
   height: 0;
   border: 17px solid transparent;
-  border-top-color: #F2F2F2; /* 테두리 색상 */
+  border-top-color: #F2F2F2;
   border-bottom: 0;
   margin-left: -4.7vw;
   margin-bottom: -17px;
   z-index: 1;
 }
+*/
 
 ion-card{
   width: 100%;
@@ -372,7 +373,7 @@ ion-card{
   background: #ffffff;
   border-radius: 20px;
   box-shadow: none;
-  margin: 5% 0 5% 0;
+  margin: 2% 0 5% 0;
 }
 
 .option-list{
@@ -461,12 +462,6 @@ ion-footer{
   }
 }
 
-@media(max-width: 345px){
 
-  .chat-bubble {
-    margin-top: 30%;
-  }
-
-}
 
 </style>
