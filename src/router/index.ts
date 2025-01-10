@@ -24,6 +24,7 @@ import TestView from "@/views/TestView.vue"
 import GameTutorial from "@/views/game/tutorial/GameTutorial.vue";
 import {validateSession} from "@/api/sessionService";
 import {useAppStateStore} from "@/store/appState";
+import {Network} from "@capacitor/network";
 
 const routes: Array<RouteRecordRaw> = [
     {
@@ -36,7 +37,6 @@ const routes: Array<RouteRecordRaw> = [
       component: HomePage,
       beforeEnter: async (to, from, next) =>{
         const appStateStore = useAppStateStore();
-
         if (!appStateStore.hasSeenOnBoarding){
           console.log("온보딩 화면으로 이동");
           return next('/intro/onboarding');
@@ -173,7 +173,7 @@ const routes: Array<RouteRecordRaw> = [
     component: GameRanking,
   },
   {
-    path: '/multi/play',
+    path: '/multi/play/:roomId',
     name: 'MultiGamePlay',
     component: MultiGamePlayView
   },

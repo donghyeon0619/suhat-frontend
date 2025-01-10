@@ -12,7 +12,7 @@ import {
   IonCardHeader,
 } from "@ionic/vue";
 import BaseButtonFooter from "@/components/common/BaseButtonFooter.vue";
-import {reactive, ref} from "vue";
+import {computed, reactive, ref} from "vue";
 
 const confirm = () => modalController.dismiss(usageTime.value, 'confirm');
 
@@ -38,6 +38,9 @@ function calculateFormattedUsageTime(totalMinutes: number){
   return `${hours.toString().padStart(2, '0')}시간 ${minutes.toString().padStart(2, '0')}분`;
 }
 
+const isRangeInput = computed(()=>
+  usageTime.value !== undefined && usageTime.value !== 0
+)
 
 </script>
 
@@ -67,6 +70,7 @@ function calculateFormattedUsageTime(totalMinutes: number){
             <IonButton
                 expand="block"
                 @click="confirm"
+                :disabled="!isRangeInput"
               >
                 입력완료
             </IonButton>

@@ -7,7 +7,7 @@ const props = defineProps({
     type:Number,
     required: true,
   },
-  disagreeUsers:{
+  disagreePlayers:{
     type: Array,
     required: true,
   }
@@ -26,7 +26,7 @@ const props = defineProps({
       </IonCardTitle>
     </IonCardHeader>
     <IonCardContent class="re-vote-description">
-      {{disagreeUsers.join(", ")}}이 비동의를 했어요.
+      {{disagreePlayers.join(", ")}}이 비동의를 했어요.
     </IonCardContent>
   </IonCard>
 </template>

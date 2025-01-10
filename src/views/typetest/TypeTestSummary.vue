@@ -9,19 +9,40 @@ import {
   IonButton,
   IonImg,
   IonThumbnail,
-  IonCard,
-  IonCardContent,
-  IonCardHeader,
   IonLabel, useIonRouter, IonCol, IonGrid, IonRow,
 } from "@ionic/vue";
 import {useRoute} from "vue-router";
 import BulbIcon from "@/assets/icons/common/icon-bulb.svg"
-import DigitalMaestro from "@/assets/img/typetest/img-digital-maestro.png"
 import WaveCard from "@/assets/img/typetest/bg-wave-card.svg"
 import VideoIcon from "@/assets/icons/typetest/icon-video.svg"
 import PhotoIcon from "@/assets/icons/typetest/icon-photo.svg"
-import {onMounted} from "vue";
+import {computed, onMounted} from "vue";
 import {useTypeTestStore} from "@/store/typeTest";
+
+// 이미지 경로
+import imgAutoplayAddict from "@/assets/img/typetest/suhatType/img-autoplay-addict.png";
+import imgDigitalGladiator from "@/assets/img/typetest/suhatType/img-digital-gladiator.png";
+import imgDigitalMaestro from "@/assets/img/typetest/suhatType/img-digital-maestro.png";
+import imgDopamineLover from "@/assets/img/typetest/suhatType/img-dopamine-lover.png";
+import imgInfluenzaEnthusiast from "@/assets/img/typetest/suhatType/img-influenza-enthusiast.png";
+import imgScrollingMaster from "@/assets/img/typetest/suhatType/img-scrolling-master.png";
+import imgThumbWarrior from "@/assets/img/typetest/suhatType/img-thumb-warrior.png";
+
+const imagesMap: Record<string, string> = {
+  "1": imgInfluenzaEnthusiast,
+  "2": imgScrollingMaster,
+  "3": imgDigitalMaestro,
+  "4": imgAutoplayAddict,
+  "5": imgDopamineLover,
+  "6": imgDigitalMaestro,
+  "7": imgDigitalGladiator,
+  "8": imgThumbWarrior,
+  "9": imgDigitalMaestro,
+};
+
+const imageSrc = computed(() => {
+  return imagesMap[suhatTypeId as string] || ""; // suhatTypeId에 맞는 경로를 리턴
+});
 
 const route = useRoute();
 const router = useIonRouter();
@@ -30,15 +51,6 @@ const suhatTypeId = route.query.suhatTypeId;
 const name = route.query.name;
 const description = route.query.description;
 const suggestion = route.query.suggestion;
-
-onMounted( ()=> {
-  console.log("Navigating to TypeTestSummary with:", {
-    suhatTypeId,
-    name,
-    description,
-    suggestion,
-  });
-})
 
 const typeTestStore = useTypeTestStore();
 const goToRetry = () => {
@@ -96,7 +108,7 @@ const goToEnd = () => {
         <img :src="WaveCard" class="card-background-image" alt="Background Image">
         <div class="card-content">
           <IonThumbnail class="type-img">
-            <IonImg :src="DigitalMaestro"/>
+            <IonImg :src="imageSrc"/>
           </IonThumbnail>
           <div class="type-description-wrapper">
             <img :src="PhotoIcon" alt="사진" class="photo-icon">

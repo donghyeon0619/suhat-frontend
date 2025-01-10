@@ -25,6 +25,7 @@ import XIcon from "@/assets/icons/home/icon-x-orange.svg"
 import PeopleIcon from "@/assets/icons/home/icon-people.svg"
 import GameIcon from "@/assets/icons/home/icon-game.svg"
 import VideoCamIcon from "@/assets/icons/home/icon-videocam.svg"
+import RoadMapImg from "@/assets/img/home/img-roadmap.svg"
 
 const serviceTypes = [
   {id: 1, name: "소셜 미디어"},
@@ -116,9 +117,7 @@ const goSurveyPage = () =>{
       </div>
 
       <!-- 로드맵 부분 -->
-      <div class="=roadmap-container">
-
-      </div>
+        <img class="roadmap-img" :src="RoadMapImg" alt="로드맵 이미지"/>
     </IonContent>
     <IonFooter class="ion-no-border">
       <IonGrid>
@@ -236,6 +235,14 @@ ion-title{
   font-weight: 700;
   letter-spacing: -0.025625rem;
   margin-bottom: 3%
+}
+
+.roadmap-img{
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 0;
+  width: 75%;
 }
 
 ion-footer{

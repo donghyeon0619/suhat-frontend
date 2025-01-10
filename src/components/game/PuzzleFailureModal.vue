@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {IonContent, IonFooter, IonButton, modalController} from "@ionic/vue";
 import ChatBubbleWithBorder from "@/components/common/ChatBubbleWithBorder.vue";
-const cancel = () => modalController.dismiss(null, 'cancel');
+const confirm = () => modalController.dismiss(null, 'confirm');
 </script>
 <template>
   <IonContent>
@@ -15,7 +15,7 @@ const cancel = () => modalController.dismiss(null, 'cancel');
   </IonContent>
   <IonFooter class="ion-no-border">
     <div class="action-button">
-      <IonButton expand="block" @click="cancel">알았어!</IonButton>
+      <IonButton expand="block" @click="confirm">알았어!</IonButton>
     </div>
   </IonFooter>
 </template>

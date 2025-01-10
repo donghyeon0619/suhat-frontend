@@ -59,12 +59,15 @@ async function createGameRoom() {
   }
 }
 
-function scanBarcode() {
-  router.push({
-    path: "/game/join"
+async function scanBarcode() {
+  closeModal();
+
+  const newModal = await modalController.create({
+    component: GameRoomScanner,
+    cssClass: "game-room-scanner-modal"
   });
 
-  closeModal();
+  await newModal.present();
 }
 
 function gameTutorial() {
@@ -85,6 +88,10 @@ function reset() {
 function closeModal() {
   modalController.dismiss();
 }
+
+onMounted(() => {
+  console.log('pinia userInfo: ', userStore.userInfo);
+})
 </script>
 
 <template>
@@ -123,6 +130,8 @@ function closeModal() {
           <ion-icon :icon="chevronForwardOutline"></ion-icon>
         </ion-text>
       </ion-card>
+
+    <!-- 방만들기 모달 -->
     <ion-modal trigger="create-room-modal" :initial-breakpoint="1" :breakpoints="[0, 1]" @didDismiss="reset">
       <div class="block">
         <ion-title class="modal-title">방만들기</ion-title>
@@ -166,6 +175,9 @@ function closeModal() {
                     button-text="방 만들기"
                     @click="createGameRoom">
         </BaseButton>
+        <div class="cancel-btn">
+          <ion-button fill="clear" @click="closeModal">취소</ion-button>
+        </div>
       </div>
     </ion-modal>
 
