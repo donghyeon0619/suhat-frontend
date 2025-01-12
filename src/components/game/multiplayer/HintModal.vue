@@ -1,23 +1,8 @@
 <script setup lang="ts">
-import { ref } from "vue";
 import {modalController,IonLabel, IonButton, IonIcon, IonText, } from "@ionic/vue";
-import {search, searchOutline} from "ionicons/icons";
+import {search} from "ionicons/icons";
 import GameCardBg from "@/assets/img/game/bg-game-card.svg";
-import HintPictureImg from "@/assets/img/game/img-test-picture.png"
-const selectedCard = ref("image");
-const hintContent = ref(
-);
-
-const selectCard = (type) => {
-  selectedCard.value = type;
-  if (type === "image") {
-    hintContent.value =
-      "스마트폰을 손에서 놓지 않으니까 손목이 아파졌어. 손목이 아프지 않으려면 스마트폰 사용을 줄일 필요가 있었어.";
-  } else {
-    hintContent.value =
-      "글자 카드 내용: 스마트폰 사용이 손목 건강에 영향을 미친다.";
-  }
-};
+import HintPictureImg from "@/assets/img/game/picture/img-picture-card-3.png"
 
 const closeModal = () => modalController.dismiss();
 

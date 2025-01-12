@@ -143,7 +143,7 @@ const handleSseEvent = (event: MessageEvent) =>{
 
       // 3초 후 퍼즐 획득 모달 띄움
       timeoutId = setTimeout(() => {
-        openSuccessModal(undefined, undefined, () => {
+        openSuccessModal(undefined, () => {
           // 모달 확인 시 다음 턴으로 emit
           emit("nextTurn", nextSpeakerId, myNextRole as "speaker" | "listener")
         });

@@ -62,7 +62,12 @@ export async function get(
 /**
  * POST 요청
  */
-export async function post(endpoint: string, data: any): Promise<any> {
+export async function post(
+  endpoint: string,
+  data: any,
+  returnFullResponse: boolean = false
+): Promise<any> {
+
   const options = await getHttpOptions(endpoint, 'POST', data);
 
   // 쿠키 전송 활성화
@@ -75,7 +80,7 @@ export async function post(endpoint: string, data: any): Promise<any> {
 
     await validateHttpResponse(response)
 
-    return response.data;
+    return returnFullResponse ? response : response.data;
   } catch (error: any) {
     console.log("에러가 발생했습니다.", error)
     throw error;

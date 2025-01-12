@@ -1,36 +1,32 @@
 <script setup lang="ts">
-import {IonContent, modalController, IonLabel, IonButton, toastController } from "@ionic/vue";
+import {IonContent, modalController, IonLabel, toastController } from "@ionic/vue";
 import PuzzleProgressChip from "@/components/game/PuzzleProgressChip.vue";
 import BaseButtonFooter from "@/components/common/BaseButtonFooter.vue";
-import {PropType, ref} from "vue";
+import {computed, PropType, ref} from "vue";
 import PlayerProfile from "@/components/game/multiplayer/PlayerProfile.vue";
 import ChatBubbleWithBorder from "@/components/common/ChatBubbleWithBorder.vue";
 import TimeInputModal from "@/components/game/multiplayer/TimeInputModal.vue";
 import GameCardBg from "@/assets/img/game/bg-game-card.svg";
+import {GameState} from "@/types/GameState";
+import {post} from "@/api/httpService";
 
 // 상위 컴포넌트로 보낼 이벤트 정의
 const emit = defineEmits(["nextRound"]);
 
-const currentPieces = ref(0)
-const maxPieces = ref(10)
+const props = defineProps<{
+  gameState: GameState
+}>();
+
+const currentPieces = computed(() => props.gameState.currentPuzzlePieces);
+const maxPieces = computed(() => props.gameState.totalPuzzlePieces);
+const totalPlayers = computed(() => props.gameState.totalPlayers);
+
 const usageTime = ref(0);
 const orderSelected = ref(false);
 const buttonText = ref("확인했어요"); // 버튼 텍스트 초기값
 const orderShow = ref(false);
 
-const props = defineProps({
-  participants: {type: Array as PropType<
-      Array<{
-        name: string;
-        order: number;
-        currentPieces: number;
-      }>
-    >,
-    required: true,
-  },
-  }
-);
-
+const players = computed(() => props.gameState.players);
 
 const openTimeInputModal = async () => {
   console.log('Opening TimeInputModal...');
@@ -50,10 +46,18 @@ const openTimeInputModal = async () => {
 
   if (role === 'confirm'){
     usageTime.value = data;
-    console.log(data, "111")
-    await presentToast();
-    buttonText.value = "2라운드 시작" // 버튼 텍스트 변경
-    orderSelected.value = true;
+    try {
+      const roomId = props.gameState.roomId
+      const response = await post(`/api/game/${roomId}/round/1/usage-time`, {
+        usageTime: data // 서버에 보낼 데이터
+      });
+      console.log("사용시간 입력", response);
+      await presentToast();
+      buttonText.value = "2라운드 시작" // 버튼 텍스트 변경
+      orderSelected.value = true;
+    } catch (error){
+      console.error("사용시간 입력 요청 중 오류 발생", error);
+    }
   }
 };
 
@@ -94,21 +98,19 @@ const handleNextRound = async () => {
     <div class="game-play-section">
       <PlayerProfile
         :order-show="orderShow"
-        v-for="participant in participants"
-        :key="participant.name"
-        :player-name="participant.name"
-        :player-order="participant.order"
-        :piece-count="participant.currentPieces"
+        v-for="(player, index) in players"
+        :key="player.playerId"
+        :player-name="player.playerInfo.name"
+        :player-order="player.sequenceNumber"
+        :piece-count="player.collectedPuzzlePieces"
         class="player-profile"
         :class="{
-             // 참여자 수가 3명일 떄의 상단 프로필 위치
-            'center-top-profile': participants.length === 3 && participant.order === 1,
-            // 참여자 수가 4명일 떄의 상단 프로필 위치
-            'left-top-profile': participants.length === 4 && participant.order === 1,
-            'right-top-profile': participants.length === 4 && participant.order === 2,
-            'left-bottom-profile': participant.order === 3,
-            'right-bottom-profile': participant.order === 4
-          }"
+          'center-top-profile': totalPlayers === 3 && index === 0, // 3명일 때 중앙
+          'left-bottom-profile': (totalPlayers === 3 && index === 1) || (totalPlayers === 4 && index === 2), // 3명 또는 4명일 때 왼쪽 아래
+          'right-bottom-profile': (totalPlayers === 3 && index === 2) || (totalPlayers === 4 && index === 3), // 3명 또는 4명일 때 오른쪽 아래
+          'left-top-profile': totalPlayers === 4 && index === 0, // 4명일 때 왼쪽 위
+          'right-top-profile': totalPlayers === 4 && index === 1, // 4명일 때 오른쪽 위
+         }"
       />
       <div class="chat-bubble-wrapper">
         <ChatBubbleWithBorder v-if="!orderSelected"

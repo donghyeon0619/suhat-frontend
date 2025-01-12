@@ -48,8 +48,9 @@ async function enterGameRoom() {
     const response = await post(`rooms/${props.roomId}/players`, {userInfo: userStore.userInfo, score: surveyStore.latestScore});
 
     console.log("response: " + response);
+    console.log("게임 대기방으로 이동합니다.")
 
-    closeModal();
+    await closeModal();
 
     router.navigate({
       path: `/game/waiting/${props.roomId}`,

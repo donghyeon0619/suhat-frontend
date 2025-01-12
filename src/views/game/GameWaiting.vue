@@ -11,7 +11,7 @@ import {
   IonList,
   IonFooter,
   useIonRouter,
-  alertController, onIonViewWillEnter, onIonViewWillLeave
+  alertController, onIonViewWillEnter, onIonViewWillLeave, toastController
 } from "@ionic/vue"
 import Header from "@/components/common/BackButtonHeader.vue";
 import JsBarcode from 'jsbarcode'
@@ -52,6 +52,8 @@ const connectToRoom = () => {
   eventSourceStore.addEventListener('player-joined', playerJoinedHandler);
   eventSourceStore.addEventListener('game-started', gameStartedHandler);
   eventSourceStore.addEventListener('player-left', playerLeftHandler);
+  eventSourceStore.addEventListener('host-assigned', hostAssignedHandler);
+  eventSourceStore.addEventListener('host-changed', hostChangedHandler);
 };
 
 // 핸들러 함수 정의
@@ -71,7 +73,7 @@ const playerJoinedHandler = (event: MessageEvent) => {
 const gameStartedHandler = (event: MessageEvent) => {
   console.log('game-started 이벤트 수신:', event.data);
   isGameStarting.value = true;
-  router.push({
+  router.replace({
     path: `/multi/play/${roomId}`,
   });
 };
@@ -84,6 +86,25 @@ const playerLeftHandler = (event: MessageEvent) => {
   console.log('player-left 이벤트 수신:', event.data);
   deletePlayer(event.data);
 };
+
+/**
+ * 'host-assigned' 이벤트:  호스트 부여
+ * @param event
+ */
+const hostAssignedHandler = (event: MessageEvent) => {
+  console.log('host-assigned 이벤트 수신:', event.data);
+  isHost.value = JSON.parse(event.data).isHost;
+  presentToast(JSON.parse(event.data).message);
+}
+
+/**
+ * 'host-changed' 이벤트:  호스트 변경
+ * @param event
+ */
+const hostChangedHandler = (event: MessageEvent) => {
+  console.log('host-changed 이벤트 수신:', event.data);
+  presentToast(JSON.parse(event.data).message);
+}
 
 /**
  * 새로운 플레이어를 참가자 리스트에 추가
@@ -134,7 +155,7 @@ const buttonClickHandler = () => {
     startGame();
   } else {
     // 일반 플레이어인 경우 게임방 나가기 로직
-    leaveRoom();
+    router.back();
   }
 }
 
@@ -143,9 +164,9 @@ const buttonClickHandler = () => {
  */
 const startGame = async () => {
   try{
-    const response = await post(`games/${roomId}/round/1/state`, null);
+    const response = await post(`games/${roomId}/round/1/state`, null, true);
 
-    if(response) {
+    if(response.status == "200") {
       console.log('게임 시작 요청 성공');
     } else {
       console.error('게임 시작 요청 실패');
@@ -166,14 +187,9 @@ const leaveRoom = async () => {
 
     if(response.status == "200") {
       console.log('게임방 나가기 요청 성공');
-
-      router.push ({
-        path: '/game/home'
-      });
     } else {
       console.error('게임 나가기 요청 실패', response);
     }
-
   } catch (error) {
     console.error('게임방 나가기 요청 성공: ', error);
   }
@@ -195,8 +211,8 @@ onIonViewWillEnter(async () => {
     // SSE 연결
     connectToRoom();
 
-    participants.value = Array(headCount.value).fill({ playerId: null, sUserJoined: false, name: '' });
-    console.log("마운트 됬을떄", response.players);
+    participants.value = Array(headCount.value).fill({ playerId: null, isUserJoined: false, name: '' });
+    console.log("화면이 보였을 때", response.players);
     Object.values(response.players).forEach((player, index) => {
       if (index < participants.value.length) {
         participants.value[index] = {
@@ -220,6 +236,8 @@ onIonViewWillLeave(() => {
   eventSourceStore.removeEventListener('player-joined', playerJoinedHandler);
   eventSourceStore.removeEventListener('player-left', playerLeftHandler);
   eventSourceStore.removeEventListener('game-started', gameStartedHandler);
+  eventSourceStore.removeEventListener('host-assigned', hostAssignedHandler);
+  eventSourceStore.removeEventListener('host-changed', hostChangedHandler);
 })
 
 /**
@@ -255,28 +273,21 @@ onBeforeRouteLeave(async (to, from, next) => {
     next(); // 게임시작중이면 네비가이션 가드 우회
     return;
   }
-  if (eventSourceStore.eventSource) {
-    const confirmed = await presentAlert();
-    console.log("confirmed", confirmed);
-    if (confirmed) {
-      // 사용자가 확인을 누르면 방나가기 처리 후 라우팅 진행
-      leaveRoom().then(() => {
-        next();  // 라우팅 진행
-      }).catch((error) => {
-        console.error('방나가기 중 오류 발생:', error);
-        next(false);
-      });
-    } else {
-      next(false); //사용자가 취소를 누르면 라우팅 취소
+  const confirmed = await presentAlert();
+  if (confirmed) {
+    try {
+      await leaveRoom();
+      next();
+    } catch (error) {
+      next(false);
     }
   } else {
-    // eventSource가 없으면 바로 라우팅 진행
-    next();
+    next(false);
   }
 });
 
 /**
- * 경고창 부분
+ * 방 나갈때 경고창 보여줌
  */
 const presentAlert = async () => {
   return new Promise(async (resolve) =>{
@@ -309,6 +320,22 @@ const presentAlert = async () => {
   // Alert가 닫힌 후 결과값 반환
   });
 }
+
+/**
+ * 이벤트 생성시 해당 이벤트 메시지 알림 토스트
+ */
+const presentToast = async (message: string) => {
+  const toast = await toastController.create({
+    message: message,
+    cssClass: "top-toast",
+    duration: 1500,
+    position: "top",
+    positionAnchor:"backButtonHeader"
+  });
+
+  await toast.present();
+}
+
 </script>
 
 <template>

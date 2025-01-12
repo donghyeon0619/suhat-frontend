@@ -62,7 +62,7 @@ const isRangeInput = computed(()=>
             <IonLabel class="usage-time">
               {{formattedUsageTime}}
             </IonLabel>
-            <IonRange  min="0" max="100" :value="rangeValue" @ionChange="rangeChange"></IonRange>
+            <IonRange min="0" max="100" :value="rangeValue" @ionChange="rangeChange"></IonRange>
           </div>
         </IonCardContent>
         <IonRow class="card-footer">

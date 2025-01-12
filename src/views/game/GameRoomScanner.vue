@@ -1,5 +1,15 @@
 <script setup lang="ts">
-import {IonContent, IonTitle, IonText, IonIcon, IonInput, IonModal, IonButton, modalController,} from "@ionic/vue"
+import {
+  IonContent,
+  IonTitle,
+  IonText,
+  IonIcon,
+  IonInput,
+  IonModal,
+  IonButton,
+  modalController,
+  alertController,
+} from "@ionic/vue"
 import Header from "@/components/common/BackButtonHeader.vue";
 import { StreamBarcodeReader } from "vue-barcode-reader";
 import BaseButton from "@/components/common/BaseButton.vue";
@@ -13,7 +23,7 @@ const headCount = ref(4);
 
 const findRoom = async () => {
   if (!roomId.value) {
-    alert('바코드 번호를 입력해주세요.');
+    await presentAlert('바코드 번호를 입력해주세요');
     return;
   }
 
@@ -36,13 +46,32 @@ const findRoom = async () => {
 
       await newModal.present();
     } else {
-      alert('해당 게임방이 존재하지 않습니다.');
+      await presentAlert('해당 게임방이 존재하지 않습니다.');
     }
   } catch (error) {
     console.error('게임방을 찾는 중 오류가 발생했습니다:', error);
-    alert('게임방을 찾을 수 없습니다.');
+    await presentAlert('게임방을 찾을 수 없습니다.');
   }
 };
+
+/**
+ * 오류 발생 시 경고창 뜸
+ */
+const presentAlert = async (message: string) => {
+    const alert = await alertController.create({
+      header: '방 찾기 ',
+      message: '정말로 방에서 나가시겠습니까?',
+      buttons: [
+        {
+          text: '확인',
+          role: 'confirm',
+          cssClass: "my-custom-alert-button-class",
+        },
+      ],
+      cssClass: "custom-one-button-alert"
+    });
+    await alert.present();
+}
 
 function closeModal() {
   modalController.dismiss();

@@ -131,7 +131,7 @@ const submitSurvey = async () => {
       </div>
 
       <!-- 선택지 영역 -->
-      <IonGrid>
+      <IonGrid class="check-option-grid">
         <IonRow class="ion-justify-content-center">
           <IonCol size="4" v-for="(option, index) in options.slice(0,2)" :key="index">
             <IonCard
@@ -241,7 +241,6 @@ ion-buttons{
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 25%;
 }
 
 .survey-number{
@@ -252,7 +251,7 @@ ion-buttons{
 }
 
 .survey-title {
-  margin: 8% 3% 5% 3%;
+  margin: 8% 3% 1% 3%;
   font-weight: 700;
   text-align: center;
   font-size: 1.625rem;
@@ -268,8 +267,16 @@ ion-buttons{
   margin-top: 1vh;
 }
 
-ion-grid{
-  --ion-grid-padding:0;
+ion-grid {
+  --ion-grid-padding: 0;
+}
+
+.check-option-grid {
+  position: absolute;
+  width: 94%;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 11%;
 }
 
 .option-item {
