@@ -38,7 +38,6 @@ const currentPhase = computed(() => props.currentPhase);
     v-if="currentPhase === 'voting'"
     :current-speaker="currentSpeaker?.playerInfo.name || '이름없음'"
     :game-state="props.gameState"
-    @next-turn="handleNextTurn"
   />
 </template>
 

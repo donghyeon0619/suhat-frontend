@@ -18,12 +18,13 @@ import {GameState} from "@/types/GameState";
 import {useUserStore} from "@/store/user";
 import GameExitHeader from "@/components/game/GameExitHeader.vue";
 import {AssignedCard} from "@/types/Card";
-
+import {VoteResult} from "@/types/VoteResult";
 
 // 라우트 파라미터
 const route = useRoute();
 const roomId = String(route.params.roomId);
 const router = useIonRouter();
+
 // store 변수 선언
 const eventSourceStore = useEventSourceStore();
 const userStore = useUserStore();
@@ -59,12 +60,17 @@ const gameState = reactive<GameState>({
   players: [],
 })
 
+// 투표 결과 저장
+const voteResult = ref<VoteResult | null>(null);
+
+
 /**
  * provide 함수
  */
 provide("assignedCard", assignedCard);
 provide("timerStartData", timerStartData);
-provide("timerExtensionData", timeExtensionData);
+provide("timeExtensionData", timeExtensionData);
+provide("voteResult", voteResult);
 
 /**
  * 클라이언트-서버 시간 차이 계산 함수
@@ -144,6 +150,7 @@ const roundTwoStartedHandler = (event: MessageEvent) => {
   const eventData = JSON.parse(event.data);
 
   gameState.currentRound = eventData.round;
+  gameState.currentTurn = 1;
   speakerId.value = eventData.speakerId;
 
   isSpeaker.value = userStore.id === speakerId.value;
@@ -190,11 +197,69 @@ const timeExtendedHandler = (event: MessageEvent) => {
   };
 };
 
-const endSpeakingHandler = (event: MessageEvent) => {
+/**
+ * 말하기 종료 핸들러 함수
+ * @param event
+ */
+const speakingEndHandler = (event: MessageEvent) => {
   const eventData = event.data;
   console.log('말하기가 종료 되었습니다.', eventData);
   presentToast(eventData);
   currentPhase.value = 'voting'
+}
+
+/**
+ * 투표 결과 이벤트 핸들러 함수
+ */
+const voteResultHandler = (event: MessageEvent) => {
+  const eventData = JSON.parse(event.data);
+
+  switch (eventData.result) {
+    // 퍼즐 획득 후 다음 턴으로 이동해야 할때
+    case "puzzle-acquired-next-turn":
+      voteResult.value = {
+        type: "puzzle-acquired",
+        agreeCount: eventData.agreeCount,
+        disagreeCount: eventData.disagreeCount,
+        hasReVoted: eventData.hasReVoted,
+        nextSpeakerId: eventData.nextSpeakerId,
+      }
+      break;
+
+    // 재투표일 때
+    case "re-vot":
+      voteResult.value = {
+        type: "re-vote",
+        agreeCount: eventData.agreeCount,
+        disagreeCount: eventData.disagreeCount,
+        disagreePlayers: eventData.disagreePlayers,
+      };
+      break;
+
+    // 퍼즐 실패 후 다음턴으로 이동해야할 때
+    case "puzzle-failed-next-turn":
+      voteResult.value = {
+        type: "puzzle-failed",
+        agreeCount: eventData.agreeCount,
+        disagreeCount: eventData.disagreeCount,
+      };
+      break;
+
+    // 퍼즐을 전부 모아 게임 끝났을 때
+    case "game-completed":
+      voteResult.value = {
+        type: "game-completed",
+        agreeCount: eventData.agreeCount,
+        disagreeCount: eventData.disagreeCount,
+        rankingData: eventData.rankingData,
+        hasReVoted: eventData.hasReVoted
+      };
+      break;
+
+    // 다른 결과 타입이 있을 때
+    default:
+      console.log("알수 없는 결과 타입", eventData.result);
+  }
 }
 
 /**
@@ -241,7 +306,11 @@ onIonViewWillEnter(async () => {
   eventSourceStore.addEventListener("timer-start", timerStartHandler);
   eventSourceStore.addEventListener("time-extended", timeExtendedHandler);
   eventSourceStore.addEventListener("speaking-end", speakingEndHandler);
+  eventSourceStore.addEventListener("vote-result", voteResultHandler);
 
+  // 컴포넌트 재진입 시 `timerStartData` 및 `timeExtensionData` 초기화
+  timerStartData.value = null;
+  timeExtensionData.value = null;
 })
 
 /**
@@ -257,6 +326,7 @@ onIonViewWillLeave(() => {
   eventSourceStore.removeEventListener("timer-start", timerStartHandler);
   eventSourceStore.removeEventListener("time-extended", timeExtendedHandler);
   eventSourceStore.removeEventListener("speaking-end", speakingEndHandler);
+  eventSourceStore.removeEventListener("vote-result", voteResultHandler);
   if(syncInterval.value) {
     clearInterval(syncInterval.value);
   }

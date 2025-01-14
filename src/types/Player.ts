@@ -13,3 +13,9 @@ export interface Player {
   usageTime: number;
   surveyScore: number;
 }
+
+export interface RankingPlayer {
+  playerId: number;
+  playerName:string;
+  puzzlePieces: number;
+}

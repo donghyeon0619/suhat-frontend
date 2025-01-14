@@ -23,12 +23,6 @@ const props = defineProps<{
   currentSpeaker: string;
 }>();
 
-interface RankingPlayer {
-  playerId: number; // 플레이어 ID
-  playerName: string; // 플레이어 이름
-  puzzlePieces: number; // 퍼즐 조각 개수
-}
-
 // 타이머 ID 저장 변수
 let timeoutId: ReturnType<typeof  setTimeout> | null = null;
 
