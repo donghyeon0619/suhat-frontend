@@ -64,7 +64,7 @@ export async function get(
  */
 export async function post(
   endpoint: string,
-  data: any,
+  data?: any,
   returnFullResponse: boolean = false
 ): Promise<any> {
 
@@ -148,12 +148,11 @@ export async function validateHttpResponse(response: any): Promise<void> {
 
   if (status >= 500) {
     console.error(`500 Internal Server Error - 서버에서 문제가 발생했습니다.`);
-    throw new Error(`500 Server Error: ${response.data}`);
+    throw new Error(`서버 에러: ${response.status}, ${response.data}`);
   }
 
   if (status >= 400) {
-    console.error(`400 Bad Request - 요청 오류가 발생했습니다.`);
-    throw new Error(`400 Bad Request: ${response.data}`);
+    throw new Error(`클라이언트 에러: ${response.status}, ${response.data}`);
   }
 }
 

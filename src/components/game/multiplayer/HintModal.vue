@@ -111,7 +111,6 @@ const closeModal = () => modalController.dismiss();
 }
 
 .card-text, .card-picture {
-  max-width: 65%;
   text-align: center;
   z-index: 2;
   font-weight: 700;
@@ -119,7 +118,12 @@ const closeModal = () => modalController.dismiss();
   line-height: 1.7;
   color: #ffffff;
 }
-
+.card-text {
+  max-width: 65%;
+}
+.card-picture{
+  max-width: 60%;
+}
 .card-title{
   font-weight: 600;
   color: #6B7684;

@@ -15,12 +15,13 @@ import {
 } from "@ionic/vue"
 import Header from "@/components/common/BackButtonHeader.vue";
 import JsBarcode from 'jsbarcode'
-import {ref, onMounted, computed} from 'vue'
+import {ref, computed} from 'vue'
 import UserItem from "@/components/game/UserItem.vue";
 import BaseButton from "@/components/common/BaseButton.vue";
 import {onBeforeRouteLeave, useRoute} from "vue-router";
 import {deleteRequest, get, post} from "@/api/httpService";
 import {useEventSourceStore} from "@/store/eventSourceStore";
+import {useUserStore} from "@/store/user";
 
 const route = useRoute();
 const router = useIonRouter();
@@ -33,6 +34,7 @@ const participants = ref(Array(headCount.value).fill({ playerId: null, isUserJoi
 
 // sse 변수 선언
 const eventSourceStore = useEventSourceStore();
+const userStore = useUserStore();
 
 /**
  * 방 연결 및 이벤트 리스너 설정
@@ -44,8 +46,6 @@ const connectToRoom = () => {
 
   eventSourceStore.addEventListener('connected', function(event) {
     console.log('connected 이벤트 수신:', event.data);
-    isHost.value = JSON.parse(event.data).host;
-    console.log('isHost: ', isHost.value);
   });
 
   // 이벤트 등록
@@ -222,6 +222,12 @@ onIonViewWillEnter(async () => {
         };
       }
     });
+
+    // 호스트 여부 확인
+    const currentUserId = userStore.userInfo.id;
+    if(response.hostId === currentUserId) {
+      isHost.value = true;
+    }
 
   } catch (error) {
     console.log('방 데이터를 가져오지 못했습니다: ', error);

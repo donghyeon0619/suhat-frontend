@@ -1,58 +1,43 @@
 <script setup lang="ts">
-import {PropType, ref} from "vue";
+import {computed, PropType, ref} from "vue";
 import ListenerListeningView from "@/views/game/multiplayer/listener/ListenerListeningView.vue";
 import ListenerVotingView from "@/views/game/multiplayer/listener/ListenerVotingView.vue";
+import {GameState} from "@/types/GameState";
 
-const props = defineProps({
-    participants: {type: Array as PropType<
-        Array<{
-          name: string;
-          order: number;
-          currentPieces: number;
-        }>
-      >,
-      required: true,
-    },
-  }
-);
+const props = defineProps<{
+  gameState: GameState;
+  currentPhase: string;
+}>()
+
 const emit = defineEmits<{
   (e: "nextTurn", nextSpeakerId: number, myRole: "speaker" | "listener"): void;
 }>()
 
 
-const speaker = ref("이예지")
-const currentPhase = ref("listening");
-
 /**
- * 하위 컴포넌트에서 emit으로 이벤트 "nextTurn" 발생 시 currentPhase listening으로 초기화
- * @param nextSpeakerId
- * @param myRole
+ * speaking이 true인 사람의 정보를 computed로 가져옴
  */
-const handleNextTurn = (nextSpeakerId: number, myRole: "speaker" | "listener") => {
-  currentPhase.value = currentPhase.value === "voting" ? "listening" : "voting";
-  emit("nextTurn", nextSpeakerId, myRole);
-}
+const currentSpeaker = computed(() => {
+  return props.gameState.players.find(player => player.isSpeaking) || null;
+})
 
-/**
- * 하위 컴포넌트에서 emit으로 이벤트 "next-phase) 발생 시 listening 완료 후
- * voting으로 화면 전환 함수
- */
-const nextPhase = () => {
-  currentPhase.value = currentPhase.value === "listening" ? "voting" : "listening";
-};
+
+const currentPhase = computed(() => props.currentPhase);
+
+
+
 
 </script>
 
 <template>
   <ListenerListeningView
     v-if="currentPhase === 'listening'"
-    :current-speaker="speaker"
-    @next-phase="nextPhase"
+    :current-speaker="currentSpeaker?.playerInfo.name || '이름없음'"
   />
   <ListenerVotingView
     v-if="currentPhase === 'voting'"
-    :current-speaker="speaker"
-    :participants="participants"
+    :current-speaker="currentSpeaker?.playerInfo.name || '이름없음'"
+    :game-state="props.gameState"
     @next-turn="handleNextTurn"
   />
 </template>

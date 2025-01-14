@@ -5,7 +5,7 @@ import {
 } from "@ionic/vue";
 import PuzzleProgressChip from "@/components/game/PuzzleProgressChip.vue";
 import BaseButtonFooter from "@/components/common/BaseButtonFooter.vue";
-import {onMounted, onUnmounted, PropType, ref} from "vue";
+import {computed, onMounted, onUnmounted, PropType, ref} from "vue";
 import PlayerProfile from "@/components/game/multiplayer/PlayerProfile.vue";
 import ChatBubbleWithBorder from "@/components/common/ChatBubbleWithBorder.vue";
 import ReVoteDetails from "@/components/game/multiplayer/ReVoteDetails.vue";
@@ -15,25 +15,12 @@ import PuzzleSuccessModal from "@/components/game/PuzzleSuccessModal.vue";
 import {enterAnimation, leaveAnimation} from "@/utils/puzzleModalAnimations";
 import PuzzleFailureModal from "@/components/game/PuzzleFailureModal.vue";
 import {useEventSourceStore} from "@/store/eventSourceStore";
+import {GameState} from "@/types/GameState";
 
-const props = defineProps({
-  participants: {type: Array as PropType<
-      Array<{
-        name: string;
-        order: number;
-        currentPieces: number;
-      }>
-    >,
-    required: true,
-  },
-  currentSpeaker:{
-      type : String,
-    required: true
-  }
-  }
-);
-
-
+const props = defineProps<{
+  gameState: GameState;
+  currentSpeaker: string;
+}>();
 
 interface RankingPlayer {
   playerId: number; // 플레이어 ID
@@ -41,24 +28,23 @@ interface RankingPlayer {
   puzzlePieces: number; // 퍼즐 조각 개수
 }
 
-// 상위 컴포넌트로 보낼 이벤트 정의
-const emit = defineEmits<{
-  (e: "nextTurn", nextSpeakerId: number, myRole: "speaker" | "listener"): void;
-}>();
 
 // 타이머 ID 저장 변수
 let timeoutId: ReturnType<typeof  setTimeout> | null = null;
 
-// 라우트 관리
-const route = useRoute();
-const roomId = route.params.roomId;
 const router = useIonRouter();
+
+/**
+ * 상위 컴포넌트 상태 변수
+ */
+const players = computed(() => props.gameState.players);
+const currentPieces = computed(() => props.gameState.currentPuzzlePieces);
+const maxPieces = computed(() => props.gameState.totalPuzzlePieces);
+const totalPlayers = computed(() => props.gameState.totalPlayers);
 
 // 현재 상태 관리
 const currentPhase = ref("voting"); // "voting", "result", reVoting
 const currentResult = ref("");
-const currentPieces = ref(0);
-const maxPieces = ref(13);
 
 // 투표 데이터
 const agreeCounts = ref(2);
@@ -104,8 +90,7 @@ const handleSseEvent = (event: MessageEvent) => {
       // 3초 후 퍼즐 획득 모달 띄움
       timeoutId = setTimeout(() => {
         openSuccessModal(undefined,  () => {
-          // 모달 확인 시 다음 턴으로 emit
-          emit("nextTurn", nextSpeakerId, myNextRole as "speaker" | "listener")
+          console.log("퍼즐 획득");
         });
       }, 3000);
       break;
@@ -142,8 +127,7 @@ const handleSseEvent = (event: MessageEvent) => {
       // 일정 시간 이후 퍼즐조각 획득 실패 모달 띄움
       timeoutId = setTimeout(() => {
         openFailureModal(() => {
-          // 모달 확인 시 다음 턴으로 emit
-          emit("nextTurn", nextSpeakerId, myNextRole as "speaker" | "listener")
+          console.log('퍼즐 실패 ');
         });
       }, 3000);
       break;
@@ -262,21 +246,19 @@ onUnmounted(() => {
       <!-- 참여자 프로필 -->
       <div class="player-profiles">
         <PlayerProfile
-          v-for="participant in participants"
-          :key="participant.name"
-          :player-name="participant.name"
-          :player-order="participant.order"
-          :piece-count="participant.currentPieces"
+          v-for="(player, index) in players"
+          :key="player.playerId"
+          :player-name="player.playerInfo.name"
+          :player-order="player.sequenceNumber"
+          :piece-count="player.collectedPuzzlePieces"
           class="player-profile"
           :class="{
-            // 참여자 수가 3명일 떄의 상단 프로필 위치
-            'center-top-profile': participants.length === 3 && participant.order === 1,
-            // 참여자 수가 4명일 떄의 상단 프로필 위치
-            'left-top-profile': participants.length === 4 && participant.order === 1,
-            'right-top-profile': participants.length === 4 && participant.order === 2,
-            'left-bottom-profile': participant.order === 3,
-            'right-bottom-profile': participant.order === 4
-          }"
+          'center-top-profile': totalPlayers === 3 && index === 0, // 3명일 때 중앙
+          'left-bottom-profile': (totalPlayers === 3 && index === 1) || (totalPlayers === 4 && index === 2), // 3명 또는 4명일 때 왼쪽 아래
+          'right-bottom-profile': (totalPlayers === 3 && index === 2) || (totalPlayers === 4 && index === 3), // 3명 또는 4명일 때 오른쪽 아래
+          'left-top-profile': totalPlayers === 4 && index === 0, // 4명일 때 왼쪽 위
+          'right-top-profile': totalPlayers === 4 && index === 1, // 4명일 때 오른쪽 위
+         }"
         />
       </div>
 

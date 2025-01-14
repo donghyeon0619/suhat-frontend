@@ -11,8 +11,7 @@ import {
   IonCardContent,
   IonCardHeader,
 } from "@ionic/vue";
-import BaseButtonFooter from "@/components/common/BaseButtonFooter.vue";
-import {computed, reactive, ref} from "vue";
+import {computed, ref} from "vue";
 
 const confirm = () => modalController.dismiss(usageTime.value, 'confirm');
 

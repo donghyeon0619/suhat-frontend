@@ -2,7 +2,7 @@
 import {IonContent, modalController, IonLabel, toastController } from "@ionic/vue";
 import PuzzleProgressChip from "@/components/game/PuzzleProgressChip.vue";
 import BaseButtonFooter from "@/components/common/BaseButtonFooter.vue";
-import {computed, PropType, ref} from "vue";
+import {computed, ref, watch} from "vue";
 import PlayerProfile from "@/components/game/multiplayer/PlayerProfile.vue";
 import ChatBubbleWithBorder from "@/components/common/ChatBubbleWithBorder.vue";
 import TimeInputModal from "@/components/game/multiplayer/TimeInputModal.vue";
@@ -10,24 +10,45 @@ import GameCardBg from "@/assets/img/game/bg-game-card.svg";
 import {GameState} from "@/types/GameState";
 import {post} from "@/api/httpService";
 
-// 상위 컴포넌트로 보낼 이벤트 정의
-const emit = defineEmits(["nextRound"]);
-
 const props = defineProps<{
-  gameState: GameState
+  gameState: GameState;
+  isHost: boolean;
+  orderAssigned: boolean;
 }>();
 
+/**
+ * 상위 컴포넌트 상태 변수
+ */
 const currentPieces = computed(() => props.gameState.currentPuzzlePieces);
 const maxPieces = computed(() => props.gameState.totalPuzzlePieces);
 const totalPlayers = computed(() => props.gameState.totalPlayers);
+const orderSelected = computed(() => props.orderAssigned);
+const roomId = props.gameState.roomId
 
 const usageTime = ref(0);
-const orderSelected = ref(false);
-const buttonText = ref("확인했어요"); // 버튼 텍스트 초기값
-const orderShow = ref(false);
+const inputCompleted = ref(false);
+
+const buttonText = computed(() => {
+  // 입력 미완료 상태
+  if (!inputCompleted.value) return "확인했어요";
+  // 호스트 조건
+  if (props.isHost){
+    return orderSelected.value ? "2라운드 시작" : "모두 입력 대기중"
+  }
+  return "다른 인원들 입력중"
+})
+
+const isButtonDisabled = computed(() => {
+  if (!inputCompleted.value) return false; // 입력 전에는 항상 활성화
+  if (props.isHost) return !orderSelected.value; // 호스트: 모두 입력 완료 후 활성화
+  return true; // 비호스트는 입력 완료 후 비활성화
+})
 
 const players = computed(() => props.gameState.players);
 
+/**
+ * 스마트폰 이용시간 입력 액션시트 모달 보여줌
+ */
 const openTimeInputModal = async () => {
   console.log('Opening TimeInputModal...');
   const modal = await modalController.create({
@@ -47,25 +68,23 @@ const openTimeInputModal = async () => {
   if (role === 'confirm'){
     usageTime.value = data;
     try {
-      const roomId = props.gameState.roomId
-      const response = await post(`/api/game/${roomId}/round/1/usage-time`, {
-        usageTime: data // 서버에 보낼 데이터
-      });
+      const response = await post(`games/${roomId}/round/1/usage-time?usageTime=${Number(data)}`);
       console.log("사용시간 입력", response);
-      await presentToast();
-      buttonText.value = "2라운드 시작" // 버튼 텍스트 변경
-      orderSelected.value = true;
+      inputCompleted.value = true;
     } catch (error){
       console.error("사용시간 입력 요청 중 오류 발생", error);
     }
   }
 };
 
+/**
+ * 순번 정해지고 토스트 보여줌
+ */
 const presentToast = async () => {
   const toast = await toastController.create({
     message: '이용습관이 적고, 앞서 했던 이용습관지 점수가 높은 순서대로 게임 순서가 결정되었어요.',
     cssClass: "top-toast",
-    duration: 1500,
+    duration: 3000,
     position: "top",
     positionAnchor:"backButtonHeader"
   });
@@ -73,17 +92,28 @@ const presentToast = async () => {
   await toast.present();
 }
 
-// 다음 라운드를 처리하는 함수
-const handleNextRound = async () => {
-  if (buttonText.value === "2라운드 시작"){
-    console.log("start round2...");
 
-    // 상위 컴포넌트로 nextRound 이벤트를 emit하여 라운드를 업데이트
-    emit("nextRound");
-  } else{
+/**
+ * 다음 라운드를 처리하는 함수
+ */
+const handleButtonClick = async () => {
+  if (orderSelected.value && props.isHost){
+    try{
+      const response = await post(`games/${roomId}/round/2/state`);
+      console.log("2라운드 게임 요청", response);
+    } catch (error) {
+      console.error("2라운드 게임 요청중 에러발생", error);
+    }
+  } else if (!inputCompleted.value){
     await openTimeInputModal();
   }
 }
+
+watch(orderSelected, (newVal) => {
+  if (newVal) {
+    presentToast();
+  }
+})
 
 </script>
 
@@ -97,7 +127,7 @@ const handleNextRound = async () => {
     <!-- 게임 영역 -->
     <div class="game-play-section">
       <PlayerProfile
-        :order-show="orderShow"
+        :order-show="orderSelected"
         v-for="(player, index) in players"
         :key="player.playerId"
         :player-name="player.playerInfo.name"
@@ -137,7 +167,10 @@ const handleNextRound = async () => {
       </div>
     </div>
   </IonContent>
-  <BaseButtonFooter :button-text="buttonText" @buttonClick="handleNextRound" />
+  <BaseButtonFooter
+    :button-text="buttonText"
+    :disabled="isButtonDisabled"
+    @buttonClick="handleButtonClick" />
 </template>
 
 <style scoped>

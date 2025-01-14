@@ -46,7 +46,7 @@ const findRoom = async () => {
 
       await newModal.present();
     } else {
-      await presentAlert('해당 게임방이 존재하지 않습니다.');
+      await presentAlert('해당 방이 존재하지 않습니다.');
     }
   } catch (error) {
     console.error('게임방을 찾는 중 오류가 발생했습니다:', error);
@@ -60,7 +60,7 @@ const findRoom = async () => {
 const presentAlert = async (message: string) => {
     const alert = await alertController.create({
       header: '방 찾기 ',
-      message: '정말로 방에서 나가시겠습니까?',
+      message: message,
       buttons: [
         {
           text: '확인',
