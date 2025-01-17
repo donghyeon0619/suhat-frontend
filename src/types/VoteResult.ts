@@ -19,6 +19,7 @@ export interface PuzzleFailedResult {
   type: "puzzle-failed";
   agreeCount: number;
   disagreeCount: number;
+  nextSpeakerId?: number;
 }
 
 export interface GameCompletedResult {

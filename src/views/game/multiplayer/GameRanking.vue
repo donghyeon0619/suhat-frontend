@@ -1,8 +1,17 @@
 <script setup lang="ts">
-import {IonPage, IonContent, IonText, IonAvatar, IonLabel,IonChip, IonCol,IonGrid,IonRow,} from "@ionic/vue";
-import BackButtonHeader from "@/components/common/BackButtonHeader.vue";
+import {
+  IonPage,
+  IonContent,
+  IonText,
+  IonAvatar,
+  IonLabel,
+  IonChip,
+  IonCol,
+  IonGrid,
+  IonRow,
+  useIonRouter,
+} from "@ionic/vue";
 import BaseDoubleButtonFooter from "@/components/common/BaseDoubleButtonFooter.vue";
-import {computed, reactive, ref} from "vue";
 
 // 아이콘 가져오기
 import IconRankingFirst from "@/assets/icons/game/icon-ranking-first.svg"
@@ -11,57 +20,111 @@ import IconRankingThird from "@/assets/icons/game/icon-ranking-third.svg"
 import IconRankingMan from "@/assets/icons/game/icon-ranking-man.png"
 import IconRankingWoman from "@/assets/icons/game/icon-ranking-woman.png"
 import IconRankingOther from "@/assets/icons/game/icon-ranking-other.png"
+import {useRoute} from "vue-router";
+import {RankingPlayer} from "@/types/Player";
+import {deleteRequest, post} from "@/api/httpService";
+import {useEventSourceStore} from "@/store/eventSourceStore";
+import {showAlert} from "@/utils/showAlert";
+import {useGameStore} from "@/store/gameStore";
+import {ref} from "vue";
 
 // 사용자 랭킹 인터페이스
 interface UserRanking {
   name: string;
-  puzzleCount: number; // 퍼즐 개수를 나타냄.
-  gender: string;
-  crownSrc?: string;
+  puzzleCount: number;
+  crownSrc: string;
+  avatarSrc: string;
+  rank: number;
 }
 
-// 성별별 아이콘과 색상 정보
-const genderDetails = reactive([
-  { name: 'man', imgSrc: IconRankingMan },
-  { name: 'woman', imgSrc: IconRankingWoman },
-  { name: 'other', imgSrc: IconRankingOther }
-]);
+const eventSourceStore = useEventSourceStore();
 
-// 순위 데이터 샘플
-const rankings = reactive<UserRanking[]>([
-  { name: "김예지", puzzleCount: 10, gender: 'woman', crownSrc: IconRankingFirst },
-  { name: "박성호", puzzleCount: 7, gender: 'man', crownSrc: IconRankingSecond },
-  { name: "김루리", puzzleCount: 5, gender: 'other', crownSrc: IconRankingThird }
-]);
+// 라우트에서 전달받은 데이터
+const route = useRoute();
+const router = useIonRouter();
 
-// 퍼즐 개수를 기준으로 사용자 순위를 정렬하는 계산된 속성
-const sortedRankings = computed(() => {
-  return [...rankings]
-    .sort((a, b) => {
-      if (b.puzzleCount === a.puzzleCount) {
-        return a.name.localeCompare(b.name); // 이름으로 오름차순 정렬
-      }
-      return b.puzzleCount - a.puzzleCount; // 퍼즐 개수로 내림차순 정렬
-    })
-    .map((user, index) => ({
-      ...user,
-      rank: index + 1, // 1등부터 시작하도록 순위 설정
-      crownSrc: index === 0 ? IconRankingFirst : index === 1 ? IconRankingSecond : IconRankingThird
-    }));
-});
+const roomId = route.query.roomId || "";
+const rankingData = JSON.parse(route.query.rankingData as string || "[]") as RankingPlayer[];
+const gameStore = useGameStore();
 
+// 순위별 왕관 이미지
+const crownIcons = [IconRankingFirst, IconRankingSecond, IconRankingThird];
+
+// 성별 아이콘 무작위 선택
+
+// 성별 아이콘 무작위 선택
+const randomGenderIcons = [IconRankingMan, IconRankingWoman, IconRankingOther];
+const getRandomGenderIcon = () => {
+  return randomGenderIcons[Math.floor(Math.random() * randomGenderIcons.length)];
+};
+
+const rankings = ref<UserRanking[]>(
+  rankingData.map((player: any, index: number) => ({
+    name: player.playerName,
+    puzzleCount: player.puzzlePieces,
+    crownSrc: crownIcons[index],  //순위에 맞는 왕관 이미지
+    avatarSrc: getRandomGenderIcon(),
+    rank: index + 1
+  }))
+)
 // 각 사용자에 맞는 애니메이션 클래스를 반환하는 computed 속성 정의
 const getRankAnimationClass = (rank: number) => `rank-${rank}`
 
-// 성별 이름을 기반으로 성별 정보를 가져오는 헬퍼 함수
-const getGenderDetails = (genderName: string) => {
-  return genderDetails.find((g) => g.name === genderName) || { imgSrc: IconRankingOther };
-};
+const goRetry = async () => {
+  try{
+    const response = await post(`games/${roomId}/retry`, null, true);
+
+    if (response.status == "200") {
+      router.replace(`/game/waiting/${roomId}`);
+      gameStore.setGameEnded(false);
+    } else {
+      console.log("다시하기 요청 이후 대기방으로 이동할 수 없음");
+      await showAlert(
+        "경고",
+        "다시하기 요청 중 오류로 홈으로 이동", [
+          {
+            text: "확인", role: "confirm", handler: () => {
+              router.replace("/game/home");
+            }
+          }]
+      );
+    }
+
+  } catch (error) {
+    console.log("게임 다시하기 요청 중 오류 발생", error);
+    await showAlert(
+      "경고",
+      "다시하기 요청 중 오류로 홈으로 이동", [
+        {
+          text: "확인", role: "confirm", handler: () => {
+            router.replace("/game/home");
+          }
+        }]
+    );
+  }
+}
+
+const goHome = async () => {
+  try{
+    const response = await deleteRequest(`rooms/${roomId}/players`, true);
+    eventSourceStore.disconnectByUser();
+
+    if (response.status == "200") {
+      console.log('게임 종료 후 ')
+      router.replace("/home");
+
+    }
+  } catch (error) {
+    console.error('홈으로 이동 중 오류 발생');
+  }
+}
 
 </script>
 <template>
 <IonPage>
-  <BackButtonHeader back-button-color="white"></BackButtonHeader>
+  <IonHeader claa="ion-no-border">
+    <IonToolbar></IonToolbar>
+  </IonHeader>
   <IonContent class="ion-padding" scroll-y="false">
     <!-- 타이틀 색션 -->
     <div class="title-section">
@@ -74,7 +137,7 @@ const getGenderDetails = (genderName: string) => {
       <IonRow>
         <!-- 각각의 왕관 뱃지 및 막대 -->
         <IonCol
-          v-for="(user, index) in sortedRankings"
+          v-for="(user, index) in rankings"
           :key="index"
           size="4"
           class="ranking-item"
@@ -87,7 +150,7 @@ const getGenderDetails = (genderName: string) => {
               <IonAvatar
                 class="avatar"
               >
-                <img class="avatar-img" :src="getGenderDetails(user.gender).imgSrc" alt="Avatar Icon" />
+                <img class="avatar-img" :src="user.avatarSrc" alt="Avatar Icon" />
               </IonAvatar>
             </div>
             <IonChip class="user-chip">
@@ -108,6 +171,8 @@ const getGenderDetails = (genderName: string) => {
   <BaseDoubleButtonFooter
     button-text1="다시하기"
     button-text2="게임 종료"
+    @button1Click="goRetry"
+    @button2Click="goHome"
   />
 </IonPage>
 </template>
@@ -115,6 +180,10 @@ const getGenderDetails = (genderName: string) => {
 <style scoped>
 .ion-page{
   background-image: url('../../../assets/img/typetest/bg-type-test-page-dark.png'); /* 이미지를 직접 넣는 방법 */
+}
+
+ion-toolbar{
+  --background: transparent;
 }
 
 ion-content::part(background) {

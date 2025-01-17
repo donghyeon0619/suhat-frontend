@@ -22,6 +22,7 @@ import {onBeforeRouteLeave, useRoute} from "vue-router";
 import {deleteRequest, get, post} from "@/api/httpService";
 import {useEventSourceStore} from "@/store/eventSourceStore";
 import {useUserStore} from "@/store/user";
+import {useGameStore} from "@/store/gameStore";
 
 const route = useRoute();
 const router = useIonRouter();
@@ -30,12 +31,19 @@ const roomName = ref('방 이름');
 const headCount = ref(4);
 const isHost = ref(false);
 const isGameStarting = ref(false);
-const participants = ref(Array(headCount.value).fill({ playerId: null, isUserJoined: false, name: '' }));
+const isLeaving = ref(false);
+
+const participants = ref(
+  Array(headCount.value).fill({
+    playerId: null,
+    isUserJoined: false,
+    ready: false,
+    name: '' }));
 
 // sse 변수 선언
 const eventSourceStore = useEventSourceStore();
 const userStore = useUserStore();
-
+const gameStore = useGameStore();
 /**
  * 방 연결 및 이벤트 리스너 설정
  */
@@ -54,6 +62,7 @@ const connectToRoom = () => {
   eventSourceStore.addEventListener('player-left', playerLeftHandler);
   eventSourceStore.addEventListener('host-assigned', hostAssignedHandler);
   eventSourceStore.addEventListener('host-changed', hostChangedHandler);
+  eventSourceStore.addEventListener('player-ready', playerReadyHandler);
 };
 
 // 핸들러 함수 정의
@@ -107,6 +116,24 @@ const hostChangedHandler = (event: MessageEvent) => {
 }
 
 /**
+ *
+ */
+const playerReadyHandler = (event: MessageEvent) => {
+  console.log('player-ready 이벤트 수신:', event.data);
+
+  const readyPlayerId = JSON.parse(event.data).playerId;
+
+  // 참가자 리스트에서 해당 플레이어 상태 업데이트
+  const playerIndex = participants.value.findIndex(
+    (p) => p.playerId === readyPlayerId
+  );
+
+  if (playerIndex !== -1) {
+    participants.value[playerIndex].ready = true;
+  }
+}
+
+/**
  * 새로운 플레이어를 참가자 리스트에 추가
  */
 const addPlayer = (data) => {
@@ -118,6 +145,7 @@ const addPlayer = (data) => {
     participants.value[emptySlotIndex] = {
       playerId: newPlayer.playerId,
       isUserJoined: true,
+      ready:true,
       name: newPlayer.playerInfo.name,
     };
     console.log("들어간 플레이어 정보", participants.value[emptySlotIndex])
@@ -132,13 +160,13 @@ const deletePlayer = (data) => {
 
   // participants 배열에서 playerId가 일치하는 항목 찾기
   const playerIndex = participants.value.findIndex(p => p.playerId === leavingPlayerId);
-
   console.log("playerIndex", playerIndex)
   if (playerIndex !== -1){
     // 해당 슬롯을 초기 상태로 되돌리기
     participants.value[playerIndex] = {
       playerId: null,
       isUserJoined: false,
+      ready: false,
       name: '',
     };
   }  else {
@@ -181,6 +209,11 @@ const startGame = async () => {
  * 방 나가기 요청을 서버에 전송
  */
 const leaveRoom = async () => {
+  if(isLeaving.value){
+    return false;
+  }
+  isLeaving.value = true;
+
   try{
     const response = await deleteRequest(`rooms/${roomId}/players`, true);
     eventSourceStore.disconnectByUser();
@@ -196,12 +229,38 @@ const leaveRoom = async () => {
 };
 
 /**
+ * 방 상태 적용
+ * @param response
+ */
+const fetchDeTails = (response: any) => {
+  participants.value = Array(headCount.value).fill({playerId: null, isUserJoined: false, name: ''});
+  console.log("화면이 보였을 때", response.players);
+  Object.values(response.players).forEach((player, index) => {
+    if (index < participants.value.length) {
+      participants.value[index] = {
+        playerId: player.playerId,
+        isUserJoined: true,
+        ready: player.ready,
+        name: player.playerInfo.name // 전달받은 player의 name 필드
+      };
+    }
+  });
+  gameStore.setGameEnded(false);
+}
+
+/**
  * 페이지가 뷰에 표시되기 직전에 호출됨
  */
 onIonViewWillEnter(async () => {
   // 초기 데이터 로드
   try {
     const response = await get(`rooms/${roomId}`);
+
+    if(response.roomStatus === "IN_GAME"){
+      console.log("게임이 이미 시작되었습니다. 게임 화면으로 이동합니다");
+      router.replace(`/multi/play/${roomId}`);
+      return;
+    }
 
     roomName.value = response.roomName;
     headCount.value = response.totalPlayers;
@@ -211,17 +270,7 @@ onIonViewWillEnter(async () => {
     // SSE 연결
     connectToRoom();
 
-    participants.value = Array(headCount.value).fill({ playerId: null, isUserJoined: false, name: '' });
-    console.log("화면이 보였을 때", response.players);
-    Object.values(response.players).forEach((player, index) => {
-      if (index < participants.value.length) {
-        participants.value[index] = {
-          playerId: player.playerId,
-          isUserJoined: true,
-          name: player.playerInfo.name // 전달받은 player의 name 필드
-        };
-      }
-    });
+    fetchDeTails(response);
 
     // 호스트 여부 확인
     const currentUserId = userStore.userInfo.id;
@@ -244,7 +293,17 @@ onIonViewWillLeave(() => {
   eventSourceStore.removeEventListener('game-started', gameStartedHandler);
   eventSourceStore.removeEventListener('host-assigned', hostAssignedHandler);
   eventSourceStore.removeEventListener('host-changed', hostChangedHandler);
+  eventSourceStore.removeEventListener('player-ready', playerReadyHandler);
+  resetRoomState();
 })
+
+/**
+ * 방 초기화 함수
+ */
+const resetRoomState = () => {
+  isLeaving.value = false;
+  isHost.value = false;
+}
 
 /**
  * 현재 참가자 수 계산
@@ -257,6 +316,13 @@ const currentParticipantCount = computed(() => {
  * 방이 꽉 찼는지 여부 확인
  */
 const isRoomFull = computed(() => currentParticipantCount.value === headCount.value);
+
+/**
+ * 방에 있는 모든 인원이 준비완료했는지 확인
+ */
+const allPlayerReady = computed(() => {
+  return participants.value.every((p => p.isUserJoined && p.ready));
+})
 
 const imageUrl = ref(null);
 
@@ -271,13 +337,13 @@ const createBarcode = (roomId) => {
   imageUrl.value = canvas.toDataURL('image/png'); // 캔버스를 이미지 URL로 변환
 };
 
+
 /**
  * 라우팅전 네비게이션 가드 함수
  */
 onBeforeRouteLeave(async (to, from, next) => {
-  if(isGameStarting.value){
-    next(); // 게임시작중이면 네비가이션 가드 우회
-    return;
+  if (isGameStarting.value || isLeaving.value) {
+    return next(); // 게임시작중이면 네비가이션 가드 우회;
   }
   const confirmed = await presentAlert();
   if (confirmed) {
@@ -295,8 +361,7 @@ onBeforeRouteLeave(async (to, from, next) => {
 /**
  * 방 나갈때 경고창 보여줌
  */
-const presentAlert = async () => {
-  return new Promise(async (resolve) =>{
+const presentAlert = async (): Promise<boolean> => {
   const alert = await alertController.create({
     header: '방 나가기',
     message: '정말로 방에서 나가시겠습니까?',
@@ -305,27 +370,33 @@ const presentAlert = async () => {
         text: '확인',
         role: 'confirm',
         cssClass: "my-custom-alert-button-class",
-        handler: async () => {
+        handler: () => {
           console.log('사용자가 나가기를 선택했습니다.');
-          resolve(true); // "나가기" 클릭 시 true 반환
+          resolvePromise(true);
         }
       },
       {
         text: '취소',
         role: 'cancel',
         cssClass: "my-custom-alert-button-class",
-        handler: async () => {
+        handler: () => {
           console.log('사용자가 취소를 선택했습니다.');
-          resolve(false); // "취소" 클릭 시 false 반환
+          resolvePromise(false);
         }
       },
     ],
     cssClass: "my-custom-alert-class"
   });
-  await alert.present();
-  // Alert가 닫힌 후 결과값 반환
+
+  let resolvePromise: (value: boolean) => void;
+  const promise = new Promise<boolean>((resolve) => {
+    resolvePromise = resolve;
   });
-}
+
+  await alert.present();
+  return promise;
+};
+
 
 /**
  * 이벤트 생성시 해당 이벤트 메시지 알림 토스트
@@ -384,6 +455,7 @@ const presentToast = async (message: string) => {
                 :key="index"
                 :isUserJoined="participant.isUserJoined"
                 :name="participant.isUserJoined ? participant.name : ''"
+                :is-ready="participant.ready"
             >
             </UserItem>
           </ion-list>
@@ -393,7 +465,7 @@ const presentToast = async (message: string) => {
 
     <ion-footer class="ion-padding-start ion-padding-end ion-padding-bottom ion-no-border">
       <ion-img class="start-speech-bubble ion-margin-start" v-if="isHost && isRoomFull" src="src/assets/icons/game/speech-bubble.svg"></ion-img>
-      <BaseButton :buttonText="isHost ? '게임시작' : '게임 나가기'" :isButtonDisabled="isHost ? !isRoomFull : false" @click="buttonClickHandler"></BaseButton>
+      <BaseButton :buttonText="isHost ? '게임시작' : '게임 나가기'" :isButtonDisabled="isHost ? !(isRoomFull && allPlayerReady) : false" @click="buttonClickHandler"></BaseButton>
     </ion-footer>
   </IonPage>
 </template>

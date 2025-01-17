@@ -9,7 +9,7 @@ import {
   IonCol,
   IonButton,
   IonLabel,
-  IonIcon, IonThumbnail, modalController, toastController
+  IonIcon, IonThumbnail, modalController, toastController, alertController
 } from "@ionic/vue";
 import {computed, inject, nextTick, onBeforeUnmount, onMounted, Ref, ref, watch} from "vue";
 import MikeIcon from "@/assets/icons/game/icon-mike.svg"
@@ -25,16 +25,12 @@ import {post} from "@/api/httpService";
 import {useRoute} from "vue-router";
 import {AssignedCard, AssignedCardData, Card} from "@/types/Card";
 import {smartphonePicture} from "@/data/smartphonePicture";
+import {Player} from "@/types/Player";
 
-/**
- * props 정의
- */
-const props = defineProps({
-  currentSpeaker : {
-    type : String,
-    required: true,
-  }
-})
+// props 선언
+const props = defineProps<{
+  currentSpeaker: Player
+}>()
 
 const route = useRoute();
 const roomId = route.params.roomId;
@@ -51,6 +47,7 @@ const timerStartData = inject<Ref<{ startTime: number; } | null>>("timerStartDat
 const timeExtensionData = inject<Ref<{ additionalTime: number } | null>>("timeExtensionData", ref(null));
 // 시간 연장 유무
 const hasExtended = ref(false);
+const speakingStarted = ref(false);
 
 /**
  * 카드 관련 변수
@@ -113,13 +110,14 @@ watch(
 );
 
 /**
- * 타이머 동기화 로직: 'timer-start' 이벤트를 수신했을 때 타이머 시작
+ * 타이머  시작 로직: 'timer-start' 이벤트를 수신했을 때 타이머 시작
  */
 watch(
   () => timerStartData?.value,
   (newTimerData) => {
     if (newTimerData && newTimerData.startTime) {
-      console.log("타이머 동기화 시작:", newTimerData);
+      console.log("타이머 시작:", newTimerData);
+      speakingStarted.value = true;
       startTimer(newTimerData.startTime);
     }
   }
@@ -185,6 +183,11 @@ const stopTimer = async () => {
  * "말하기 종료" 버튼 클릭 시 타이머 정지 및 다음 phase 전환 함수
  */
 const handleEndSpeaking = async () => {
+  if (!speakingStarted.value) {
+    await presentAlert("말하기가 아직 시작되지 않았습니다. 시작 후 종료를 시도하세요");
+    return;
+  }
+
   await stopTimer();
   try {
     const response = await post(`games/${roomId}/speaking/end`);
@@ -214,6 +217,11 @@ watch(
  * 시간 연장함수
  */
 const extendTime = async () => {
+  if(!speakingStarted.value) {
+    await presentAlert("먼저 그림카드와 글자 카드를 눌러주세요");
+    return
+  }
+
   if (!hasExtended.value) {
     try {
       const response = await post(`games/${roomId}/timer/extensions?additionalTime=${ADDITIONAL_TIME}`);
@@ -281,6 +289,25 @@ const closeAllModals = async () => {
 };
 
 /**
+ * 오류 발생 시 경고창 뜸
+ */
+const presentAlert = async (message: string) => {
+  const alert = await alertController.create({
+    header: '잘못된 동작',
+    message: message,
+    buttons: [
+      {
+        text: '확인',
+        role: 'confirm',
+        cssClass: "my-custom-alert-button-class",
+      },
+    ],
+    cssClass: "custom-one-button-alert"
+  });
+  await alert.present();
+}
+
+/**
  * unmounted 될 때 타이머 초기화
  */
 onBeforeUnmount(() => {
@@ -298,7 +325,7 @@ onBeforeUnmount(() => {
         <img :src="MikeIcon" alt="마이크">
       </IonAvatar>
       <IonChip class="player-chip">
-        <IonLabel class="player-name">{{currentSpeaker}}</IonLabel>
+        <IonLabel class="player-name">{{currentSpeaker.playerInfo.name}}</IonLabel>
       </IonChip>
     </div>
 

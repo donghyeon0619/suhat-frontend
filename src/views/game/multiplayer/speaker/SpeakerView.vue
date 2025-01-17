@@ -13,7 +13,7 @@ const props = defineProps<{
 const currentPhase = computed(() => props.currentPhase);
 
 const emit = defineEmits<{
-  (e: "nextTurn", nextSpeakerId: number, myRole: "speaker" | "listener"): void;
+  (e: "nextTurn", nextSpeakerId: number): void;
 }>()
 
 /**
@@ -23,17 +23,23 @@ const currentSpeaker = computed(() => {
   return props.gameState.players.find(player => player.isSpeaking) || null;
 })
 
+const handleNextTurn = (nextSpeakerId: number) => {
+  emit("nextTurn", nextSpeakerId);
+}
+
+
 </script>
 
 <template>
   <SpeakerSpeakingView
-    v-if="currentPhase === 'speaking'"
-    :current-speaker="currentSpeaker?.playerInfo.name || '이름없음'"
+    v-if="currentPhase === 'speaking' && currentSpeaker"
+    :current-speaker="currentSpeaker"
   />
   <SpeakerVotingView
-    v-if="currentPhase === 'voting'"
-    :current-speaker="currentSpeaker?.playerInfo.name || '이름없음'"
+    v-if="currentPhase === 'voting' && currentSpeaker"
+    :current-speaker="currentSpeaker"
     :game-state="props.gameState"
+    @next-turn="handleNextTurn"
   />
 </template>
 

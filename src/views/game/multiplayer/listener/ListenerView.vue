@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {computed, PropType, ref} from "vue";
+import {computed} from "vue";
 import ListenerListeningView from "@/views/game/multiplayer/listener/ListenerListeningView.vue";
 import ListenerVotingView from "@/views/game/multiplayer/listener/ListenerVotingView.vue";
 import {GameState} from "@/types/GameState";
@@ -10,7 +10,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: "nextTurn", nextSpeakerId: number, myRole: "speaker" | "listener"): void;
+  (e: "nextTurn", nextSpeakerId: number): void;
 }>()
 
 
@@ -21,23 +21,24 @@ const currentSpeaker = computed(() => {
   return props.gameState.players.find(player => player.isSpeaking) || null;
 })
 
+const handleNextTurn = (nextSpeakerId: number) => {
+  emit("nextTurn", nextSpeakerId);
+}
 
 const currentPhase = computed(() => props.currentPhase);
-
-
-
 
 </script>
 
 <template>
   <ListenerListeningView
-    v-if="currentPhase === 'listening'"
-    :current-speaker="currentSpeaker?.playerInfo.name || '이름없음'"
+    v-if="currentPhase === 'listening' && currentSpeaker"
+    :current-speaker="currentSpeaker"
   />
   <ListenerVotingView
-    v-if="currentPhase === 'voting'"
-    :current-speaker="currentSpeaker?.playerInfo.name || '이름없음'"
+    v-if="currentPhase === 'voting' && currentSpeaker"
+    :current-speaker="currentSpeaker"
     :game-state="props.gameState"
+    @next-turn="handleNextTurn"
   />
 </template>
 

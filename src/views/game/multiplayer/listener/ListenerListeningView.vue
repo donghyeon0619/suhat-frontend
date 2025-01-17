@@ -6,10 +6,11 @@ import GameCardBg from "@/assets/img/game/bg-game-card.svg";
 import {AssignedCard, Card} from "@/types/Card";
 import {smartphoneTexts} from "@/data/smartphoneTexts";
 import {smartphonePicture} from "@/data/smartphonePicture";
+import {Player} from "@/types/Player";
 
 // props 선언
 const props = defineProps<{
-  currentSpeaker: string
+  currentSpeaker: Player
 }>()
 
 // 타이머 샛업
@@ -144,7 +145,7 @@ onBeforeUnmount(() => {
         <img :src="MikeIcon" alt="마이크">
       </IonAvatar>
       <IonChip class="player-chip">
-        <IonLabel class="player-name">{{currentSpeaker}}</IonLabel>
+        <IonLabel class="player-name">{{currentSpeaker.playerInfo.name}}</IonLabel>
       </IonChip>
     </div>
 

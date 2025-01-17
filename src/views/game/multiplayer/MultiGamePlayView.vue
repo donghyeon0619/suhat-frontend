@@ -8,7 +8,7 @@ import {
   useIonRouter
 } from "@ionic/vue";
 import GameRound0neView from "@/views/game/multiplayer/GameRound0neView.vue";
-import {provide, reactive, ref} from "vue";
+import {computed, provide, reactive, ref} from "vue";
 import SpeakerView from "@/views/game/multiplayer/speaker/SpeakerView.vue";
 import ListenerView from "@/views/game/multiplayer/listener/ListenerView.vue";
 import {onBeforeRouteLeave, useRoute} from "vue-router";
@@ -19,6 +19,7 @@ import {useUserStore} from "@/store/user";
 import GameExitHeader from "@/components/game/GameExitHeader.vue";
 import {AssignedCard} from "@/types/Card";
 import {VoteResult} from "@/types/VoteResult";
+import {useGameStore} from "@/store/gameStore";
 
 // 라우트 파라미터
 const route = useRoute();
@@ -28,18 +29,22 @@ const router = useIonRouter();
 // store 변수 선언
 const eventSourceStore = useEventSourceStore();
 const userStore = useUserStore();
-
+const gameStore = useGameStore();
 
 // 상태 플래그
-const isGameEnded = ref(false);
 const orderAssigned = ref(false);
-const speakerId = ref()
 const isHost = ref(false); // 호스트인지 여부
 const isSpeaker = ref(true); // 발언자인지 여부 (서버에서 결정되거나 초기화)
 const assignedCard = ref<AssignedCard | null>(null);
 const timerStartData = ref<{ startTime: number } | null>(null);
 const timeExtensionData = ref<{ additionalTime : number } | null>(null);
 const currentPhase = ref<string>('');
+const isLeaving = ref(false);
+
+// speaker 객체
+const speaker = computed(() => {
+  return gameState.players.find((player) => player.isSpeaking) || null;
+})
 
 // 시간 동기화 관련 함수
 const timeDifference = ref(0);
@@ -103,9 +108,9 @@ const gameEndedHandler = (event:MessageEvent) =>{
   // 메시지 생성
   const reason = eventData.reason || "알 수 없는 이유";
   const dataMessage = eventData.data || "알 수 없는 데이터";
-  const toastMessage = `${dataMessage} (사유: ${reason})`;
+  const toastMessage = `${dataMessage}\n(사유: ${reason})`;
 
-  isGameEnded.value = true;
+  gameStore.setGameEnded(true);
 
   // 메시지를 Toast에 표시
   presentToast(toastMessage);
@@ -151,15 +156,21 @@ const roundTwoStartedHandler = (event: MessageEvent) => {
 
   gameState.currentRound = eventData.round;
   gameState.currentTurn = 1;
-  speakerId.value = eventData.speakerId;
 
-  isSpeaker.value = userStore.id === speakerId.value;
+  const currentSpeaker = gameState.players.find(
+    (player) => player.playerId === eventData.speakerId
+  );
 
-  currentPhase.value = isSpeaker.value ? 'speaking' : 'listening'
-  gameState.players.forEach(player => {
-    player.isSpeaking = player.playerId === speakerId.value;
-  });
-}
+  if(currentSpeaker) {
+    currentSpeaker.isSpeaking = true;
+  } else {
+    console.error(`${eventData.speakerId} 의 플레이어가 존재하지 않습니다.`);
+  }
+
+  isSpeaker.value = userStore.id === eventData.speakerId;
+
+  currentPhase.value = isSpeaker.value ? 'speaking' : 'listening';
+};
 
 /**
  * 카드 할당 이벤트 함수 (provide, inject)로 데이터 전달
@@ -213,22 +224,26 @@ const speakingEndHandler = (event: MessageEvent) => {
  */
 const voteResultHandler = (event: MessageEvent) => {
   const eventData = JSON.parse(event.data);
+  console.log("투표 결과 이벤트를 받았습니다");
 
   switch (eventData.result) {
     // 퍼즐 획득 후 다음 턴으로 이동해야 할때
     case "puzzle-acquired-next-turn":
+      incrementPuzzlePieces();
       voteResult.value = {
+        ...voteResult.value,
         type: "puzzle-acquired",
         agreeCount: eventData.agreeCount,
         disagreeCount: eventData.disagreeCount,
         hasReVoted: eventData.hasReVoted,
         nextSpeakerId: eventData.nextSpeakerId,
-      }
+      };
       break;
 
     // 재투표일 때
-    case "re-vot":
+    case "re-vote":
       voteResult.value = {
+        ...voteResult.value,
         type: "re-vote",
         agreeCount: eventData.agreeCount,
         disagreeCount: eventData.disagreeCount,
@@ -239,15 +254,19 @@ const voteResultHandler = (event: MessageEvent) => {
     // 퍼즐 실패 후 다음턴으로 이동해야할 때
     case "puzzle-failed-next-turn":
       voteResult.value = {
+        ...voteResult.value,
         type: "puzzle-failed",
         agreeCount: eventData.agreeCount,
         disagreeCount: eventData.disagreeCount,
+        nextSpeakerId: eventData.nextSpeakerId
       };
       break;
 
     // 퍼즐을 전부 모아 게임 끝났을 때
     case "game-completed":
+      incrementPuzzlePieces();
       voteResult.value = {
+        ...voteResult.value,
         type: "game-completed",
         agreeCount: eventData.agreeCount,
         disagreeCount: eventData.disagreeCount,
@@ -263,6 +282,19 @@ const voteResultHandler = (event: MessageEvent) => {
 }
 
 /**
+ * 퍼즐 갯수 증가 함수
+ */
+const incrementPuzzlePieces = () => {
+  // 현재 퍼즐 조각 개수 증가
+  ++gameState.currentPuzzlePieces;
+
+  // speaker의 collectedPuzzlePiececs 증가
+  if (speaker.value) {
+    ++speaker.value.collectedPuzzlePieces;
+  }
+}
+
+/**
  * 주기적인 시간 동기화 함수
  */
 const periodicTimeSync = async () => {
@@ -270,10 +302,42 @@ const periodicTimeSync = async () => {
   console.log(`주기적인 시간 동기화 완료, 시간 차이: ${timeDifference.value}ms`);
 }
 
-const handleNextTurn = (nextSpeakerId: number, myRole: "speaker" | "listener") => {
-  isSpeaker.value = myRole === "speaker";
+/**
+ * 다음 턴으로 이동 하는 함수
+ * @param nextSpeakerId
+ */
+const handleNextTurn = (nextSpeakerId: number) => {
+  console.log(`다음 순번으로 넘어가면서 ${nextSpeakerId}로 말하기 변경`);
+
+  // 1. 현재 speaker의 isSpeaking을 false로 설정
+  if(speaker.value) {
+    speaker.value.isSpeaking = false
+  }
+
+  // 2. nextSpeakerId에 해당하는 player의 isSpeaking을 true로 설정
+  const nextSpeaker = gameState.players.find(
+    (player) => player.playerId === nextSpeakerId
+  );
+  if (nextSpeaker) {
+    nextSpeaker.isSpeaking = true;
+    gameState.currentTurn = nextSpeaker.sequenceNumber;
+  } else {
+    console.error(`${nextSpeakerId}의 플레이어가 존재하지 않습니다`);
+  }
+
+  // 3. 현재 사용자가 speaker인지 확인
+  isSpeaker.value = userStore.userInfo.id === nextSpeakerId;
+
+  // 4. currentPhase를 speaker인지 여부에 따라 설정
+  currentPhase.value = isSpeaker.value ? "speaking" : "listening";
+
+  console.log("발화자가 바꼈습니다. 다음 순번으로 넘어갑니다.");
+
 }
 
+/**
+ * 화면이 처음에 랜더링 되었을떄,
+ */
 onIonViewWillEnter(async () => {
 
   console.log("게임 시작되어 게임상태를 불러옵니다.")
@@ -314,6 +378,24 @@ onIonViewWillEnter(async () => {
 })
 
 /**
+ * 게임 상태를 초기화 하는 함수
+ */
+const resetGameState = () => {
+  orderAssigned.value = false;
+  isHost.value = false;
+  isSpeaker.value = false;
+  assignedCard.value = null;
+  timerStartData.value = null;
+  timeExtensionData.value = null;
+  currentPhase.value = '';
+  voteResult.value = null;
+  isLeaving.value = false;
+  if(syncInterval.value) {
+    clearInterval(syncInterval.value);
+  }
+}
+
+/**
  * 페이지를 떠날 때 리스너 제거
  */
 onIonViewWillLeave(() => {
@@ -327,21 +409,25 @@ onIonViewWillLeave(() => {
   eventSourceStore.removeEventListener("time-extended", timeExtendedHandler);
   eventSourceStore.removeEventListener("speaking-end", speakingEndHandler);
   eventSourceStore.removeEventListener("vote-result", voteResultHandler);
-  if(syncInterval.value) {
-    clearInterval(syncInterval.value);
-  }
+  resetGameState();
 })
 
 /**
  * 방 나가기 요청을 서버에 전송
  */
 const leaveRoom = async (): Promise<boolean> => {
+  if (isLeaving.value) {
+    return false;
+  }
+  isLeaving.value = true;
+
   try{
     const response = await deleteRequest(`rooms/${roomId}/players`, true);
     eventSourceStore.disconnectByUser();
 
     if(response.status == "200") {
       console.log('게임방 나가기 요청 성공');
+      gameStore.setGameEnded(true);
       return true;
     } else {
       console.error('게임 나가기 요청 실패', response);
@@ -363,7 +449,7 @@ const gameExit = async () => {
  */
 onBeforeRouteLeave(async (to, from, next) => {
   // 게임이 종료되었을 시 라우팅 바로 진행
-  if (isGameEnded.value) {
+  if (gameStore.isGameEnded || isLeaving.value) {
     return next();
   }
 
