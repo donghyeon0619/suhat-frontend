@@ -2,7 +2,7 @@ import {CapacitorHttp, HttpOptions } from '@capacitor/core';
 import {useRouter} from "vue-router";
 import router from "@/router";
 
-const BASE_URL = 'http://localhost:8080/api/';
+const BASE_URL = 'http://10.0.2.2:8070/api/';
 
 // **HTTP 요청 함수**
 /**

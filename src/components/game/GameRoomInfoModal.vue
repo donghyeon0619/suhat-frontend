@@ -48,11 +48,15 @@ async function enterGameRoom() {
     const response = await post(`rooms/${props.roomId}/players`, {userInfo: userStore.userInfo, score: surveyStore.latestScore});
 
     console.log("response: " + response);
-    console.log("게임 대기방으로 이동합니다.")
 
-    await closeModal();
+    let topModal = await modalController.getTop(); // 최상위 모달 가져오기
 
-    router.navigate({
+    while (topModal) {
+      await modalController.dismiss(); // 현재 모달 닫기
+      topModal = await modalController.getTop(); // 다음 최상위 모달 확인
+    }
+
+    router.push({
       path: `/game/waiting/${props.roomId}`,
     });
   } catch (error) {

@@ -527,6 +527,7 @@ const presentToast = async (message: string) => {
   await toast.present();
 }
 </script>
+
 <template>
   <IonPage>
     <GameExitHeader id="backButtonHeader" :header-title="`라운드 ${gameState.currentRound}`" @buttonClick="gameExit"/>

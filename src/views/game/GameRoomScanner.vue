@@ -11,13 +11,20 @@ import {
   alertController,
 } from "@ionic/vue"
 import Header from "@/components/common/BackButtonHeader.vue";
-import { StreamBarcodeReader } from "vue-barcode-reader";
 import BaseButton from "@/components/common/BaseButton.vue";
-import {ref} from "vue";
-import {get} from "@/api/httpService";
+import { ref } from "vue";
+import { get } from "@/api/httpService";
 import GameRoomInfoModal from "@/components/game/GameRoomInfoModal.vue";
+import InformationIcon from "@/assets/icons/game/informaion-icon.svg";
+import CancelIcon from "@/assets/icons/game/cancel-icon.svg";
+import SearchIcon from "@/assets/icons/game/search-icon.svg";
+import {
+  CapacitorBarcodeScanner,
+  CapacitorBarcodeScannerOptions,
+  CapacitorBarcodeScannerTypeHintALLOption
+} from "@capacitor/barcode-scanner";
 
-const roomId = ref('');
+const roomId = ref(null);
 const roomName = ref('방 이름');
 const headCount = ref(4);
 
@@ -54,60 +61,67 @@ const findRoom = async () => {
   }
 };
 
-/**
- * 오류 발생 시 경고창 뜸
- */
 const presentAlert = async (message: string) => {
-    const alert = await alertController.create({
-      header: '방 찾기 ',
-      message: message,
-      buttons: [
-        {
-          text: '확인',
-          role: 'confirm',
-          cssClass: "my-custom-alert-button-class",
-        },
-      ],
-      cssClass: "custom-one-button-alert"
-    });
-    await alert.present();
+  const alert = await alertController.create({
+    header: '방 찾기 ',
+    message: message,
+    buttons: [
+      {
+        text: '확인',
+        role: 'confirm',
+        cssClass: "my-custom-alert-button-class",
+      },
+    ],
+    cssClass: "custom-one-button-alert"
+  });
+  await alert.present();
 }
 
 function closeModal() {
   modalController.dismiss();
 }
+
+const options: CapacitorBarcodeScannerOptions = {
+  hint: CapacitorBarcodeScannerTypeHintALLOption.ALL,
+  scanInstructions: '아래 사각형 안에 바코드가<br>꽉차도록 맞춰주세요',
+};
+
+async function scanBarcode() {
+  try {
+    const result = (await CapacitorBarcodeScanner.scanBarcode(options)).ScanResult;
+    roomId.value = result;
+    console.error("스캔 성공: ", roomId.value);
+    findRoom();
+  } catch (error) {
+    console.error("스캔 오류:", error);
+  }
+}
 </script>
 
 <template>
   <Header></Header>
-    <ion-content class="background">
-      <ion-title class="title">방 입장하기</ion-title>
-      <ion-text class="description">아래 사각형 안에 바코드가<br>꽉차도록 맞춰주세요</ion-text>
+  <ion-content class="background">
+    <ion-title class="title">방 입장하기</ion-title>
+    <ion-text class="description">아래 사각형 안에 바코드가<br>꽉차도록 맞춰주세요</ion-text><br>
 
-      <div class="scanner-wrap">
-        <StreamBarcodeReader
-            @decode="onDecode"
-            @loaded="onLoaded"
-            :constraints="{ facingMode: 'environment' }"
-            class="custom-scanner"
-        />
-      </div>
+    <!-- Barcode scanner button -->
+    <ion-button class="scan" @click="scanBarcode">바코드 스캔 시작</ion-button>
 
-      <div class="information">
-        <ion-text id="enter-room-id">
-          <ion-icon src="src/assets/icons/game/informaion-icon.svg"></ion-icon>
-          바코드가 인식되지 않나요?
-        </ion-text>
-      </div>
+    <div class="information">
+      <ion-text id="enter-room-id">
+        <ion-icon :src="InformationIcon"></ion-icon>
+        바코드가 인식되지 않나요?
+      </ion-text>
+    </div>
 
-      <ion-icon class="cancel-icon" src="src/assets/icons/game/cancel-icon.svg" @click="closeModal"></ion-icon>
+    <ion-icon class="cancel-icon" :src="CancelIcon" @click="closeModal"></ion-icon>
 
     <ion-modal class="ion-no-margin" trigger="enter-room-id">
       <div class="block">
         <ion-title class="modal-title">방 입장하기</ion-title>
 
         <ion-text class="modal-sub-title">
-          <ion-icon src="src/assets/icons/game/search-icon.svg"></ion-icon>
+          <ion-icon :src="SearchIcon"></ion-icon>
           방 바코드 번호
         </ion-text>
         <ion-input class="input" fill="outline" v-model="roomId"></ion-input>
@@ -255,5 +269,9 @@ ion-modal {
   ion-button {
     color: #6A7382;
   }
+}
+
+.scan {
+  --background: #13BD7E;
 }
 </style>

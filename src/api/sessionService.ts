@@ -1,7 +1,7 @@
 import {CapacitorCookies} from "@capacitor/core";
 import {get} from "@/api/httpService";
 
-const BASE_URL = 'http://localhost:8080/api/';
+const BASE_URL = 'http://10.0.2.2:8070/api/';
 
 /**
  * 쿠키 및 세션 관리 모듈
@@ -11,12 +11,22 @@ const BASE_URL = 'http://localhost:8080/api/';
  * JSESSIONID 설정하기
  */
 export async function setJSessionId(jsessionId: string) {
-  await CapacitorCookies.setCookie({
-    url: BASE_URL, // 백엔드 URL
-    key: 'JSESSIONID',
-    value: jsessionId,
-    path: '/', // Spring Security 기본 경로
-  });
+  if (!jsessionId) {
+    console.error('유효하지 않은 session 값:', jsessionId);
+    return;
+  }
+
+  try {
+    await CapacitorCookies.setCookie({
+      url: BASE_URL, // 백엔드 URL
+      key: 'JSESSIONID',
+      value: jsessionId,
+      path: '/', // Spring Security 기본 경로
+    });
+    console.log('JSESSIONID 설정 완료:', jsessionId);
+  } catch (error) {
+    console.error('JSESSIONID 설정 실패:', error);
+  }
 }
 
 /**

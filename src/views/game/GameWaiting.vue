@@ -11,7 +11,7 @@ import {
   IonList,
   IonFooter,
   useIonRouter,
-  alertController, onIonViewWillEnter, onIonViewWillLeave, toastController
+  onIonViewWillEnter, onIonViewWillLeave, alertController, toastController
 } from "@ionic/vue"
 import Header from "@/components/common/BackButtonHeader.vue";
 import JsBarcode from 'jsbarcode'
@@ -49,7 +49,7 @@ const gameStore = useGameStore();
  */
 const connectToRoom = () => {
 
-  eventSourceStore.connect(`http://localhost:8080/api/rooms/connect/${roomId}`);
+  eventSourceStore.connect(`http://10.0.2.2:8070/api/rooms/connect/${roomId}`);
 
 
   eventSourceStore.addEventListener('connected', function(event) {
@@ -427,7 +427,7 @@ const presentToast = async (message: string) => {
         <ion-card-content>
           <ion-img class="barcode" v-if="imageUrl" :src="imageUrl" alt="바코드 이미지" style="width: 80%; height: auto;"></ion-img>
           <ion-card class="description ion-no-margin no-shadow">
-            <ion-img class="scan-icon" src="src/assets/icons/game/scan-icon.svg"></ion-img>
+            <img src="@/assets/icons/game/scan-icon.svg" class="scan-icon" alt="스캔 아이콘">
             해당 바코드를 스캔 후 방에 입장할 수 있어요
           </ion-card>
           <div class="horizontal-division">
