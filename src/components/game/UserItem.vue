@@ -9,6 +9,11 @@ const props = defineProps({
   isUserJoined: {
     type: Boolean,
     default: false
+  },
+  isReady: {
+    type: Boolean,
+    default: false,
+
   }
 })
 </script>
@@ -18,7 +23,14 @@ const props = defineProps({
     <template v-if="isUserJoined">
       <ion-img class="profile-icon" src="src/assets/icons/game/profile-icon.svg"></ion-img>
       <ion-label class="name">{{name}}</ion-label>
-      <ion-badge class="ready-badge" slot="end">준비완료</ion-badge>
+      <template v-if="isReady">
+        <ion-badge class="ready-badge" slot="end">준비완료</ion-badge>
+      </template>
+      <template v-else>
+        <ion-badge class="loading-badge" slot="end">
+          <ion-spinner name="dots"></ion-spinner>
+        </ion-badge>
+      </template>
     </template>
 
     <template v-else>

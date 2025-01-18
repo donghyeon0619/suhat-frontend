@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 
 export interface UserState {
-  id: string | null;
+  id: number | null;
   name: string;
   gender: number | null;
   school: string;
@@ -9,7 +9,7 @@ export interface UserState {
 
 export const useUserStore = defineStore('user', {
   state: (): UserState => ({
-    id: localStorage.getItem('userId'),
+    id: localStorage.getItem('userId') ? Number(localStorage.getItem('userId')) : null,
     name: localStorage.getItem('name') || '',
     gender: localStorage.getItem('gender') ? JSON.parse(localStorage.getItem('userGender')!) : null,
     school: localStorage.getItem('school') || '',
@@ -23,9 +23,9 @@ export const useUserStore = defineStore('user', {
     }),
   },
   actions: {
-    setId(id: string) {
+    setId(id: number) {
       this.id = id;
-      localStorage.setItem('userId', id);
+      localStorage.setItem('userId', JSON.stringify(id));
     },
     setName(name: string) {
       this.name = name;

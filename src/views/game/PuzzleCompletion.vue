@@ -32,6 +32,8 @@ const rankingData = route.query.rankingData
   ? JSON.parse(route.query.rankingData as string)
   : []; // multi 모드일 때만 처리
 
+const roomId = route.query.roomId || "";
+
 /**
  * 홈 리우팅 함수
  */
@@ -45,10 +47,11 @@ const goHome = () =>{
  */
 const goRanking = () => {
   if(rankingData.length > 0){
-    router.push({
+    router.replace({
       path: "/multi/ranking",
       query: {
         rankingData: JSON.stringify(rankingData),
+        roomId: roomId,
       }
     })
   } else {

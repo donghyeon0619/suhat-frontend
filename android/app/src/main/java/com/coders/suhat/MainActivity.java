@@ -1,4 +1,4 @@
-package com.coders.boardgame;
+package com.coders.suhat;
 
 import com.getcapacitor.BridgeActivity;
 

@@ -49,9 +49,14 @@ async function enterGameRoom() {
 
     console.log("response: " + response);
 
-    closeModal();
+    let topModal = await modalController.getTop(); // 최상위 모달 가져오기
 
-    router.navigate({
+    while (topModal) {
+      await modalController.dismiss(); // 현재 모달 닫기
+      topModal = await modalController.getTop(); // 다음 최상위 모달 확인
+    }
+
+    router.push({
       path: `/game/waiting/${props.roomId}`,
     });
   } catch (error) {

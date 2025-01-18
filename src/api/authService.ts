@@ -12,7 +12,9 @@ export async function signup(){
   const response = await post('users', userInfo);
 
   if (response){
-    await setJSessionId(response);
+    const { session, userId } = response;
+    await setJSessionId(session);
+    userStore.setId(userId);
     console.log("가입완료");
   }
 

@@ -3,7 +3,7 @@ import {CapacitorCookies} from "@capacitor/core";
 
 const config: CapacitorConfig = {
   appId: 'com.coders.suhat',
-  appName: 'SUHAT',
+  appName: 'SUAHT',
   webDir: 'dist',
   plugins: {
     CapacitorHttp:{
@@ -11,7 +11,13 @@ const config: CapacitorConfig = {
     },
     CapacitorCookies:{
       enabled:true
+    },
+    Keyboard: {
+      resize: 'none'
     }
+  },
+  server: {
+    cleartext: true,
   }
 };
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {IonPage, IonContent, IonImg, IonIcon, IonText, IonInput, IonButton, IonModal, modalController, IonGrid, IonRow, IonCol, useIonRouter} from "@ionic/vue"
+import {IonPage, IonContent, IonIcon, IonText, IonInput, IonButton, IonModal, modalController, IonGrid, IonRow, IonCol, useIonRouter} from "@ionic/vue"
 import Header from "@/components/common/BackButtonHeader.vue";
 import BaseButton from "@/components/common/BaseButton.vue";
 import {onMounted, ref} from "vue";
@@ -100,7 +100,7 @@ onMounted(() => {
       <ion-content class="ion-padding" scroll-y="false">
         <ion-text class="description">친구들과 함께 퍼즐조각을 모아<br>그림을 완성해보세요!</ion-text>
         <div class="img-container">
-          <ion-img class="puzzle-lock-img" src="src/assets/img/puzzle-lock.svg"></ion-img>
+          <img src="@/assets/img/puzzle-lock.svg" class="puzzle-lock-img" alt="잠긴 퍼즐 이미지">
         </div>
       </ion-content>
 
@@ -110,7 +110,7 @@ onMounted(() => {
           <!-- 방 만들기 버튼 -->
           <ion-button class="btn" id="create-room-modal">
             <div class="btn-content">
-              <ion-img class="icon" src="src/assets/icons/icon-house.svg"></ion-img>
+              <img src="@/assets/icons/icon-house.svg" class="icon" alt="집 아이콘">
               <ion-text class="btn-title">방 만들기</ion-text>
               <ion-text class="btn-description">직접 게임을 만들어<br>친구들과 함께해봐요</ion-text>
             </div>
@@ -119,7 +119,7 @@ onMounted(() => {
           <!-- 입장하기 버튼 -->
           <ion-button class="btn" id="join-room-modal">
             <div class="btn-content">
-              <ion-img class="icon" src="src/assets/icons/home/icon-flag.svg"></ion-img>
+              <img src="@/assets/icons/home/icon-flag.svg" class="icon" alt="깃발 아이콘">
               <ion-text class="btn-title">입장하기</ion-text>
               <ion-text class="btn-description">친구가 만든 게임에<br>참여할 수 있어요</ion-text>
             </div>
@@ -153,7 +153,7 @@ onMounted(() => {
                       id="open-modal"
                       @click="selectHeadCount(3)">
             <div class="btn-content">
-              <ion-img class="icon" src="src/assets/icons/common/multiplay-icon.svg"></ion-img>
+              <img src="@/assets/icons/common/multiplay-icon.svg" class="icon" alt="멀티플레이 아이콘">
               <ion-text class="btn-title">3인 게임</ion-text>
             </div>
           </ion-button>
@@ -164,7 +164,7 @@ onMounted(() => {
                       fill="outline"
                       @click="selectHeadCount(4)">
             <div class="btn-content">
-              <ion-img class="icon" src="src/assets/icons/common/4-multiplay-icon.svg"></ion-img>
+              <img src="@/assets/icons/common/4-multiplay-icon.svg" class="icon" alt="멀티플레이 아이콘">
               <ion-text class="btn-title">4인 게임</ion-text>
             </div>
           </ion-button>
@@ -190,7 +190,7 @@ onMounted(() => {
             <ion-grid>
               <ion-row>
                 <ion-col class="camera-img" size="2">
-                  <ion-img src="src/assets/icons/game/camera-icon.svg"></ion-img>
+                  <img src="@/assets/icons/game/camera-icon.svg" alt="카메라 아이콘">
                 </ion-col>
                 <ion-col>
                   <ion-card-title class="ion-padding-start">카메라(필수)</ion-card-title>

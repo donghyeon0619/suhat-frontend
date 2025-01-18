@@ -40,7 +40,6 @@ import './global.scss';
  * 상태관리 라이브러리 import
  */
 import {createPinia} from "pinia";
-import store from "./store";
 
 const pinia = createPinia(); // pinia 인스턴스 생성
 
@@ -48,7 +47,6 @@ const app = createApp(App)
   .use(IonicVue)
   .use(router)
   .use(pinia)
-  .use(store);
 
 router.isReady().then(() => {
   app.mount('#app');

@@ -71,8 +71,9 @@ html {
 }
 
 .toast-txt-center{
-  .toast-container{
+  .toast-container {
     align-items: center;
+    justify-content: center;
   }
 }
 
@@ -93,6 +94,10 @@ html {
     justify-content: center;
     gap: 5vw;
   }
+}
+
+.custom-one-button-alert .alert-wrapper {
+  border: #13BD7E 3px solid;
 }
 
 .my-custom-alert-button-class{

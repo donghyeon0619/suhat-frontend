@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {IonPage, IonContent, IonText, IonImg, IonFooter, useIonRouter} from "@ionic/vue"
+import {IonPage, IonContent, IonText, IonFooter, useIonRouter} from "@ionic/vue"
 import Header from "@/components/common/BackButtonHeader.vue";
 import ChatBubble from "@/components/common/ChatBubble.vue";
 import BaseButton from "@/components/common/BaseButton.vue";
@@ -27,7 +27,7 @@ const handleButtonClick = () => {
   if(currentScreen.value === 2) {
     currentScreen.value += 1;
   } else {
-    router.push({
+    router.replace({
       path: "/game/home"
     });
   }
@@ -52,11 +52,13 @@ const handleButtonClick = () => {
         <div class="tutorial-description ion-margin-top ion-margin-bottom">
           <ion-text>그림 카드를<br>확인 해보세요!</ion-text>
         </div>
-        <ion-img
-            @click="currentScreen = 2"
-            class="example-img-card"
-            src="src/assets/img/game/tutorial/example-card.svg">
-        </ion-img>
+        <div class="ion-margin-start ion-margin-end ion-padding-start ion-padding-end">
+          <img
+              src="@/assets/img/game/tutorial/example-card.svg"
+              class="example-img-card"
+              @click="currentScreen = 2"
+              alt="예시 카드 이미지">
+        </div>
       </div>
 
       <!-- tutorial 2 -->
@@ -64,10 +66,13 @@ const handleButtonClick = () => {
         <div class="tutorial-description ion-margin-top ion-margin-bottom">
           <ion-text>예시 답안을<br>확인해요</ion-text>
         </div>
-        <ion-img
-            class="example-img-card"
-            src="src/assets/img/game/tutorial/example-answer.svg">
-        </ion-img>
+        <div class="ion-margin-start ion-margin-end ion-padding-start ion-padding-end">
+          <img
+              src="@/assets/img/game/tutorial/example-card.svg"
+              class="example-img-card"
+              @click="currentScreen = 2"
+              alt="예시 카드 이미지">
+        </div>
       </div>
 
       <!-- tutorial 3 -->
@@ -75,10 +80,10 @@ const handleButtonClick = () => {
         <div class="tutorial-description ion-margin-top ion-margin-bottom">
           <ion-text>이야기를 들은<br>당신의 생각은?</ion-text>
         </div>
-        <ion-img
+        <img
+            src="@/assets/img/game/tutorial/example-vote.svg"
             class="example-img-card"
-            src="src/assets/img/game/tutorial/example-vote.svg">
-        </ion-img>
+            alt="예시 투표 이미지">
       </div>
     </ion-content>
     <ion-footer class="ion-padding" :class="{ dimmed: isDimmed }">
@@ -131,6 +136,7 @@ ion-content::part(background) {
 
 .example-img-card {
   height: 45vh;
+  margin: auto;
 }
 
 ion-content.dimmed::after {

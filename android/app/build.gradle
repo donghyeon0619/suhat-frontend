@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace "com.coders.boardgame"
+    namespace "com.coders.suhat"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.coders.boardgame"
+        applicationId "com.coders.suhat"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

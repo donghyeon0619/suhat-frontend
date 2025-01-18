@@ -43,7 +43,8 @@ export const useEventSourceStore = defineStore('eventSource', {
           return;
         }
 
-        console.error('[SSE] 오류 발생 - 자동 재연결 대기 중');
+        console.error('[SSE] 오류 발생 - 네트워크 및 서버 타임아웃으로 인한 연결 종료 ');
+
         // 브라우저의 기본 재연결 로직에 따라 자동 재연결 시도
       };
     },

@@ -1,58 +1,43 @@
 <script setup lang="ts">
-import {PropType, ref} from "vue";
+import {computed} from "vue";
 import ListenerListeningView from "@/views/game/multiplayer/listener/ListenerListeningView.vue";
 import ListenerVotingView from "@/views/game/multiplayer/listener/ListenerVotingView.vue";
+import {GameState} from "@/types/GameState";
 
-const props = defineProps({
-    participants: {type: Array as PropType<
-        Array<{
-          name: string;
-          order: number;
-          currentPieces: number;
-        }>
-      >,
-      required: true,
-    },
-  }
-);
+const props = defineProps<{
+  gameState: GameState;
+  currentPhase: string;
+}>()
+
 const emit = defineEmits<{
-  (e: "nextTurn", nextSpeakerId: number, myRole: "speaker" | "listener"): void;
+  (e: "nextTurn", nextSpeakerId: number): void;
 }>()
 
 
-const speaker = ref("이예지")
-const currentPhase = ref("listening");
-
 /**
- * 하위 컴포넌트에서 emit으로 이벤트 "nextTurn" 발생 시 currentPhase listening으로 초기화
- * @param nextSpeakerId
- * @param myRole
+ * speaking이 true인 사람의 정보를 computed로 가져옴
  */
-const handleNextTurn = (nextSpeakerId: number, myRole: "speaker" | "listener") => {
-  currentPhase.value = currentPhase.value === "voting" ? "listening" : "voting";
-  emit("nextTurn", nextSpeakerId, myRole);
+const currentSpeaker = computed(() => {
+  return props.gameState.players.find(player => player.isSpeaking) || null;
+})
+
+const handleNextTurn = (nextSpeakerId: number) => {
+  emit("nextTurn", nextSpeakerId);
 }
 
-/**
- * 하위 컴포넌트에서 emit으로 이벤트 "next-phase) 발생 시 listening 완료 후
- * voting으로 화면 전환 함수
- */
-const nextPhase = () => {
-  currentPhase.value = currentPhase.value === "listening" ? "voting" : "listening";
-};
+const currentPhase = computed(() => props.currentPhase);
 
 </script>
 
 <template>
   <ListenerListeningView
-    v-if="currentPhase === 'listening'"
-    :current-speaker="speaker"
-    @next-phase="nextPhase"
+    v-if="currentPhase === 'listening' && currentSpeaker"
+    :current-speaker="currentSpeaker"
   />
   <ListenerVotingView
-    v-if="currentPhase === 'voting'"
-    :current-speaker="speaker"
-    :participants="participants"
+    v-if="currentPhase === 'voting' && currentSpeaker"
+    :current-speaker="currentSpeaker"
+    :game-state="props.gameState"
     @next-turn="handleNextTurn"
   />
 </template>

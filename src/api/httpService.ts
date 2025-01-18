@@ -2,7 +2,7 @@ import {CapacitorHttp, HttpOptions } from '@capacitor/core';
 import {useRouter} from "vue-router";
 import router from "@/router";
 
-const BASE_URL = 'http://localhost:8080/api/';
+const BASE_URL = 'http://10.0.2.2:8070/api/';
 
 // **HTTP 요청 함수**
 /**
@@ -62,7 +62,12 @@ export async function get(
 /**
  * POST 요청
  */
-export async function post(endpoint: string, data: any): Promise<any> {
+export async function post(
+  endpoint: string,
+  data?: any,
+  returnFullResponse: boolean = false
+): Promise<any> {
+
   const options = await getHttpOptions(endpoint, 'POST', data);
 
   // 쿠키 전송 활성화
@@ -75,7 +80,7 @@ export async function post(endpoint: string, data: any): Promise<any> {
 
     await validateHttpResponse(response)
 
-    return response.data;
+    return returnFullResponse ? response : response.data;
   } catch (error: any) {
     console.log("에러가 발생했습니다.", error)
     throw error;
@@ -143,12 +148,11 @@ export async function validateHttpResponse(response: any): Promise<void> {
 
   if (status >= 500) {
     console.error(`500 Internal Server Error - 서버에서 문제가 발생했습니다.`);
-    throw new Error(`500 Server Error: ${response.data}`);
+    throw new Error(`서버 에러: ${response.status}, ${response.data}`);
   }
 
   if (status >= 400) {
-    console.error(`400 Bad Request - 요청 오류가 발생했습니다.`);
-    throw new Error(`400 Bad Request: ${response.data}`);
+    throw new Error(`클라이언트 에러: ${response.status}, ${response.data}`);
   }
 }
 

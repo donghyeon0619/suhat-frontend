@@ -9,9 +9,9 @@ import {
   IonCol,
   IonButton,
   IonLabel,
-  IonIcon, IonThumbnail, modalController, toastController
+  IonIcon, IonThumbnail, modalController, toastController, alertController
 } from "@ionic/vue";
-import {computed, nextTick, onBeforeUnmount, onMounted, ref, watch} from "vue";
+import {computed, inject, nextTick, onBeforeUnmount, onMounted, Ref, ref, watch} from "vue";
 import MikeIcon from "@/assets/icons/game/icon-mike.svg"
 import GameCardBg from "@/assets/img/game/bg-game-card.svg";
 import testImg from "@/assets/img/game/img-test-phone.png";
@@ -20,130 +20,108 @@ import FlagIcon from "@/assets/icons/home/icon-flag.svg"
 import TimerIcon from "@/components/game/multiplayer/TimerIcon.vue";
 import ChatBubbleModal from "@/components/common/ChatBubbleModal.vue";
 import HintModal from "@/components/game/multiplayer/HintModal.vue";
+import {smartphoneTexts} from "@/data/smartphoneTexts";
+import {post} from "@/api/httpService";
+import {useRoute} from "vue-router";
+import {AssignedCard, AssignedCardData, Card} from "@/types/Card";
+import {smartphonePicture} from "@/data/smartphonePicture";
+import {Player} from "@/types/Player";
 
-/**
- * props 정의
- */
-const props = defineProps({
-  currentSpeaker : {
-    type : String,
-    required: true,
-  }
-})
+// props 선언
+const props = defineProps<{
+  currentSpeaker: Player
+}>()
 
-/**
- * emit정의
- */
-const emit = defineEmits(["nextPhase"]);
+const route = useRoute();
+const roomId = route.params.roomId;
 
 /**
  *  타이머 샛업
   */
+const ADDITIONAL_TIME = 120
 const initialTime = 180 // 3분 선언
 const timer = ref(initialTime); //타이머 3분에서 시작
 const formattedTime = ref("3:00"); // "MM:SS"로 형식으로 화면에 보여줌
 let timerInterval: ReturnType<typeof setInterval> | null = null;
-
+const timerStartData = inject<Ref<{ startTime: number; } | null>>("timerStartData", ref(null));
+const timeExtensionData = inject<Ref<{ additionalTime: number } | null>>("timeExtensionData", ref(null));
 // 시간 연장 유무
 const hasExtended = ref(false);
-
+const speakingStarted = ref(false);
 
 /**
- * 카드 애니메이션
+ * 카드 관련 변수
  */
-const isFlipped = ref(false);
-const isResetting = ref(false);
-const cardRefs = ref<HTMLElement[]>([]);
-
-const cards = ref([
+const cards = ref<Card[]>([
   { id: 1, isFlipped: false, type: 'text', content: ''},
-  { id: 2, isFlipped: false, type: 'image', content: ''},
+  { id: 2, isFlipped: false, type: 'picture', content: ''},
 ])
+const assignedCard = inject<Ref<AssignedCard | null>>("assignedCard", ref(null));
 
 /**
- * 랜덤 데이터 설정
+ * 카드 클릭 시 호출되는 API 요청
  */
-const textOptions = [
-  '스마트폰을 <br> 손에서 놓지 않음',
-  '놀러가고 싶다',
-  '책을 읽지 않음',
-  '잠을 잘 못 잠'
-];
-const imageOptions = [
-  testImg, // 현재 사용 중인 이미지
-  'https://via.placeholder.com/150', // 테스트용 이미지
-  'https://via.placeholder.com/200',
-  'https://via.placeholder.com/250'
-];
+const sendCardClickRequest = async (id:number) => {
+  // 클릭한 카드 찾기
+  const card = cards.value.find((c) => c.id === id);
+  if (!card || card.isFlipped) return; // 이미 뒤집힌 카드 무시
 
-/**
- * 카드의 랜덤 데이터를 설정하는 함수
- */
-const setRandomCardContent = (card: any) =>{
-  if (card.type ==='text'){
-    card.content = textOptions[Math.floor(Math.random() * textOptions.length)];
-  } else if (card.type === 'image'){
-    card.content = imageOptions[Math.floor(Math.random() * imageOptions.length)];
+  // 카드 타입에 따라 데이터 길이 계산
+  const cardType = card.type;
+  const dataCount = cardType === "text" ? smartphoneTexts.length : smartphonePicture.length;
+
+  try {
+    const response = await post(`games/${roomId}/card/${cardType}?maxId=${dataCount}`);
+    console.log("카드 요청:", response);
+  } catch (error) {
+    console.error("카드 부여 요청 중 오류 발생", error)
   }
 }
 
 /**
- * 카드 초기화
+ * 카드 부여 watch 함수
  */
-cards.value.forEach(setRandomCardContent);
+watch(
+  () => assignedCard?.value, // sse 이벤트 데이터 감지
+  (newCardData) => {
+    if (newCardData) {
+      console.log("새로운 카드 데이터 수신:", newCardData);
 
-/**
- * 모든 카드가 뒤집혔는지 여부를 확인하는 computed
- */
-const allCardsFlipped = computed(() => {
-  return cards.value.every(card => card.isFlipped);
-});
+      // 카드 ID로 해당 카드 찾기
+      const card = cards.value.find((c) => c.type === newCardData.cardType);
+      if (card) {
+        // 카드 데이터 업데이트
+        card.isFlipped = true;
+        card.type = newCardData.cardType;
 
-/**
- * allCardsFlipped 값이 변경될 때 실행 하는 watch 함수
- */
-watch(allCardsFlipped, (newVal) => {
-  if (newVal) {
-    startTimer(); // 모든 카드가 뒤집혔을 때 타이머 시작
+        // 카드 타입에 따라 데이터 검색
+        if (newCardData.cardType === "text") {
+          const textData = smartphoneTexts.find((item) => item.id === newCardData.cardId);
+          card.content = textData?.text || "데이터 없음";
+        } else if (newCardData.cardType === "picture") {
+          const pictureData = smartphonePicture.find((item) => item.id === newCardData.cardId);
+          card.content = pictureData?.url || "데이터 없음";
+        }
+      } else {
+        console.log(`ID(${newCardData.cardId})에 해당하는 카드를 찾을 수 없습니다.`);
+      }
+    }
   }
-});
-/**
- * 카드 뒤집기 함수
- */
-const toggleFlip = (id: number) => {
-  if (isResetting.value) return; // 리셋 중에는 클릭 방지
+);
 
-  const card = cards.value.find(c => c.id === id);
-  if(card && !card.isFlipped){
-    card.isFlipped = true;
-    setRandomCardContent(card);
+/**
+ * 타이머  시작 로직: 'timer-start' 이벤트를 수신했을 때 타이머 시작
+ */
+watch(
+  () => timerStartData?.value,
+  (newTimerData) => {
+    if (newTimerData && newTimerData.startTime) {
+      console.log("타이머 시작:", newTimerData);
+      speakingStarted.value = true;
+      startTimer(newTimerData.startTime);
+    }
   }
-}
-
-/**
- * 카드 상태 초기화 함수
- */
-const resetCards = () => {
-  isResetting.value = true; // 리셋 시작
-
-  // 모든 카드에 대해 리셋 애니메이션 적용
-  cards.value.forEach(card => {
-    card.isFlipped = false; // 뒷면으로 초기화
-  });
-
-  // 애니메이션 완료 이벤트 등록
-  nextTick(() => {
-    cardRefs.value.forEach((cardElement) => {
-      cardElement.addEventListener(
-        "transitionend",
-        () => {
-          isResetting.value = false;
-        },
-        {once: true}
-      );
-    })
-  })
-};
+)
 
 /**
  * "MM:SS" 로 바꾸는 함수
@@ -158,25 +136,36 @@ const formatTime = (seconds: number) => {
 /**
  * 타이머 시작 함수
  */
-const startTimer = () => {
-  formattedTime.value =formatTime(timer.value);
-  timerInterval = setInterval(()=>{
-    if (timer.value > 0){
-      timer.value -= 1
-      formattedTime.value =formatTime(timer.value);
-      // 이 때 1분 남았는지 확인
-      if (timer.value === 60) {
-        const message = hasExtended.value
-          ? "한 번 시도해보고, 잘 안 되면 다시 해봐도 괜찮아요. 중요한 건 시도하는 거예요!"
-          : "천천히 생각해보고, 생각난 대로 말해보세요. 괜찮아요!";
-        openCheerUpModal(message);
+const startTimer = (serverStartTime: number) => {
+  const clientCurrentTime = Date.now();
+  const elapsedTime = Math.floor((clientCurrentTime - serverStartTime) / 1000);  // 초단위
+  const remainingTime = initialTime - elapsedTime;
+
+  if (remainingTime > 0) {
+    timer.value = remainingTime
+    formattedTime.value = formatTime(timer.value);
+
+    timerInterval = setInterval(() => {
+      if (timer.value > 0) {
+        timer.value -= 1
+        formattedTime.value = formatTime(timer.value);
+
+        // 이 때 1분 남았는지 확인
+        if (timer.value === 60) {
+          const message = hasExtended.value
+            ? "한 번 시도해보고, 잘 안 되면 다시 해봐도 괜찮아요. 중요한 건 시도하는 거예요!"
+            : "천천히 생각해보고, 생각난 대로 말해보세요. 괜찮아요!";
+          openCheerUpModal(message);
+        }
+      } else {
+        handleEndSpeaking();
       }
-    } else {
-      stopTimer();
-      emit("nextPhase"); // 시간이 다 지나면 다음 단계로 전환
-    }
-  }, 1000);
-}
+    }, 1000);
+  } else {
+    // 시간이 이미 다 지났다면 다음 단계로 전환
+    handleEndSpeaking();
+  }
+};
 
 /**
  * 타이머 정지 함수
@@ -193,22 +182,56 @@ const stopTimer = async () => {
 /**
  * "말하기 종료" 버튼 클릭 시 타이머 정지 및 다음 phase 전환 함수
  */
-const handleEndSpeaking = () => {
-  stopTimer();
-  emit("nextPhase"); // 다음 단계로 전환
+const handleEndSpeaking = async () => {
+  if (!speakingStarted.value) {
+    await presentAlert("말하기가 아직 시작되지 않았습니다. 시작 후 종료를 시도하세요");
+    return;
+  }
+
+  await stopTimer();
+  try {
+    const response = await post(`games/${roomId}/speaking/end`);
+    console.log("말하기 종료", response);
+  } catch (error) {
+    console.error("말하기 종료 에러", error);
+  }
 };
+
+/**
+ * 시간 연장 이벤트 수신 시 타이머 업데이트
+ */
+watch(
+  () => timeExtensionData?.value,
+  (newExtensionData) => {
+    if (newExtensionData && newExtensionData.additionalTime > 0 && !hasExtended.value) {
+      timer.value += newExtensionData.additionalTime;
+      formattedTime.value = formatTime(timer.value);
+      hasExtended.value = true;
+      presentToast();
+    }
+  }
+)
 
 
 /**
  * 시간 연장함수
  */
-const extendTime = () => {
-  if (!hasExtended.value) {
-    timer.value += 120;
-    formattedTime.value = formatTime(timer.value);
-    hasExtended.value = true;
+const extendTime = async () => {
+  if(!speakingStarted.value) {
+    await presentAlert("먼저 그림카드와 글자 카드를 눌러주세요");
+    return
   }
-  presentToast();
+
+  if (!hasExtended.value) {
+    try {
+      const response = await post(`games/${roomId}/timer/extensions?additionalTime=${ADDITIONAL_TIME}`);
+      console.log("시간 연장 요청 결과:", response)
+      formattedTime.value = formatTime(timer.value);
+      hasExtended.value = true;
+    } catch (error) {
+      console.error("시간 연장 실패 :", error);
+    }
+  }
 }
 
 /**
@@ -266,6 +289,25 @@ const closeAllModals = async () => {
 };
 
 /**
+ * 오류 발생 시 경고창 뜸
+ */
+const presentAlert = async (message: string) => {
+  const alert = await alertController.create({
+    header: '잘못된 동작',
+    message: message,
+    buttons: [
+      {
+        text: '확인',
+        role: 'confirm',
+        cssClass: "my-custom-alert-button-class",
+      },
+    ],
+    cssClass: "custom-one-button-alert"
+  });
+  await alert.present();
+}
+
+/**
  * unmounted 될 때 타이머 초기화
  */
 onBeforeUnmount(() => {
@@ -283,7 +325,7 @@ onBeforeUnmount(() => {
         <img :src="MikeIcon" alt="마이크">
       </IonAvatar>
       <IonChip class="player-chip">
-        <IonLabel class="player-name">{{currentSpeaker}}</IonLabel>
+        <IonLabel class="player-name">{{currentSpeaker.playerInfo.name}}</IonLabel>
       </IonChip>
     </div>
 
@@ -293,10 +335,9 @@ onBeforeUnmount(() => {
       <div
         v-for="card in cards"
         :key="card.id"
-        ref="cardRefs"
         class="card-wrapper"
         :class="{ flipped: card.isFlipped }"
-        @click="toggleFlip(card.id)"
+        @click="sendCardClickRequest(card.id)"
       >
         <!-- 뒷면 (기본 상태) -->
         <div class="card-back">
@@ -490,7 +531,7 @@ ion-content::part(background) {
 
 .card-text, .card-picture {
   text-align: center;
-  padding: 1.5vh;
+  padding: 2vh;
   max-width: 90%;
   z-index: 2;
   color: #ffffff;
@@ -581,7 +622,7 @@ ion-content::part(background) {
 /* Media Query for Foldable Devices (e.g., Galaxy Z Fold) */
 @media  (max-width: 345px) {
   .card-container{
-    margin-top: 12%;
+    margin-top: 3%;
   }
 }
 </style>

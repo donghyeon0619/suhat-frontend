@@ -1,34 +1,79 @@
 <script setup lang="ts">
-import {
-  IonContent,
-  IonAvatar,
-  IonChip,
-  IonRow,
-  IonCol,
-  IonButton,
-  IonLabel, toastController,
-} from "@ionic/vue";
-import {onBeforeUnmount, onMounted, ref} from "vue";
+import {IonAvatar, IonChip, IonCol, IonContent, IonLabel, IonRow, toastController,} from "@ionic/vue";
+import {inject, onBeforeUnmount, Ref, ref, watch} from "vue";
 import MikeIcon from "@/assets/icons/game/icon-mike.svg"
 import GameCardBg from "@/assets/img/game/bg-game-card.svg";
-import testImg from "@/assets/img/game/img-test-phone.png";
+import {AssignedCard, Card} from "@/types/Card";
+import {smartphoneTexts} from "@/data/smartphoneTexts";
+import {smartphonePicture} from "@/data/smartphonePicture";
+import {Player} from "@/types/Player";
 
 // props 선언
-const props = defineProps({
-  currentSpeaker:{
-    type:String,
-    required: true
-  }
-})
-
-const emit = defineEmits(["nextPhase"]);
+const props = defineProps<{
+  currentSpeaker: Player
+}>()
 
 // 타이머 샛업
-const initialTime = 60 // 3분 선언
+const initialTime = 180 // 3분 선언
 const timer = ref(initialTime); //타이머 3분에서 시작
-const formattedTime = ref(""); // "MM:SS"로 형식으로 화면에 보여줌
+const formattedTime = ref("3:00"); // "MM:SS"로 형식으로 화면에 보여줌
 let timerInterval: ReturnType<typeof setInterval> | null = null;
+const timerStartData = inject<Ref<{ startTime: number; } | null>>("timerStartData", ref(null));
+const timeExtensionData = inject<Ref<{ additionalTime: number } | null>>("timeExtensionData", ref(null));
 
+/**
+ * 카드 관련 변수
+ */
+const cards = ref<Card[]>([
+  { id: 1, isFlipped: false, type: 'text', content: ''},
+  { id: 2, isFlipped: false, type: 'picture', content: ''},
+])
+const assignedCard = inject<Ref<AssignedCard | null>>("assignedCard", ref(null));
+
+
+/**
+ * 카드 부여 함수
+ */
+watch(
+  () => assignedCard?.value, // sse 이벤트 데이터 감지
+  (newCardData) => {
+    if (newCardData) {
+      console.log("새로운 카드 데이터 수신:", newCardData);
+
+      // 카드 ID로 해당 카드 찾기
+      const card = cards.value.find((c) => c.type === newCardData.cardType);
+      if (card) {
+        // 카드 데이터 업데이트
+        card.isFlipped = true;
+        card.type = newCardData.cardType;
+
+        // 카드 타입에 따라 데이터 검색
+        if (newCardData.cardType === "text") {
+          const textData = smartphoneTexts.find((item) => item.id === newCardData.cardId);
+          card.content = textData?.text || "데이터 없음";
+        } else if (newCardData.cardType === "picture") {
+          const pictureData = smartphonePicture.find((item) => item.id === newCardData.cardId);
+          card.content = pictureData?.url || "데이터 없음";
+        }
+      } else {
+        console.log(`ID(${newCardData.cardId})에 해당하는 카드를 찾을 수 없습니다.`);
+      }
+    }
+  }
+);
+
+/**
+ * 타이머 동기화 로직: 'timer-start' 이벤트를 수신했을 때 타이머 시작
+ */
+watch(
+  () => timerStartData?.value,
+  (newTimerData) => {
+    if (newTimerData && newTimerData.startTime) {
+      console.log("타이머 동기화 시작:", newTimerData);
+      startTimer(newTimerData.startTime);
+    }
+  }
+)
 
 // "MM:SS" 로 바꾸는 함수
 const formatTime = (seconds: number) => {
@@ -38,21 +83,40 @@ const formatTime = (seconds: number) => {
 };
 
 // 타이머 시작 함수
-const startTimer = () => {
-  formattedTime.value =formatTime(timer.value);
-  timerInterval = setInterval(()=>{
+const startTimer = (serverStartTime: number) => {
+  const clientCurrentTime = Date.now();
+  const elapsedTime = Math.floor((clientCurrentTime - serverStartTime) / 1000);
+  timer.value = initialTime - elapsedTime
+
+  formattedTime.value = formatTime(timer.value);
+  timerInterval = setInterval(() => {
     timer.value -= 1;
     formattedTime.value = formatTime(Math.max(timer.value, 0)); // 음수로 내려가지 않도록 보장
 
     if (timer.value <= 0) { // 타이머 종료 조건
       clearInterval(timerInterval!); // timerInterval이 null이 아님을 보장
       timerInterval = null; // 초기화
-      emit("nextPhase"); // 시간이 다 지나면 다음 단계로 전환
     }
   }, 1000);
-}
+};
 
-// 시간 연장시 상단 토스트 출현
+/**
+ * 시간 연장 이벤트 수신 시 타이머 업데이트
+ */
+watch(
+  () => timeExtensionData?.value,
+  (newExtensionData) => {
+    if (newExtensionData && newExtensionData.additionalTime > 0 ) {
+      timer.value += newExtensionData.additionalTime;
+      formattedTime.value = formatTime(timer.value);
+      presentToast();
+    }
+  }
+)
+
+/**
+ * 시간 연장시 상단 토스트 출현
+  */
 const presentToast = async () => {
   const toast = await toastController.create({
     message: '남은 시간이 연장되었어요',
@@ -72,10 +136,6 @@ onBeforeUnmount(() => {
   }
 });
 
-// mount 될 시 타이머 시작
-onMounted(() => {
-  startTimer();
-})
 </script>
 <template>
   <IonContent scroll-y="false" >
@@ -85,19 +145,47 @@ onMounted(() => {
         <img :src="MikeIcon" alt="마이크">
       </IonAvatar>
       <IonChip class="player-chip">
-        <IonLabel class="player-name">{{currentSpeaker}}</IonLabel>
+        <IonLabel class="player-name">{{currentSpeaker.playerInfo.name}}</IonLabel>
       </IonChip>
     </div>
 
     <!-- 게임 카드 진행 영역 -->
     <div class="card-container ion-padding">
-      <div class="text-card">
-        <img :src="GameCardBg" alt="Background" class="card-background" />
-        <IonLabel class="card-text">스마트폰을 <br>손에서 놓지 않음</IonLabel>
-      </div>
-      <div class="face-card">
-        <img :src="GameCardBg" alt="Background" class="card-background" />
-        <img :src="testImg" class="card-picture" alt="그림이미지">
+      <!-- 애니메이션 들어간 카드 -->
+      <div
+        v-for="card in cards"
+        :key="card.id"
+        class="card-wrapper"
+        :class="{ flipped: card.isFlipped }"
+      >
+        <!-- 뒷면 (기본 상태) -->
+        <div class="card-back">
+          <img :src="GameCardBg" alt="Background" class="card-background" />
+          <IonLabel class="card-text">
+            {{ card.type === 'text' ? '글자 카드' : '그림 카드' }}
+          </IonLabel>
+        </div>
+
+        <!-- 앞면 (뒤집힌 상태) -->
+        <div
+          v-if="card.type === 'text'"
+          class="card-front text-card"
+        >
+          <img :src="GameCardBg" alt="Background" class="card-background" />
+          <IonLabel
+            class="card-text"
+            v-html="card.content"
+          >
+          </IonLabel>
+        </div>
+
+        <div
+          v-else
+          class="card-front face-card"
+        >
+          <img :src="GameCardBg" alt="Background" class="card-background" />
+          <img :src="card.content" class="card-picture" alt="그림 이미지" />
+        </div>
       </div>
     </div>
 
@@ -146,20 +234,62 @@ ion-content::part(background) {
 
 .card-container {
   display: flex;
-  gap: 1vw;
+  gap: 3.5vw;
   margin-top: 20%;
 
 }
 
 .text-card,
-.face-card {
+.face-card,
+.card-back {
   position: relative;
-  width: 100%;
   min-height: 60vw;
   margin: 0 1vh 0 1vh;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.card-wrapper{
+  position: relative;
+  width: 100%;
+  height: 60vw;
+  perspective: 1000px;
+  cursor: pointer;
+}
+
+.card-wrapper .card-back,
+.card-wrapper .card-front {
+  position: absolute;
+  top: 0;
+  margin: auto;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  transition: transform 0.65s ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-wrapper .card-back {
+  transform: rotateY(0deg);
+  z-index: 2;
+}
+
+.card-wrapper .card-front {
+  transform: rotateY(180deg);
+  z-index: 1;
+}
+
+.card-wrapper.flipped .card-back {
+  transform: rotateY(-180deg);
+  z-index: 1;
+}
+
+.card-wrapper.flipped .card-front {
+  transform: rotateY(0deg);
+  z-index: 2;
 }
 
 .card-background {
@@ -173,13 +303,15 @@ ion-content::part(background) {
 
 .card-text, .card-picture {
   text-align: center;
-  max-width: 70%;
+  padding: 1.5vh;
+  max-width: 90%;
   z-index: 2;
-  font-size: 1.125rem;
-  font-weight: bold;
   color: #ffffff;
-  line-height: 1.6;
+  font-weight: bold;
+  font-size: 1.2rem;
+  line-height: 1.5;
 }
+
 
 
 .speech-bubble-wrapper{
@@ -243,14 +375,14 @@ ion-content::part(background) {
 /* Media Query for Small Devices (e.g., Galaxy S8) */
 @media screen and (max-width: 360px) {
   .card-container{
-    margin-top: 15%;
+    margin-top: 12%;
   }
 }
 
 /* Media Query for Foldable Devices (e.g., Galaxy Z Fold) */
 @media  (max-width: 345px) {
   .card-container{
-    margin-top: 25%;
+    margin-top: 17%;
   }
 }
 
