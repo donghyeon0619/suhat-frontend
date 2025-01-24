@@ -83,7 +83,7 @@ function closeModal() {
 
 const options: CapacitorBarcodeScannerOptions = {
   hint: CapacitorBarcodeScannerTypeHintALLOption.ALL,
-  scanInstructions: '아래 사각형 안에 바코드가<br>꽉차도록 맞춰주세요',
+  scanInstructions: '아래 사각형 안에 바코드가\n꽉차도록 맞춰주세요',
 };
 
 async function scanBarcode() {
@@ -91,7 +91,7 @@ async function scanBarcode() {
     const result = (await CapacitorBarcodeScanner.scanBarcode(options)).ScanResult;
     roomId.value = result;
     console.error("스캔 성공: ", roomId.value);
-    findRoom();
+    await findRoom();
   } catch (error) {
     console.error("스캔 오류:", error);
   }
@@ -102,7 +102,7 @@ async function scanBarcode() {
   <Header></Header>
   <ion-content class="background">
     <ion-title class="title">방 입장하기</ion-title>
-    <ion-text class="description">아래 사각형 안에 바코드가<br>꽉차도록 맞춰주세요</ion-text><br>
+    <ion-text class="description">아래 버튼을 눌러주세요</ion-text><br>
 
     <!-- Barcode scanner button -->
     <ion-button class="scan" @click="scanBarcode">바코드 스캔 시작</ion-button>
@@ -272,6 +272,7 @@ ion-modal {
 }
 
 .scan {
+  margin:2vh;
   --background: #13BD7E;
 }
 </style>

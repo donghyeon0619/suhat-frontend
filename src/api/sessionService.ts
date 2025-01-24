@@ -1,7 +1,7 @@
-import {CapacitorCookies} from "@capacitor/core";
-import {get} from "@/api/httpService";
+import {CapacitorCookies, CapacitorHttp} from "@capacitor/core";
+import {get, getHttpOptions} from "@/api/httpService";
 
-const BASE_URL = 'http://10.0.2.2:8070/api/';
+const BASE_URL = 'https://suhat.kr';
 
 /**
  * 쿠키 및 세션 관리 모듈
@@ -55,9 +55,18 @@ async function deleteJSessionId() {
  * @returns {Promise<boolean>} 세션 유효 여부
  */
 export async function validateSession(): Promise<boolean> {
+
+  const options = await getHttpOptions('users/session', 'GET', undefined, undefined);
+
+  // 쿠키 전송 활성화
+  options.webFetchExtra = {
+    credentials: 'include', // 쿠키 포함 설정
+    mode: 'cors'
+  };
+
   try {
     // API 호출
-    const response = await get('users/session', undefined, true);
+    const response = await CapacitorHttp.get(options);
 
     // 응답 상태 확인
     if (response.status === 200) {

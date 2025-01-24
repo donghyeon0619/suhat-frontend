@@ -2,6 +2,7 @@
 import {IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle} from "@ionic/vue";
 import { chevronBackOutline } from 'ionicons/icons';
 import {computed} from "vue";
+
 // Define a prop for the color
 const props = defineProps({
   backButtonColor: {

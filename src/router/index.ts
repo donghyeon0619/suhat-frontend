@@ -24,6 +24,8 @@ import TestView from "@/views/TestView.vue"
 import GameTutorial from "@/views/game/tutorial/GameTutorial.vue";
 import {validateSession} from "@/api/sessionService";
 import {useAppStateStore} from "@/store/appState";
+import {useNetworkStore} from "@/store/network";
+import {showAlert} from "@/utils/showAlert";
 
 const routes: Array<RouteRecordRaw> = [
     {
@@ -186,6 +188,21 @@ const routes: Array<RouteRecordRaw> = [
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes
+})
+
+router.beforeEach(async (to, from) => {
+  const networkStore = useNetworkStore();
+  if(!networkStore.isOnline) {
+    await showAlert(
+      "페이지 이동 오류",
+      "네트워크 활성화 후 페이지 이동을 해주세요",
+      [{
+        text: "확인", role: "confirm",
+
+      }],"custom-one-button-alert"
+    );
+    return false;
+  }
 })
 
 export default router

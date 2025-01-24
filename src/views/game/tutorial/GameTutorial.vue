@@ -27,9 +27,7 @@ const handleButtonClick = () => {
   if(currentScreen.value === 2) {
     currentScreen.value += 1;
   } else {
-    router.replace({
-      path: "/game/home"
-    });
+    router.back();
   }
 
   messageText.value = '많은 동의를 얻어 퍼즐 조각을 획득해보자<br>가장 많은 퍼즐 조각을 얻은 사람이 승자야!'
@@ -68,9 +66,9 @@ const handleButtonClick = () => {
         </div>
         <div class="ion-margin-start ion-margin-end ion-padding-start ion-padding-end">
           <img
-              src="@/assets/img/game/tutorial/example-card.svg"
-              class="example-img-card"
-              @click="currentScreen = 2"
+              src="@/assets/img/game/tutorial/example-answer.svg"
+              class="example-img-answer"
+              @click="currentScreen = 3"
               alt="예시 카드 이미지">
         </div>
       </div>
@@ -137,6 +135,12 @@ ion-content::part(background) {
 .example-img-card {
   height: 45vh;
   margin: auto;
+}
+
+.example-img-answer {
+  height: 50vh;
+  margin: auto;
+
 }
 
 ion-content.dimmed::after {

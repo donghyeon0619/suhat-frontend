@@ -196,7 +196,7 @@ ion-content::part(background) {
   width: 100%;
   height: 63vh;
   padding: 12% 5%;
-  margin-top: 18%;
+  margin-top: 13%;
   border-radius: 20px 20px 12px 12px;
   overflow: hidden;
 }
@@ -286,7 +286,7 @@ ion-content::part(background) {
 }
 
 ion-footer{
-  height: 15%;
+  height: 13%;
 }
 
 

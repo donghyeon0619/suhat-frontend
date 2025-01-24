@@ -40,6 +40,7 @@ const fetchSurveys = async () => {
     const response = await get("surveys", undefined);
     console.log(response, "응답 완료");
     questions.value = response.map((survey: { content: string }) => survey.content);  // content 필드 추출
+    currentQuestionIndex.value = 0;
 
     selectedAnswers.value = Array(questions.value.length).fill(-1);
   } catch (error) {
@@ -101,7 +102,7 @@ const submitSurvey = async () => {
       totalScore: totalScore.value});
     console.log('설문 결과 데이터 전송 성공');
 
-    router.push({
+    router.replace({
       name: 'SurveyResult',
       query: { score: totalScore.value },
     });

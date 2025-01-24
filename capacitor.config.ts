@@ -14,10 +14,17 @@ const config: CapacitorConfig = {
     },
     Keyboard: {
       resize: 'none'
+    },
+    SplashScreen :{
+      launchShowDuration: 4000,
+      launchAutoHide: true,
+      backgroundColor: '#000000',
+      splashFullScreen: 'true'
     }
   },
   server: {
-    cleartext: true,
+    hostname: 'suhat.kr',
+    cleartext: false,
   }
 };
 

@@ -27,7 +27,7 @@ export const useEventSourceStore = defineStore('eventSource', {
       // 연결이 열렸을 때
       this.eventSource.onopen = () =>{
         console.log('sse 연결이 열렸습니다.');
-        this.isConnected =true;
+        this.isConnected = true;
       };
 
       // 서버로 부터 기본 메시지(onmessage)
@@ -38,9 +38,9 @@ export const useEventSourceStore = defineStore('eventSource', {
 
       // 오류 발생 시 (네트워크 단절, 서버 타임아웃 등)
       this.eventSource.onerror = () => {
-        if (this.isDisconnectedByUser) {
-          console.log('[SSE] 사용자가 의도적으로 연결을 끊었습니다.');
-          return;
+        if (!this.isDisconnectedByUser) {
+          console.log('[SSE] 서버 혹은 네트워크 문제로 인한, 연결 종료');
+          this.disconnect();
         }
 
         console.error('[SSE] 오류 발생 - 네트워크 및 서버 타임아웃으로 인한 연결 종료 ');
@@ -69,7 +69,6 @@ export const useEventSourceStore = defineStore('eventSource', {
      */
     removeEventListener(eventName: string, handler: (e: MessageEvent) => void){
       if (!this.eventSource) {
-        console.warn("[SSE] 연결을 먼저 하세요");
         return;
       }
       this.eventSource.removeEventListener(eventName, handler);

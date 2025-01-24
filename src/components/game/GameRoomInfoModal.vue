@@ -13,7 +13,8 @@ import {onMounted} from "vue";
 import {post} from "@/api/httpService";
 import {useUserStore} from "@/store/user";
 import {useSurveyStore} from "@/store/survey";
-
+import TagIcon from "@/assets/icons/game/tag-icon.svg"
+import HumanIcon from "@/assets/icons/common/singleplay-icon.svg"
 const props = defineProps({
   roomId: {
     type: String,
@@ -80,14 +81,14 @@ async function closeModal() {
     <IonTitle class="modal-title">방 입장하기</IonTitle>
 
     <IonText class="modal-sub-title">
-      <IonIcon src="src/assets/icons/game/tag-icon.svg"></IonIcon>
+      <IonIcon :src="TagIcon"></IonIcon>
       방 이름
     </IonText>
     <IonInput class="input" fill="outline" :value="roomName" readonly></IonInput>
 
     <div class="horizontal-division">
       <IonText>
-        <IonIcon src="src/assets/icons/common/singleplay-icon.svg"></IonIcon>
+        <IonIcon :src="HumanIcon"></IonIcon>
         인원 수<span class="vertical-division"></span>
         <IonLabel>{{headCount}}인 게임</IonLabel>
       </IonText>
