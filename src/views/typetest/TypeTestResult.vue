@@ -339,7 +339,7 @@ ion-item{
 
 
 ion-footer{
-  height: 15%;
+  height: 13%;
 }
 
 

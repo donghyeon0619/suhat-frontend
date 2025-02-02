@@ -24,6 +24,10 @@ const props = defineProps({
   showChip:{
     type: Boolean,
     default: true
+  },
+  bubbleFontSize:{
+    type: String,
+    default: "1.125rem"
   }
 })
 
@@ -37,7 +41,7 @@ const props = defineProps({
       :class="{ 'no-tail': !hasTail}"
       :style="{ borderRadius: customRadius, textAlign: textAlign }"
     >
-      <IonLabel v-html="message"></IonLabel>
+      <IonLabel v-html="message" :style="bubbleFontSize"></IonLabel>
     </div>
     <SuhatChip v-if="showChip"/>
   </div>

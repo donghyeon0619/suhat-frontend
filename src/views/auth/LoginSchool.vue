@@ -50,17 +50,21 @@ const validateForm = () =>{
 // 학교를 저장하고 loginFinish로 이동
 const saveSchoolAndFinish = async () => {
   userStore.setSchool(schoolName.value);
-  const response = await signup();
 
-  if (response) {
-    router.navigate(
-      {
-        name: "LoginFinish",
-        query: {username: userStore.name}
-      },
-      'forward', 'replace');
-  } else {
-    console.error('가입완료 실패')
+  try {
+    const response = await signup();
+    if (response) {
+      router.push(
+        {
+          name: "LoginFinish",
+          query: {username: userStore.name}
+        }, undefined
+      );
+    } else {
+      console.log("가입 완료 실패")
+    }
+  } catch (error) {
+    console.error("가입완료 중 오류 발생")
   }
 }
 

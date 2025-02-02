@@ -1,7 +1,8 @@
-import {CapacitorCookies} from "@capacitor/core";
-import {get} from "@/api/httpService";
+import {CapacitorCookies, CapacitorHttp} from "@capacitor/core";
+import {get, getHttpOptions} from "@/api/httpService";
 
-const BASE_URL = 'http://10.0.2.2:8070/api/';
+const BASE_URL = 'https://suhat.kr';
+// const BASE_URL = 'http://10.0.2.2:8443';
 
 /**
  * 쿠키 및 세션 관리 모듈
@@ -34,10 +35,14 @@ export async function setJSessionId(jsessionId: string) {
  */
 export async function getJSessionId(): Promise<string | null> {
   const result = await CapacitorCookies.getCookies({url: BASE_URL});
-  console.log(result);
-  console.log(result.cookies);
-  const cookies = result.cookies as unknown as { [key: string]: string }; // unknown으로 변환 후 캐스팅
-  return cookies['JSESSIONID'] || null; // JSESSIONID 가져오기
+  const allResult = await CapacitorCookies.getCookies();
+  console.log("getCookies", result);
+  console.log("getAllCookies", allResult);
+  // 쿠키 데이터가 최상위 수준에 있을 경우 처리
+  const jsessionId = result['JSESSIONID'] || null;
+  console.log("JSESSIONID:", jsessionId);
+
+  return jsessionId;
 }
 
 /**
@@ -55,9 +60,18 @@ async function deleteJSessionId() {
  * @returns {Promise<boolean>} 세션 유효 여부
  */
 export async function validateSession(): Promise<boolean> {
+
+  const options = await getHttpOptions('users/session', 'GET', undefined, undefined);
+
+  // 쿠키 전송 활성화
+  options.webFetchExtra = {
+    credentials: 'include', // 쿠키 포함 설정
+    mode: 'cors'
+  };
+
   try {
     // API 호출
-    const response = await get('users/session', undefined, true);
+    const response = await CapacitorHttp.get(options);
 
     // 응답 상태 확인
     if (response.status === 200) {

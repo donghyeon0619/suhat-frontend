@@ -194,15 +194,6 @@ const presentAlert = async (header: string, message: string) => {
       </div>
 
       <div class="option-container">
-        <!-- 대화형 말풍선 -->
-<!--        <div class="chat-bubble">-->
-<!--          <div class="speech-bubble">-->
-<!--            <IonLabel>-->
-<!--              나와 가장 가까운 대답을 골라줘-->
-<!--            </IonLabel>-->
-<!--          </div>-->
-<!--          <SuhatChip font-size="0.875rem"></SuhatChip>-->
-<!--        </div>-->
         <img class="chat-bubble" :src="SpeechBubbleimg" alt="말풍선 이미지" style="width: 65%"/>
         <!-- 선택지 -->
         <IonCard>
@@ -310,62 +301,15 @@ ion-buttons{
 
 .chat-bubble{
   display: flex;
-  margin-top: 15%;
 }
 
-/*
-.suhat-chip{
+.option-container{
   position: absolute;
-  top: -85%;
-  left: 3%;
-  z-index: 4;
+  width: 90%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 3vh;
 }
-
-.speech-bubble{
-  position: relative;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 20px;
-  border: 3px solid #F2F2F2;
-  padding: 1.5% 10% 2% 6%;
-  ion-label{
-    font-weight: 900;
-    font-size: 0.875rem;
-    line-height: 1.25;
-    color: #333D4B;
-  }
-  z-index: 2;
-}
-
-.speech-bubble::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 25%;
-  width: 0;
-  height: 0;
-  border: 15px solid transparent;
-  border-top-color:rgba(255, 255, 255, 0.8);
-  border-bottom: 0;
-  margin-left: -4vw;
-  margin-bottom: -14px;
-  z-index:3;
-}
-
-.speech-bubble::before {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 25%;
-  width: 0;
-  height: 0;
-  border: 17px solid transparent;
-  border-top-color: #F2F2F2;
-  border-bottom: 0;
-  margin-left: -4.7vw;
-  margin-bottom: -17px;
-  z-index: 1;
-}
-*/
 
 ion-card{
   width: 100%;
@@ -406,7 +350,7 @@ ion-card{
 
 
 ion-footer{
-  height: 15%;
+  height: 13%;
 }
 
 .prev-button, .next-button {

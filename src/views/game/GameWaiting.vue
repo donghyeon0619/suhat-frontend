@@ -49,20 +49,21 @@ const gameStore = useGameStore();
  */
 const connectToRoom = () => {
 
-  eventSourceStore.connect(`http://10.0.2.2:8070/api/rooms/connect/${roomId}`);
+  eventSourceStore.connect(`https://suhat.kr/api/rooms/connect/${roomId}`);
+  // eventSourceStore.connect(`http://10.0.2.2:8443/api/rooms/connect/${roomId}`);
 
 
   eventSourceStore.addEventListener('connected', function(event) {
     console.log('connected 이벤트 수신:', event.data);
+    // 이벤트 등록
+    eventSourceStore.addEventListener('not-in-room', notInRoomHandler);
+    eventSourceStore.addEventListener('player-joined', playerJoinedHandler);
+    eventSourceStore.addEventListener('game-started', gameStartedHandler);
+    eventSourceStore.addEventListener('player-left', playerLeftHandler);
+    eventSourceStore.addEventListener('host-assigned', hostAssignedHandler);
+    eventSourceStore.addEventListener('host-changed', hostChangedHandler);
+    eventSourceStore.addEventListener('player-ready', playerReadyHandler);
   });
-
-  // 이벤트 등록
-  eventSourceStore.addEventListener('player-joined', playerJoinedHandler);
-  eventSourceStore.addEventListener('game-started', gameStartedHandler);
-  eventSourceStore.addEventListener('player-left', playerLeftHandler);
-  eventSourceStore.addEventListener('host-assigned', hostAssignedHandler);
-  eventSourceStore.addEventListener('host-changed', hostChangedHandler);
-  eventSourceStore.addEventListener('player-ready', playerReadyHandler);
 };
 
 // 핸들러 함수 정의
@@ -95,6 +96,21 @@ const playerLeftHandler = (event: MessageEvent) => {
   console.log('player-left 이벤트 수신:', event.data);
   deletePlayer(event.data);
 };
+
+/**
+ * 재연결시 방에 없을 때, 홈에서 다시 입장
+ */
+const notInRoomHandler = (event: MessageEvent) => {
+  isLeaving.value = true;
+  const eventData = event.data;
+  presentToast(eventData)
+  setTimeout(() => {
+    router.replace({
+      path: '/game/home'
+    })
+  }, 2000);
+}
+
 
 /**
  * 'host-assigned' 이벤트:  호스트 부여
@@ -139,13 +155,25 @@ const playerReadyHandler = (event: MessageEvent) => {
 const addPlayer = (data) => {
   const newPlayer = JSON.parse(data);
   console.log('new player: ', newPlayer);
+
+  // 1) 이미 존재하는지 확인
+  const existingIndex = participants.value.findIndex(
+    p => p.playerId === newPlayer.playerId
+  );
+
+  if (existingIndex !== -1) {
+    // 이미 존재 -> 재연결 or 중복 처리
+    participants.value[existingIndex].ready = true;
+    return;
+  }
+
   // 새로운 유저 정보를 participants 리스트에 추가
   const emptySlotIndex = participants.value.findIndex(p => !p.isUserJoined);
   if (emptySlotIndex !== -1) {
     participants.value[emptySlotIndex] = {
       playerId: newPlayer.playerId,
       isUserJoined: true,
-      ready:true,
+      ready: true,
       name: newPlayer.playerInfo.name,
     };
     console.log("들어간 플레이어 정보", participants.value[emptySlotIndex])
@@ -294,6 +322,7 @@ onIonViewWillLeave(() => {
   eventSourceStore.removeEventListener('host-assigned', hostAssignedHandler);
   eventSourceStore.removeEventListener('host-changed', hostChangedHandler);
   eventSourceStore.removeEventListener('player-ready', playerReadyHandler);
+  eventSourceStore.removeEventListener('not-in-room', notInRoomHandler);
   resetRoomState();
 })
 

@@ -109,7 +109,9 @@ const handleButtonClick = () => {
       <ChatBubbleWithBorder
         message=
           "퍼즐을 완성한 걸 축하해!
-          <br>이제 스마트폰 없이도 나와 같이 재미있는 일상을 보내보자">
+          <br>이제 스마트폰 없이도 나와 같이 재미있는 일상을 보내보자"
+        bubble-font-size="1rem"
+      >
       </ChatBubbleWithBorder>
     </div>
   </IonContent>
@@ -169,6 +171,7 @@ ion-content::part(background) {
 .card-header{
   align-items: center;
   padding-top:0;
+  padding-bottom:5%;
 }
 
 .card-title{

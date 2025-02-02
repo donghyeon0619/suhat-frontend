@@ -103,6 +103,45 @@ const calculateTimeDifference = async (): Promise<number> => {
  */
 const gameEndedHandler = (event:MessageEvent) =>{
   console.log('game-ended 이벤트 수신:', event.data);
+
+  gameStore.setGameEnded(true);
+  const toastMessage = "게임이 종료되어 홈으로 이동합니다.";
+  // 메시지를 Toast에 표시
+  presentToast(toastMessage);
+
+  setTimeout(() => {
+    router.replace({
+      path: '/game/home'
+    });
+  }, 3000);
+}
+
+/**
+ * 'game-ended' 이벤트: 플레이어  떠남으로 인한 게임종료
+ * @param event
+ */
+const notInRoomHandler = (event:MessageEvent) =>{
+  console.log('game-ended 이벤트 수신:', event.data);
+
+  gameStore.setGameEnded(true);
+  const toastMessage = "방에서 나가져서 다시 입장 요청해야합니다.";
+  // 메시지를 Toast에 표시
+  presentToast(toastMessage);
+
+  setTimeout(() => {
+    router.replace({
+      path: '/game/home'
+    });
+  }, 3000);
+}
+
+/**
+ * 'game-rest' 이벤트: 게임 초기화 완료 후 대기방 이동
+ * @param event
+ */
+const gameResetHandler = (event: MessageEvent) => {
+  console.log('game-reset 이벤트 수신:', event.data)
+
   // 이벤트 데이터 파싱
   const eventData = JSON.parse(event.data);
   // 메시지 생성
@@ -112,21 +151,14 @@ const gameEndedHandler = (event:MessageEvent) =>{
 
   gameStore.setGameEnded(true);
 
-  // 메시지를 Toast에 표시
-  presentToast(toastMessage);
-}
+  presentToast(toastMessage)
 
-/**
- * 'game-rest' 이벤트: 게임 초기화 완료 후 대기방 이동
- * @param event
- */
-const gameResetHandler = (event: MessageEvent) => {
-  console.log('game-reset 이벤트 수신:', event.data)
   setTimeout(() => {
     router.replace({
       path: `/game/waiting/${roomId}`
     });
   }, 3000);
+
 }
 
 /**
@@ -363,6 +395,7 @@ onIonViewWillEnter(async () => {
   syncInterval.value = setInterval(periodicTimeSync, 600000);
 
   eventSourceStore.addEventListener("game-ended", gameEndedHandler);
+  eventSourceStore.addEventListener("not-in-room",notInRoomHandler)
   eventSourceStore.addEventListener("player-order-assigned", playerOrderAssignedHandler);
   eventSourceStore.addEventListener("round-2-started", roundTwoStartedHandler);
   eventSourceStore.addEventListener("game-reset", gameResetHandler);
@@ -409,6 +442,7 @@ onIonViewWillLeave(() => {
   eventSourceStore.removeEventListener("time-extended", timeExtendedHandler);
   eventSourceStore.removeEventListener("speaking-end", speakingEndHandler);
   eventSourceStore.removeEventListener("vote-result", voteResultHandler);
+  eventSourceStore.removeEventListener("not-in-room", notInRoomHandler)
   resetGameState();
 })
 

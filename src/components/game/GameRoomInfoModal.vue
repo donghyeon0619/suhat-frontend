@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {
+  alertController,
   IonButton,
   IonIcon,
   IonInput,
@@ -13,7 +14,8 @@ import {onMounted} from "vue";
 import {post} from "@/api/httpService";
 import {useUserStore} from "@/store/user";
 import {useSurveyStore} from "@/store/survey";
-
+import TagIcon from "@/assets/icons/game/tag-icon.svg"
+import HumanIcon from "@/assets/icons/common/singleplay-icon.svg"
 const props = defineProps({
   roomId: {
     type: String,
@@ -61,8 +63,30 @@ async function enterGameRoom() {
     });
   } catch (error) {
     console.log('게임 방 입장 오류 발생: ', error);
+    await presentAlert('게임 방이 존재하지 않습니다.');
   }
   // 게임 방 입장 처리 로직
+}
+
+
+/**
+ * 게임 방 입장 중 오류 핸들러 토스트
+ * @param message
+ */
+const presentAlert = async (message: string) => {
+  const alert = await alertController.create({
+    header: '방 입장 ',
+    message: message,
+    buttons: [
+      {
+        text: '확인',
+        role: 'confirm',
+        cssClass: "my-custom-alert-button-class",
+      },
+    ],
+    cssClass: "custom-one-button-alert"
+  });
+  await alert.present();
 }
 
 async function closeModal() {
@@ -80,14 +104,14 @@ async function closeModal() {
     <IonTitle class="modal-title">방 입장하기</IonTitle>
 
     <IonText class="modal-sub-title">
-      <IonIcon src="src/assets/icons/game/tag-icon.svg"></IonIcon>
+      <IonIcon :src="TagIcon"></IonIcon>
       방 이름
     </IonText>
     <IonInput class="input" fill="outline" :value="roomName" readonly></IonInput>
 
     <div class="horizontal-division">
       <IonText>
-        <IonIcon src="src/assets/icons/common/singleplay-icon.svg"></IonIcon>
+        <IonIcon :src="HumanIcon"></IonIcon>
         인원 수<span class="vertical-division"></span>
         <IonLabel>{{headCount}}인 게임</IonLabel>
       </IonText>

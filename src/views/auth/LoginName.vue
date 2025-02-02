@@ -39,7 +39,7 @@ watch(nameInput, (newValue) => {
 // 이름을 저장하고 loginGender로 라우팅
 const saveNameAndProceed = async () => {
   userStore.setName(nameInput.value);
-  router.push('/loginGender');
+  router.push('/loginGender', undefined);
 }
 
 </script>

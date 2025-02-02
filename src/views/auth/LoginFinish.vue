@@ -4,7 +4,7 @@ import LoginFooter from "@/views/auth/components/LoginFooter.vue";
 import {ref, onMounted} from "vue";
 import lottie from 'lottie-web';
 import confettiAnimationData from '@/assets/confetti.json'
-import {useRoute} from "vue-router";
+import {onBeforeRouteLeave, useRoute} from "vue-router";
 
 // 라우터 정의
 const route = useRoute();
@@ -33,6 +33,14 @@ const goHome = () =>{
   router.navigate("/home", "forward", "replace")
 }
 
+onBeforeRouteLeave(async (to, from, next) =>{
+  //이동하는 경로가 회원가입 로직일 떄, 뒤로가기 막기
+  if (to.name === 'LoginSchool') {
+    next(false);
+  } else {
+    next();
+  }
+})
 
 </script>
 

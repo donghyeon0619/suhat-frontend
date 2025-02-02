@@ -16,7 +16,7 @@ import {
   IonText,
   actionSheetController, useIonRouter,
 } from "@ionic/vue";
-import {useRoute} from "vue-router";
+import {onBeforeRouteLeave, useRoute} from "vue-router";
 
 import goHome from "@/assets/icons/common/icon-go-home.svg"
 import ListIcon from "@/assets/icons/home/icon-list.svg"
@@ -26,6 +26,7 @@ import PeopleIcon from "@/assets/icons/home/icon-people.svg"
 import GameIcon from "@/assets/icons/home/icon-game.svg"
 import VideoCamIcon from "@/assets/icons/home/icon-videocam.svg"
 import RoadMapImg from "@/assets/img/home/img-roadmap.svg"
+import {beforeEach} from "vitest";
 
 const serviceTypes = [
   {id: 1, name: "소셜 미디어"},
@@ -80,7 +81,14 @@ const goSurveyPage = () =>{
   router.push("/SurveyPage")
 }
 
-
+onBeforeRouteLeave(async (to, from, next) =>{
+  //이동하는 경로가 회원가입 로직일 떄, 뒤로가기 막기
+  if (to.name === 'LoginSchool') {
+    next(false);
+  } else {
+    next();
+  }
+})
 
 </script>
 

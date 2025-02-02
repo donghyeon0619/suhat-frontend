@@ -36,7 +36,7 @@ const handleSelectionChange= (event) =>{
 // 성별을 저장하고 LoginSchool로 라우팅
 const saveGenderAndProceed = async () => {
   userStore.setGender(selectedGender.value);
-  router.push('/loginSchool');
+  router.push('/loginSchool', undefined);
 }
 
 </script>

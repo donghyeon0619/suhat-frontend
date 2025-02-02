@@ -1,8 +1,10 @@
 import {CapacitorHttp, HttpOptions } from '@capacitor/core';
-import {useRouter} from "vue-router";
 import router from "@/router";
+import {showAlert} from "@/utils/showAlert";
 
-const BASE_URL = 'http://10.0.2.2:8070/api/';
+
+const BASE_URL = 'https://suhat.kr';
+// const BASE_URL = 'http://10.0.2.2:8443';
 
 // **HTTP 요청 함수**
 /**
@@ -20,7 +22,7 @@ export async function getHttpOptions(
   params?: any
 ): Promise<HttpOptions> {
   return {
-    url: `${BASE_URL}${endpoint}`,
+    url: `${BASE_URL}/api/${endpoint}`,
     headers: {
       'Content-Type': 'application/json',
     },
@@ -43,6 +45,7 @@ export async function get(
   // 쿠키 전송 활성화
   options.webFetchExtra = {
     credentials: 'include', // 쿠키 포함 설정
+    mode: 'cors'
   };
 
   try {
@@ -73,11 +76,13 @@ export async function post(
   // 쿠키 전송 활성화
   options.webFetchExtra = {
     credentials: 'include', // 쿠키 포함 설정
+    mode: 'cors'
   };
 
   try {
     const response = await CapacitorHttp.post(options);
 
+    console.log("capacitorHttp post 요청 이후 응답 값", response);
     await validateHttpResponse(response)
 
     return returnFullResponse ? response : response.data;
@@ -93,6 +98,7 @@ export async function put(endpoint: string, data: any): Promise<any> {
   // 쿠키 전송 활성화
   options.webFetchExtra = {
     credentials: 'include', // 쿠키 포함 설정
+    mode: 'cors'
   };
 
   try {
@@ -114,6 +120,7 @@ export async function deleteRequest(endpoint: string, returnFullResponse: boolea
   // 쿠키 전송 활성화
   options.webFetchExtra = {
     credentials: 'include', // 쿠키 포함 설정
+    mode: 'cors'
   };
 
   try {
@@ -162,5 +169,14 @@ export async function validateHttpResponse(response: any): Promise<void> {
  */
 export async function handleUnauthorizedRequest() {
   console.log("로그인으로 리다이렉션")
-  await router.replace('/loginName');
+  await showAlert(
+    "로그인 만료",
+    "로그인 만료되었습니다. 로그인 화면으로 이동합니다",
+    [{
+      text: "확인", role: "confirm", handler: () => {
+        router.push('/loginTerms');
+      },
+    }],
+    "custom-one-button-alert"
+  );
 }

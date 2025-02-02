@@ -40,6 +40,7 @@ import './global.scss';
  * 상태관리 라이브러리 import
  */
 import {createPinia} from "pinia";
+import {useNetworkStore} from "@/store/network";
 
 const pinia = createPinia(); // pinia 인스턴스 생성
 
@@ -48,6 +49,13 @@ const app = createApp(App)
   .use(router)
   .use(pinia)
 
-router.isReady().then(() => {
+
+
+router.isReady().then(async () => {
+
+  // 전역 스토어 초기화
+  const networkStore = useNetworkStore();
+  await networkStore.setupNetworkListener();
+
   app.mount('#app');
 });

@@ -7,17 +7,28 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   plugins: {
     CapacitorHttp:{
-      enabled:true,
+      enabled:false,
     },
     CapacitorCookies:{
       enabled:true
     },
     Keyboard: {
       resize: 'none'
-    }
+    },
+    SplashScreen :{
+      launchShowDuration: 4000,
+      launchAutoHide: true,
+      backgroundColor: '#000000',
+      splashFullScreen: 'true'
+    },
+    // android : {
+    //   allowMixedContent: true
+    // }
   },
   server: {
-    cleartext: true,
+    hostname: 'suhat.kr',
+    cleartext: false,
+    allowNavigation: ['suhat.kr']
   }
 };
 

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import LoginHeader from "@/components/common/BackButtonHeader.vue";
 import {
   IonPage,
   IonContent,
@@ -8,12 +7,13 @@ import {
   IonThumbnail,
   IonItem,
   IonText,
-  IonLabel, useIonRouter
+  IonLabel, useIonRouter, IonHeader, IonToolbar
 } from "@ionic/vue";
 import LoginFooter from "@/views/auth/components/LoginFooter.vue";
 import {reactive, watch} from 'vue';
 import CheckmarkIcon from "@/components/common/CheckmarkIcon.vue";
 import {useUserStore} from "@/store/user";
+import {onBeforeRouteLeave} from "vue-router";
 
 const userStore = useUserStore();
 
@@ -47,16 +47,28 @@ watch([() => checkboxes.serviceTerms, () => checkboxes.privacyPolicy], () => {
 // userInfo 초기화 및 loginName 라우팅
 const initUserInfoAndProceed = async () => {
   userStore.resetUserInfo();
-  router.push('/loginName');
+  router.replace('/loginName');
 }
+
+/**
+ * Login 로직에서 LoginName으로만 넘어가는 거 허용
+ */
+onBeforeRouteLeave(async (to, from, next) =>{
+  if (to.name === 'LoginName') {
+    next();
+  } else {
+    next(false);
+  }
+})
 
 </script>
 
 <template>
   <IonPage>
-    <login-header></login-header>
+    <IonHeader class="ion-no-border">
+      <IonToolbar></IonToolbar>
+    </IonHeader>
     <IonContent class="ion-padding" scroll-y="false">
-
       <!-- 타이틀 부분 -->
       <div class="title">
         <ion-text class="title-text">
@@ -113,6 +125,9 @@ const initUserInfoAndProceed = async () => {
 </template>
 
 <style scoped>
+ion-toolbar{
+  --background: transparent;
+}
 .title {
   height: 13%;
   display: flex;
