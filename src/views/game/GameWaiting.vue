@@ -50,6 +50,7 @@ const gameStore = useGameStore();
 const connectToRoom = () => {
 
   eventSourceStore.connect(`https://suhat.kr/api/rooms/connect/${roomId}`);
+  // eventSourceStore.connect(`http://10.0.2.2:8443/api/rooms/connect/${roomId}`);
 
 
   eventSourceStore.addEventListener('connected', function(event) {

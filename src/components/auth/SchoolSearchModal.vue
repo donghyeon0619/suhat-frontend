@@ -96,25 +96,25 @@ const handleInput = async (event : CustomEvent) =>{
   }
 }
 
-/**
- * searchbar 키보드 출력 시 컨텐츠 올라오는 현상 수정
- */
-const input = document.querySelector('ion-searchbar');
-
-if (input) {
-  window.addEventListener('keyboardWillShow', (ev) => {
-    const event = ev as CustomEvent<KeyboardInfo>
-    const { keyboardHeight } = event.detail;
-
-    input.style.setProperty(
-      'transform',
-      `translate3d(0, ${keyboardHeight}px, 0)`
-    );
-  });
-  window.addEventListener('keyboardDidHide', () => {
-    input.style.removeProperty('transform');
-  });
-}
+// /**
+//  * searchbar 키보드 출력 시 컨텐츠 올라오는 현상 수정
+//  */
+// const input = document.querySelector('ion-searchbar');
+//
+// if (input) {
+//   window.addEventListener('keyboardWillShow', (ev) => {
+//     const event = ev as CustomEvent<KeyboardInfo>
+//     const { keyboardHeight } = event.detail;
+//
+//     input.style.setProperty(
+//       'transform',
+//       `translate3d(0, ${keyboardHeight}px, 0)`
+//     );
+//   });
+//   window.addEventListener('keyboardDidHide', () => {
+//     input.style.removeProperty('transform');
+//   });
+// }
 
 // 검색어가 없는 경우 초기화 함수
 const clearSearch = () =>{

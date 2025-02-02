@@ -1,8 +1,10 @@
 import { defineStore } from 'pinia';
+import {EventListener, EventSourcePolyfill} from "event-source-polyfill";
+import {getJSessionId} from "@/api/sessionService";
 
 export const useEventSourceStore = defineStore('eventSource', {
   state: () => ({
-    eventSource: null as EventSource | null,
+    eventSource: null as EventSourcePolyfill | null,
 
     // 사용자(클라이언트) 측에서 '명시적으로' disconnect()를 호출했는지 여부
     // -> onerror 발생 시, 의도적으로 끊김이라면 재 연결 안함
@@ -21,32 +23,46 @@ export const useEventSourceStore = defineStore('eventSource', {
       this.isDisconnectedByUser = false; // 의도적으로 끊김 상태 해제
       this.isConnected = false;
 
+      console.log("다큐멘트 쿠키", document.cookie);
+
+      const jSessionId =  getJSessionId();
       console.log(`SSE 연결중: ${url}`)
-      this.eventSource = new EventSource(url, {withCredentials: true});
+      // this.eventSource = new EventSource(url, {withCredentials: true});
+      this.eventSource = new EventSourcePolyfill(url,
+        {
+          headers: {'Cookie': `JSESSIONID=${jSessionId}`},
+          withCredentials: true,
+          heartbeatTimeout: 60 * 1000 * 10,
+        },
+      );
 
-      // 연결이 열렸을 때
-      this.eventSource.onopen = () =>{
-        console.log('sse 연결이 열렸습니다.');
-        this.isConnected = true;
-      };
+      if(this.eventSource) {
+        // 연결이 열렸을 때
+        this.eventSource.onopen = () => {
+          console.log('sse 연결이 열렸습니다.');
+          this.isConnected = true;
+        };
 
-      // 서버로 부터 기본 메시지(onmessage)
-      this.eventSource.onmessage = (event) => {
+        // 서버로 부터 기본 메시지(onmessage)
+        this.eventSource.onmessage = (event) => {
           const data = JSON.parse(event.data);
           console.log(data.message);
-      };
+        };
 
-      // 오류 발생 시 (네트워크 단절, 서버 타임아웃 등)
-      this.eventSource.onerror = () => {
-        if (!this.isDisconnectedByUser) {
-          console.log('[SSE] 서버 혹은 네트워크 문제로 인한, 연결 종료');
-          this.disconnect();
-        }
+        // 오류 발생 시 (네트워크 단절, 서버 타임아웃 등)
+        this.eventSource.onerror = (e) => {
+          if (!this.isDisconnectedByUser) {
+            console.log('[SSE] 서버 혹은 네트워크 문제로 인한, 연결 종료', e);
+            this.disconnect();
+          }
 
-        console.error('[SSE] 오류 발생 - 네트워크 및 서버 타임아웃으로 인한 연결 종료 ');
+          console.error('[SSE] 오류 발생 - 네트워크 및 서버 타임아웃으로 인한 연결 종료 ');
 
-        // 브라우저의 기본 재연결 로직에 따라 자동 재연결 시도
-      };
+          // 브라우저의 기본 재연결 로직에 따라 자동 재연결 시도
+        };
+      } else {
+        console.log("sse 연결이 안됨");
+      }
     },
 
     /**
@@ -54,12 +70,12 @@ export const useEventSourceStore = defineStore('eventSource', {
      * @param eventName 이벤트 이름
      * @param handler 제거할 콜백함수
      */
-    addEventListener(eventName: string, handler: (e: MessageEvent) => void){
-      if(!this.eventSource){
+    addEventListener(eventName: string, handler: (event: MessageEvent) => void) {
+      if (!this.eventSource) {
         console.warn("[SSE] 연결을 먼저 하세요");
         return;
       }
-      this.eventSource.addEventListener(eventName, handler);
+      this.eventSource.addEventListener(eventName, (event) => handler(event as MessageEvent));
     },
 
     /**
@@ -67,11 +83,11 @@ export const useEventSourceStore = defineStore('eventSource', {
      * @param eventName 이벤트 이름
      * @param handler 제거할 콜백함수
      */
-    removeEventListener(eventName: string, handler: (e: MessageEvent) => void){
+    removeEventListener(eventName: string, handler: (event: MessageEvent) => void){
       if (!this.eventSource) {
         return;
       }
-      this.eventSource.removeEventListener(eventName, handler);
+      this.eventSource.removeEventListener(eventName, (event) => handler(event as MessageEvent));
     },
 
     /**

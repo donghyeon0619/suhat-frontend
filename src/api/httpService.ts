@@ -2,7 +2,9 @@ import {CapacitorHttp, HttpOptions } from '@capacitor/core';
 import router from "@/router";
 import {showAlert} from "@/utils/showAlert";
 
-const BASE_URL = 'https://suhat.kr/api/';
+
+const BASE_URL = 'https://suhat.kr';
+// const BASE_URL = 'http://10.0.2.2:8443';
 
 // **HTTP 요청 함수**
 /**
@@ -20,7 +22,7 @@ export async function getHttpOptions(
   params?: any
 ): Promise<HttpOptions> {
   return {
-    url: `${BASE_URL}${endpoint}`,
+    url: `${BASE_URL}/api/${endpoint}`,
     headers: {
       'Content-Type': 'application/json',
     },
@@ -171,9 +173,10 @@ export async function handleUnauthorizedRequest() {
     "로그인 만료",
     "로그인 만료되었습니다. 로그인 화면으로 이동합니다",
     [{
-      text: "확인" , role: "confirm", handler: () => {
+      text: "확인", role: "confirm", handler: () => {
         router.push('/loginTerms');
       },
     }],
+    "custom-one-button-alert"
   );
 }

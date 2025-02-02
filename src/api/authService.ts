@@ -24,15 +24,22 @@ export async function signup(){
   try {
     const response = await post('users', userInfo);
     if (response){
-      const { session, userId } = response;
+      const { sessionId, userId } = response;
       userStore.setId(userId);
 
-      await setJSessionId(session);
+      console.log("세션 값", sessionId);
+      await setJSessionId(sessionId);
       // await syncCookies();
 
-      console.log("쿠키 값", getJSessionId());
-      console.log('회원가입 및 쿠키 동기화 성공');}
-    return response
+      const jsessionId = await getJSessionId();
+      if(jsessionId){
+        console.log('쿠키값: ', jsessionId);
+        console.log('회원가입 및 쿠키 동기화 성공');
+      } else {
+        console.log('회원가입 및 쿠키 동기화 실패');
+      }
+    }
+    return response;
   } catch (error) {
     console.error('회원가입 중 오류:', error);
     throw error

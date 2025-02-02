@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {
+  alertController,
   IonButton,
   IonIcon,
   IonInput,
@@ -62,8 +63,30 @@ async function enterGameRoom() {
     });
   } catch (error) {
     console.log('게임 방 입장 오류 발생: ', error);
+    await presentAlert('게임 방이 존재하지 않습니다.');
   }
   // 게임 방 입장 처리 로직
+}
+
+
+/**
+ * 게임 방 입장 중 오류 핸들러 토스트
+ * @param message
+ */
+const presentAlert = async (message: string) => {
+  const alert = await alertController.create({
+    header: '방 입장 ',
+    message: message,
+    buttons: [
+      {
+        text: '확인',
+        role: 'confirm',
+        cssClass: "my-custom-alert-button-class",
+      },
+    ],
+    cssClass: "custom-one-button-alert"
+  });
+  await alert.present();
 }
 
 async function closeModal() {
