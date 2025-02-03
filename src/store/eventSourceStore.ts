@@ -35,7 +35,7 @@ export const useEventSourceStore = defineStore('eventSource', {
         {
           // headers: {'Cookie': `JSESSIONID=${jSessionId}`},
           withCredentials: true,
-          heartbeatTimeout: 60 * 1000 * 10,
+          heartbeatTimeout: 60 * 1000 * 10, // 10분 타임아웃
         },
       );
 

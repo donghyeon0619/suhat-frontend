@@ -23,6 +23,7 @@ import {deleteRequest, get, post} from "@/api/httpService";
 import {useEventSourceStore} from "@/store/eventSourceStore";
 import {useUserStore} from "@/store/user";
 import {useGameStore} from "@/store/gameStore";
+import canStartSpeechBubbleImg from "@/assets/img/game/speech-bubble.svg"
 
 const route = useRoute();
 const router = useIonRouter();
@@ -55,6 +56,12 @@ const connectToRoom = () => {
 
   eventSourceStore.addEventListener('connected', function(event) {
     console.log('connected 이벤트 수신:', event.data);
+
+    // 현재 접속한 사용자의 ready 상태를 true로 변경 (null 체크 추가)
+    if (userStore.userInfo.id !== null) {
+      setPlayerReady(userStore.userInfo.id);
+    }
+
     // 이벤트 등록
     eventSourceStore.addEventListener('not-in-room', notInRoomHandler);
     eventSourceStore.addEventListener('player-joined', playerJoinedHandler);
@@ -132,27 +139,19 @@ const hostChangedHandler = (event: MessageEvent) => {
 }
 
 /**
- *
+ * 플레이어 레디 핸들러
  */
 const playerReadyHandler = (event: MessageEvent) => {
   console.log('player-ready 이벤트 수신:', event.data);
 
   const readyPlayerId = JSON.parse(event.data).playerId;
-
-  // 참가자 리스트에서 해당 플레이어 상태 업데이트
-  const playerIndex = participants.value.findIndex(
-    (p) => p.playerId === readyPlayerId
-  );
-
-  if (playerIndex !== -1) {
-    participants.value[playerIndex].ready = true;
-  }
+  setPlayerReady(readyPlayerId);
 }
 
 /**
  * 새로운 플레이어를 참가자 리스트에 추가
  */
-const addPlayer = (data) => {
+const addPlayer = (data: any) => {
   const newPlayer = JSON.parse(data);
   console.log('new player: ', newPlayer);
 
@@ -183,7 +182,7 @@ const addPlayer = (data) => {
 /**
  * 플레이어를 참가자 리스트에서 제거
  */
-const deletePlayer = (data) => {
+const deletePlayer = (data: any) => {
   const leavingPlayerId = Number(data);
 
   // participants 배열에서 playerId가 일치하는 항목 찾기
@@ -276,6 +275,22 @@ const fetchDeTails = (response: any) => {
   gameStore.setGameEnded(false);
 }
 
+/**
+ * 사용자의 레디 상태 활성화
+ * @param playerId
+ */
+const setPlayerReady = (playerId: number) => {
+  const playerIndex = participants.value.findIndex(
+    (p) => p.playerId === playerId
+  );
+
+  if (playerIndex !== -1) {
+    participants.value[playerIndex].ready = true;
+    console.log("플레이어 레디 활성화");
+  } else {
+    console.log("참가자에서 플레이어 찾을 수 없음");
+  }
+}
 /**
  * 페이지가 뷰에 표시되기 직전에 호출됨
  */
@@ -493,7 +508,7 @@ const presentToast = async (message: string) => {
     </ion-content>
 
     <ion-footer class="ion-padding-start ion-padding-end ion-padding-bottom ion-no-border">
-      <ion-img class="start-speech-bubble ion-margin-start" v-if="isHost && isRoomFull" src="src/assets/icons/game/speech-bubble.svg"></ion-img>
+      <ion-img class="start-speech-bubble ion-margin-start" v-if="isHost && isRoomFull" :src="canStartSpeechBubbleImg"></ion-img>
       <BaseButton :buttonText="isHost ? '게임시작' : '게임 나가기'" :isButtonDisabled="isHost ? !(isRoomFull && allPlayerReady) : false" @click="buttonClickHandler"></BaseButton>
     </ion-footer>
   </IonPage>

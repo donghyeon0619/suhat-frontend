@@ -184,7 +184,7 @@ const stopTimer = async () => {
  */
 const handleEndSpeaking = async () => {
   if (!speakingStarted.value) {
-    await presentAlert("말하기가 아직 시작되지 않았습니다. 시작 후 종료를 시도하세요");
+    await presentAlert("말하기가 아직 시작되지 않았습니다. 먼저 그림카드, 글자카드를 뒤집어서 말하기를 시작 후 종료를 시도하세요");
     return;
   }
 
