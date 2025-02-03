@@ -91,13 +91,13 @@ html {
   border: #13BD7E 3px solid;
   border-radius: 15px;
   .alert-button-group{
-    justify-content: center;
-    gap: 5vw;
+    justify-content: space-around;
   }
 }
 
 .custom-one-button-alert .alert-wrapper {
   border: #13BD7E 3px solid;
+  border-radius: 15px;
 }
 
 .my-custom-alert-button-class{

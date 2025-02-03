@@ -12,7 +12,7 @@ import {
 } from "@ionic/vue";
 import SchoolSearchModal from "@/components/auth/SchoolSearchModal.vue";
 import LoginFooter from "@/views/auth/components/LoginFooter.vue";
-import {ref, watch} from "vue";
+import {computed, ref, watch} from "vue";
 import {closeCircle, searchSharp} from "ionicons/icons";
 import {signup} from "@/api/authService";
 import {useUserStore} from "@/store/user";
@@ -23,11 +23,23 @@ const userStore = useUserStore();
 // 학교 이름 및 상세주소 관리
 const schoolName = ref(userStore.school || '');
 const isButtonDisabled = ref(true);
+const isModalOpen = ref(false);
+
+// API 요청 중인 상태를 관리하는 변수
+const isSubmitting = ref(false);
+
+// 최종 버튼 활성화 상태: 학교명이 유효해야 하고, API 요청 중이 아닐때만 활성화
+const finalButtonDisabled =  computed(() => {
+  return isButtonDisabled.value || isSubmitting.value;
+})
 
 // 라우터 변수 정의
 const router = useIonRouter();
 
 const openModal = async () => {
+  if(isModalOpen.value) return;
+  isModalOpen.value = true;
+
   const modal = await modalController.create({
     component: SchoolSearchModal
   });
@@ -35,6 +47,7 @@ const openModal = async () => {
   await modal.present();
 
   const {data, role} = await modal.onWillDismiss();
+  isModalOpen.value = false;
 
   if(role === 'confirm') {
     schoolName.value = `${data}`;
@@ -49,6 +62,9 @@ const validateForm = () =>{
 
 // 학교를 저장하고 loginFinish로 이동
 const saveSchoolAndFinish = async () => {
+  // 이미 요청 진행중인지 확인
+  if (isSubmitting.value) return;
+  isSubmitting.value = true;
   userStore.setSchool(schoolName.value);
 
   try {
@@ -65,6 +81,8 @@ const saveSchoolAndFinish = async () => {
     }
   } catch (error) {
     console.error("가입완료 중 오류 발생")
+  } finally {
+    isSubmitting.value = false;
   }
 }
 
@@ -106,7 +124,7 @@ watch(schoolName,(newValue) => {
       </div>
       </div>
     </IonContent>
-    <LoginFooter :isButtonDisabled="isButtonDisabled" :onConfirm="saveSchoolAndFinish"/>
+    <LoginFooter :isButtonDisabled="finalButtonDisabled" :onConfirm="saveSchoolAndFinish"/>
   </IonPage>
 </template>
 

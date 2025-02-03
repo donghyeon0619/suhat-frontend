@@ -49,8 +49,8 @@ const gameStore = useGameStore();
  */
 const connectToRoom = () => {
 
-  eventSourceStore.connect(`https://suhat.kr/api/rooms/connect/${roomId}`);
-  // eventSourceStore.connect(`http://10.0.2.2:8443/api/rooms/connect/${roomId}`);
+  eventSourceStore.connect(`https://suhat.kr/api/sse/rooms/connect/${roomId}`);
+  // eventSourceStore.connect(`http://localhost:8443/api/rooms/connect/${roomId}`);
 
 
   eventSourceStore.addEventListener('connected', function(event) {
@@ -241,10 +241,10 @@ const leaveRoom = async () => {
     return false;
   }
   isLeaving.value = true;
+  eventSourceStore.disconnectByUser();
 
   try{
     const response = await deleteRequest(`rooms/${roomId}/players`, true);
-    eventSourceStore.disconnectByUser();
 
     if(response.status == "200") {
       console.log('게임방 나가기 요청 성공');

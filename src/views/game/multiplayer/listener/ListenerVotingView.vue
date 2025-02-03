@@ -240,6 +240,9 @@ const openSuccessModal = async (
     cssClass: 'chat-bubble-modal',
     enterAnimation: enterAnimation,
     leaveAnimation: leaveAnimation,
+    componentProps: {
+      maxPieces: maxPieces.value,
+    }
   });
 
   await modal.present();

@@ -31,14 +31,6 @@ const props = defineProps({
   },
 });
 
-onMounted(() => {
-  console.log("쾅쾅쾅쾅쾅쾅쾅쾅쾅\n" +
-      "쾅쾅　　　　　쾅쾅\n" +
-      "쾅쾅（∩8ㅁ8）쾅쾅\n" +
-      "　＿/_ﾐつ/￣￣￣/\n" +
-      "　　 ＼/＿＿＿/");
-})
-
 const router = useIonRouter();
 const userStore = useUserStore();
 const surveyStore = useSurveyStore();

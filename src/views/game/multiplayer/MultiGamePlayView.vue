@@ -519,7 +519,7 @@ const presentAlert = async () => {
               if (success) {
                 resolve(true); // "나가기" 클릭 시 true 반환
               } else {
-                await presentToast("방나가기 중 오류 발생");
+                await presentToast("방나가기 중 오류 발생으로 홈으로 이동");
                 resolve(true);
               }
             } catch (error) {

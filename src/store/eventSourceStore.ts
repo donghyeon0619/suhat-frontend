@@ -1,6 +1,9 @@
 import { defineStore } from 'pinia';
 import {EventListener, EventSourcePolyfill} from "event-source-polyfill";
 import {getJSessionId} from "@/api/sessionService";
+import {showAlert} from "@/utils/showAlert";
+import router from "@/router";
+import {useGameStore} from "@/store/gameStore";
 
 export const useEventSourceStore = defineStore('eventSource', {
   state: () => ({
@@ -30,7 +33,7 @@ export const useEventSourceStore = defineStore('eventSource', {
       // this.eventSource = new EventSource(url, {withCredentials: true});
       this.eventSource = new EventSourcePolyfill(url,
         {
-          headers: {'Cookie': `JSESSIONID=${jSessionId}`},
+          // headers: {'Cookie': `JSESSIONID=${jSessionId}`},
           withCredentials: true,
           heartbeatTimeout: 60 * 1000 * 10,
         },
@@ -50,12 +53,21 @@ export const useEventSourceStore = defineStore('eventSource', {
         };
 
         // 오류 발생 시 (네트워크 단절, 서버 타임아웃 등)
-        this.eventSource.onerror = (e) => {
+        this.eventSource.onerror = async (e) => {
           if (!this.isDisconnectedByUser) {
             console.log('[SSE] 서버 혹은 네트워크 문제로 인한, 연결 종료', e);
             this.disconnect();
+            await showAlert(
+              "연결 에러",
+              "서버 혹은 네트워크 문제로 연결 종료", [
+                {
+                  text: "확인", role: "confirm", handler: () => {
+                    useGameStore().setGameEnded(true);
+                    router.replace("/game/home");
+                  }
+                }]
+            );
           }
-
           console.error('[SSE] 오류 발생 - 네트워크 및 서버 타임아웃으로 인한 연결 종료 ');
 
           // 브라우저의 기본 재연결 로직에 따라 자동 재연결 시도

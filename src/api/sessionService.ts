@@ -2,7 +2,7 @@ import {CapacitorCookies, CapacitorHttp} from "@capacitor/core";
 import {get, getHttpOptions} from "@/api/httpService";
 
 const BASE_URL = 'https://suhat.kr';
-// const BASE_URL = 'http://10.0.2.2:8443';
+// const BASE_URL = 'http://localhost:8443';
 
 /**
  * 쿠키 및 세션 관리 모듈
@@ -39,10 +39,10 @@ export async function getJSessionId(): Promise<string | null> {
   console.log("getCookies", result);
   console.log("getAllCookies", allResult);
   // 쿠키 데이터가 최상위 수준에 있을 경우 처리
-  const jsessionId = result['JSESSIONID'] || null;
-  console.log("JSESSIONID:", jsessionId);
+  const jSessionId = result['JSESSIONID'] || null;
+  console.log("JSESSIONID:", jSessionId);
 
-  return jsessionId;
+  return jSessionId;
 }
 
 /**
