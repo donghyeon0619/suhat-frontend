@@ -38,6 +38,7 @@ const isSpeaker = ref(true); // 발언자인지 여부 (서버에서 결정되�
 const assignedCard = ref<AssignedCard | null>(null);
 const timerStartData = ref<{ startTime: number } | null>(null);
 const timeExtensionData = ref<{ additionalTime : number } | null>(null);
+let timeoutId: ReturnType<typeof  setTimeout> | null = null;
 const currentPhase = ref<string>('');
 const isLeaving = ref(false);
 
@@ -121,7 +122,7 @@ const gameEndedHandler = (event:MessageEvent) =>{
  * @param event
  */
 const notInRoomHandler = (event:MessageEvent) =>{
-  console.log('game-ended 이벤트 수신:', event.data);
+  console.log('not-in-room 이벤트 수신:', event.data);
 
   gameStore.setGameEnded(true);
   const toastMessage = "방에서 나가져서 다시 입장 요청해야합니다.";
@@ -216,6 +217,7 @@ const cardAssignedHandler = (event: MessageEvent) => {
     cardId: eventData.cardId,
   };
 }
+
 /**
  * 타이머 시작 이벤트 핸들러 함수
  * @param event
@@ -261,7 +263,10 @@ const voteResultHandler = (event: MessageEvent) => {
   switch (eventData.result) {
     // 퍼즐 획득 후 다음 턴으로 이동해야 할때
     case "puzzle-acquired-next-turn":
-      incrementPuzzlePieces();
+      // 1.5초 이후 퍼즐 갯수 증가
+      timeoutId = setTimeout(() => {
+        incrementPuzzlePieces();
+      }, 1500);
       voteResult.value = {
         ...voteResult.value,
         type: "puzzle-acquired",
@@ -296,7 +301,10 @@ const voteResultHandler = (event: MessageEvent) => {
 
     // 퍼즐을 전부 모아 게임 끝났을 때
     case "game-completed":
-      incrementPuzzlePieces();
+      // 1.5초 이후 퍼즐 갯수 증가
+      timeoutId = setTimeout(() => {
+        incrementPuzzlePieces();
+      }, 1500);
       voteResult.value = {
         ...voteResult.value,
         type: "game-completed",
@@ -374,6 +382,7 @@ onIonViewWillEnter(async () => {
 
   console.log("게임 시작되어 게임상태를 불러옵니다.")
   try {
+
     const response = await get(`games/${roomId}/state`);
     Object.assign(gameState, response); // 서버에서 가져온 데이터를 gamestate에 병합
 
@@ -432,7 +441,7 @@ const resetGameState = () => {
  * 페이지를 떠날 때 리스너 제거
  */
 onIonViewWillLeave(() => {
-  console.log('Leaving GameWaiting, cleaning up listeners');
+  console.log('Leaving MultiGameView, cleaning up listeners');
   eventSourceStore.removeEventListener('game-ended', gameEndedHandler);
   eventSourceStore.removeEventListener('player-order-assigned', playerOrderAssignedHandler);
   eventSourceStore.removeEventListener('round-2-started', roundTwoStartedHandler);
@@ -442,7 +451,12 @@ onIonViewWillLeave(() => {
   eventSourceStore.removeEventListener("time-extended", timeExtendedHandler);
   eventSourceStore.removeEventListener("speaking-end", speakingEndHandler);
   eventSourceStore.removeEventListener("vote-result", voteResultHandler);
-  eventSourceStore.removeEventListener("not-in-room", notInRoomHandler)
+  eventSourceStore.removeEventListener("not-in-room", notInRoomHandler);
+
+  if(timeoutId) {
+    clearTimeout(timeoutId);
+  }
+
   resetGameState();
 })
 
@@ -454,10 +468,10 @@ const leaveRoom = async (): Promise<boolean> => {
     return false;
   }
   isLeaving.value = true;
+  eventSourceStore.disconnectByUser();
 
   try{
     const response = await deleteRequest(`rooms/${roomId}/players`, true);
-    eventSourceStore.disconnectByUser();
 
     if(response.status == "200") {
       console.log('게임방 나가기 요청 성공');

@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { IonPage, IonContent } from "@ionic/vue";
+import {IonPage, IonContent, toastController, IonButton} from "@ionic/vue";
 import VotingResult from "@/components/game/multiplayer/VotingResult.vue";
 import GameExitHeader from "@/components/game/GameExitHeader.vue";
+import Header from "@/components/common/BackButtonHeader.vue";
 
 // 테스트용 하드코딩된 값
 const agreeCount = ref(0);
@@ -11,11 +12,31 @@ const disagreeCount = ref(2);
 const hello = () => {
   console.log("핼로우")
 }
+
+/**
+ * 이벤트 생성시 해당 이벤트 메시지 알림 토스트
+ */
+const presentToast = async (message: string) => {
+  const toast = await toastController.create({
+    message: message,
+    cssClass: "top-toast toast-txt-center",
+    duration: 60000,
+    position: "top",
+    positionAnchor:"backButtonHeader"
+  });
+
+  await toast.present();
+}
+
 </script>
 
 <template>
   <IonPage>
-    <GameExitHeader id="backButtonHeader" :header-title="`라운드 2`" @buttonClick="hello"/>
+    <Header
+      id="backButtonHeader"
+      :show-title="true"
+      :header-title="'게임 대기'"
+    ></Header>
     <IonContent scroll-y="false" class="ion-padding">
       <div class="game-play-section">
         <div class="interactive-content">
@@ -26,6 +47,7 @@ const hello = () => {
           />
         </div>
       </div>
+      <IonButton @click="presentToast"></IonButton>
     </IonContent>
   </IonPage>
 </template>

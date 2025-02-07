@@ -4,6 +4,8 @@ import {getJSessionId} from "@/api/sessionService";
 import {showAlert} from "@/utils/showAlert";
 import router from "@/router";
 import {useGameStore} from "@/store/gameStore";
+import {play} from "ionicons/icons";
+import {get, post} from "@/api/httpService";
 
 export const useEventSourceStore = defineStore('eventSource', {
   state: () => ({
@@ -13,10 +15,12 @@ export const useEventSourceStore = defineStore('eventSource', {
     // -> onerror 발생 시, 의도적으로 끊김이라면 재 연결 안함
     isDisconnectedByUser: false,
     isConnected: false, // 현재 연결 여부 표시
+    pingInterval: null as ReturnType<typeof setInterval> | null,
   }),
 
   actions: {
     connect(url: string){
+
       // 이미 연결되어 있으면 중복 연결 방지
       if(this.eventSource){
         console.log('SSE 가 이미 연결됬거나 연결중입니다')
@@ -26,16 +30,11 @@ export const useEventSourceStore = defineStore('eventSource', {
       this.isDisconnectedByUser = false; // 의도적으로 끊김 상태 해제
       this.isConnected = false;
 
-      console.log("다큐멘트 쿠키", document.cookie);
-
-      const jSessionId =  getJSessionId();
       console.log(`SSE 연결중: ${url}`)
-      // this.eventSource = new EventSource(url, {withCredentials: true});
       this.eventSource = new EventSourcePolyfill(url,
         {
-          // headers: {'Cookie': `JSESSIONID=${jSessionId}`},
           withCredentials: true,
-          heartbeatTimeout: 60 * 1000 * 10, // 10분 타임아웃
+          heartbeatTimeout: 60 * 1000 * 30, // 30분 타임아웃
         },
       );
 
@@ -52,8 +51,15 @@ export const useEventSourceStore = defineStore('eventSource', {
           console.log(data.message);
         };
 
+
         // 오류 발생 시 (네트워크 단절, 서버 타임아웃 등)
-        this.eventSource.onerror = async (e) => {
+        this.eventSource.onerror =  async (e) => {
+          // 만약 게임이 이미 종료된 상태라면, 오류 처리는 건너뜀
+          if (useGameStore().isGameEnded) {
+            console.log("[SSE] 이미 게임 종료 상태입니다. onerror 무시");
+            return;
+          }
+
           if (!this.isDisconnectedByUser) {
             console.log('[SSE] 서버 혹은 네트워크 문제로 인한, 연결 종료', e);
             this.disconnect();
@@ -62,6 +68,9 @@ export const useEventSourceStore = defineStore('eventSource', {
               "서버 혹은 네트워크 문제로 연결 종료", [
                 {
                   text: "확인", role: "confirm", handler: () => {
+                    if(this.pingInterval){
+                      this.stopPingInterval();
+                    }
                     useGameStore().setGameEnded(true);
                     router.replace("/game/home");
                   }
@@ -108,6 +117,7 @@ export const useEventSourceStore = defineStore('eventSource', {
     disconnectByUser(){
       this.isDisconnectedByUser = true;
       this.disconnect();
+      this.stopPingInterval(); // ping 중단
     },
 
     /**
@@ -120,6 +130,47 @@ export const useEventSourceStore = defineStore('eventSource', {
         this.eventSource = null;
       }
       this.isConnected = false;
+    },
+
+    /**
+     * pingInterval 시작 메서드
+     * @param roomId
+     * @param playerId
+     */
+    startPingInterval(roomId: string) {
+      if (this.pingInterval) {
+        console.log("[ping] 이미 interval이 실행중입니다.");
+        return;
+      }
+
+      console.log(`[Ping] startPingInterval: room=${roomId}`);
+      this.pingInterval = setInterval(async () => {
+        try {
+          await post(`rooms/${roomId}/ping`);
+          console.log("[Ping] 성공적으로 전송");
+        } catch (error: any) {
+          if (error.response.status === 404) {
+            console.warn("[Ping] 이미 방에서 제거됨(404). 홈으로 이동합니다.");
+            // pingInterval 중단
+            this.stopPingInterval();
+            // SSE disconnect
+            this.disconnectByUser();
+            // 라우터로 홈 이동
+            await router.replace('/game/home');
+          } else {
+            console.error("[Ping] 전송 실패", error);
+          }
+        }
+      }, 30_000); // 30초 주기로 ping
+    },
+
+    stopPingInterval(){
+      if (this.pingInterval) {
+        clearInterval(this.pingInterval);
+        this.pingInterval = null;
+        console.log("[Ping] pingInterval을 중단합니다.");
+      }
     }
+
   }
 })

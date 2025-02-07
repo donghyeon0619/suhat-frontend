@@ -13,12 +13,12 @@ import {
   IonItemGroup,
   IonBadge,
   IonLabel,
-  IonItemDivider
+  IonItemDivider, onIonViewWillEnter, onIonViewWillLeave
 } from '@ionic/vue';
 import {  ref } from 'vue';
 import {closeOutline,checkmarkCircle,searchOutline} from "ionicons/icons";
 import {get} from "@/api/httpService";
-import {KeyboardInfo} from "@capacitor/keyboard";
+import {Keyboard, KeyboardInfo} from "@capacitor/keyboard";
 const schoolName = ref();
 const schoolSearchResults = ref<SchoolDetails[]>([]);
 const isSearchEmpty = ref(false);
@@ -96,25 +96,38 @@ const handleInput = async (event : CustomEvent) =>{
   }
 }
 
-// /**
-//  * searchbar 키보드 출력 시 컨텐츠 올라오는 현상 수정
-//  */
-// const input = document.querySelector('ion-searchbar');
-//
-// if (input) {
-//   window.addEventListener('keyboardWillShow', (ev) => {
-//     const event = ev as CustomEvent<KeyboardInfo>
-//     const { keyboardHeight } = event.detail;
-//
-//     input.style.setProperty(
-//       'transform',
-//       `translate3d(0, ${keyboardHeight}px, 0)`
-//     );
-//   });
-//   window.addEventListener('keyboardDidHide', () => {
-//     input.style.removeProperty('transform');
-//   });
-// }
+/**
+ * 키보드 이벤트 리스너를 통해서 ion-searchbar 클릭시 content-area가 올라오는 현상 수정
+ */
+const keyboardWillShowListener = ref<any>(null);
+const keyboardDidHideListener = ref<any>(null);
+
+onIonViewWillEnter(() => {
+  keyboardWillShowListener.value = Keyboard.addListener('keyboardWillShow', (info: KeyboardInfo) =>{
+    // .content-area 요소를 선택한다.
+    const contentArea = document.querySelector('#content-area') as HTMLElement;
+    if (contentArea) {
+      // 키보드 높이 만큼 margin-top 적용 (필요에 따라 추가 offset 조정 가능)
+      contentArea.style.marginTop = `${info.keyboardHeight}px`;
+    }
+  });
+
+  keyboardDidHideListener.value = Keyboard.addListener('keyboardDidHide', () => {
+    const contentArea = document.querySelector('#content-area') as HTMLElement;
+    if (contentArea) {
+      contentArea.style.marginTop = `0px`;
+    }
+  });
+})
+
+onIonViewWillLeave(() => {
+  if (keyboardWillShowListener.value) {
+    keyboardWillShowListener.value = null;
+  }
+  if (keyboardDidHideListener.value) {
+    keyboardDidHideListener.value = null;
+  }
+})
 
 // 검색어가 없는 경우 초기화 함수
 const clearSearch = () =>{
@@ -149,7 +162,7 @@ const clearSearch = () =>{
     </div>
 
     <!--컨텐츠 출력 부분 -->
-    <div class="content-area">
+    <div class="content-area" id="content-area">
       <!-- 예시 리스트 -->
       <div v-if="!isSearchPerformed" class="example-container">
         <ion-list lines="none">

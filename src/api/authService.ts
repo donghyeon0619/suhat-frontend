@@ -29,15 +29,6 @@ export async function signup(){
 
       console.log("세션 값", sessionId);
       await setJSessionId(sessionId);
-      // await syncCookies();
-
-      const jsessionId = await getJSessionId();
-      if(jsessionId){
-        console.log('쿠키값: ', jsessionId);
-        console.log('회원가입 및 쿠키 동기화 성공');
-      } else {
-        console.log('회원가입 및 쿠키 동기화 실패');
-      }
     }
     return response;
   } catch (error) {
@@ -45,32 +36,3 @@ export async function signup(){
     throw error
   }
 }
-
-// async function syncCookies(url = 'https://suhat.kr') {
-//   try{
-//     const cookiesResponse = await CapacitorCookies.getCookies({url});
-//
-//     console.log('Raw Cookie Response:', JSON.stringify(cookiesResponse, null, 2));
-//     console.log('Cookie Keys:', Object.keys(cookiesResponse));
-//
-//     // JSESSIONID에 특화된 동기화 로직
-//     const jsessionCookie = Object.entries(cookiesResponse)
-//       .find(([key]) => key.toLowerCase() === 'jsessionid');
-//
-//     if (jsessionCookie) {
-//       const [key, value] = jsessionCookie;
-//       const cookieString = `${key}=${value}; path=/; domain=suhat.kr; Secure; SameSite=None; HttpOnly`;
-//
-//       document.cookie = cookieString;
-//
-//       console.log(`동기화된 세션 쿠키: ${key}`);
-//       console.log(`동기화된 쿠키 문자열: ${cookieString}`);
-//       console.log('전체 document.cookie:', document.cookie);
-//     } else {
-//       console.warn('JSESSIONID 쿠키를 찾을 수 없습니다.');
-//     }
-//   } catch (error) {
-//     console.error('쿠키 동기화 오류', error);
-//     console.log('쿠키 동깋라ㅗ 오류 ', error);
-//   }
-// }

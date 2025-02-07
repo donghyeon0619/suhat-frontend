@@ -6,9 +6,8 @@ import ChatBubbleWithBorder from "@/components/common/ChatBubbleWithBorder.vue";
 const confirm = () => modalController.dismiss(null, 'confirm');
 // maxPieces prop을 정의하고 기본값을 6으로 지정합니다.
 // 구조 분해하여 maxPieces 변수를 선언 (기본값 6)
-const { maxPieces } = withDefaults(defineProps<{ maxPieces?: number }>(), {
-  maxPieces: 6,
-});
+const { maxPieces = 6 } = defineProps<{ maxPieces?: number }>();
+
 
 </script>
 <template>

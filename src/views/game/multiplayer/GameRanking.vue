@@ -9,7 +9,7 @@ import {
   IonCol,
   IonGrid,
   IonRow,
-  useIonRouter,
+  useIonRouter, IonHeader, IonToolbar
 } from "@ionic/vue";
 import BaseDoubleButtonFooter from "@/components/common/BaseDoubleButtonFooter.vue";
 
@@ -51,8 +51,6 @@ const gameStore = useGameStore();
 const crownIcons = [IconRankingFirst, IconRankingSecond, IconRankingThird];
 
 // 성별 아이콘 무작위 선택
-
-// 성별 아이콘 무작위 선택
 const randomGenderIcons = [IconRankingMan, IconRankingWoman, IconRankingOther];
 const getRandomGenderIcon = () => {
   return randomGenderIcons[Math.floor(Math.random() * randomGenderIcons.length)];
@@ -72,11 +70,13 @@ const getRankAnimationClass = (rank: number) => `rank-${rank}`
 
 const goRetry = async () => {
   try{
+
+    eventSourceStore.disconnectByUser();
     const response = await post(`games/${roomId}/retry`, null, true);
 
     if (response.status == "200") {
-      router.replace(`/game/waiting/${roomId}`);
       gameStore.setGameEnded(false);
+      router.replace(`/game/waiting/${roomId}`);
     } else {
       console.log("다시하기 요청 이후 대기방으로 이동할 수 없음");
       await showAlert(
@@ -106,8 +106,9 @@ const goRetry = async () => {
 
 const goHome = async () => {
   try{
-    const response = await deleteRequest(`rooms/${roomId}/players`, true);
+
     eventSourceStore.disconnectByUser();
+    const response = await deleteRequest(`rooms/${roomId}/players`, true);
 
     if (response.status == "200") {
       console.log('게임 종료 후 ')
@@ -122,7 +123,7 @@ const goHome = async () => {
 </script>
 <template>
 <IonPage>
-  <IonHeader claa="ion-no-border">
+  <IonHeader class="ion-no-border">
     <IonToolbar></IonToolbar>
   </IonHeader>
   <IonContent class="ion-padding" scroll-y="false">

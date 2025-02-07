@@ -27,51 +27,47 @@ import canStartSpeechBubbleImg from "@/assets/img/game/speech-bubble.svg"
 
 const route = useRoute();
 const router = useIonRouter();
-const roomId = route.params.roomId;
+const roomId = String(route.params.roomId);
 const roomName = ref('방 이름');
 const headCount = ref(4);
 const isHost = ref(false);
 const isGameStarting = ref(false);
 const isLeaving = ref(false);
 
-const participants = ref(
-  Array(headCount.value).fill({
-    playerId: null,
-    isUserJoined: false,
-    ready: false,
-    name: '' }));
+// 실제 입장한 플레이어 배열
+const participants = ref<Array<{ playerId: number | null, isUserJoined: boolean, ready: boolean, name: string }>>([]);
 
 // sse 변수 선언
 const eventSourceStore = useEventSourceStore();
 const userStore = useUserStore();
 const gameStore = useGameStore();
+
 /**
- * 방 연결 및 이벤트 리스너 설정
+ * 방 연결
  */
 const connectToRoom = () => {
-
-  eventSourceStore.connect(`https://suhat.kr/api/sse/rooms/connect/${roomId}`);
-  // eventSourceStore.connect(`http://localhost:8443/api/rooms/connect/${roomId}`);
-
-
-  eventSourceStore.addEventListener('connected', function(event) {
-    console.log('connected 이벤트 수신:', event.data);
-
-    // 현재 접속한 사용자의 ready 상태를 true로 변경 (null 체크 추가)
-    if (userStore.userInfo.id !== null) {
-      setPlayerReady(userStore.userInfo.id);
-    }
-
-    // 이벤트 등록
-    eventSourceStore.addEventListener('not-in-room', notInRoomHandler);
-    eventSourceStore.addEventListener('player-joined', playerJoinedHandler);
-    eventSourceStore.addEventListener('game-started', gameStartedHandler);
-    eventSourceStore.addEventListener('player-left', playerLeftHandler);
-    eventSourceStore.addEventListener('host-assigned', hostAssignedHandler);
-    eventSourceStore.addEventListener('host-changed', hostChangedHandler);
-    eventSourceStore.addEventListener('player-ready', playerReadyHandler);
-  });
+  // eventSourceStore.connect(`https://suhat.kr/api/sse/rooms/connect/${roomId}`);
+  eventSourceStore.connect(`http://localhost:8443/api/sse/rooms/connect/${roomId}`);
+  // SSE "connected" 이벤트 수신 시, pingInterval 시작
+  eventSourceStore.addEventListener('connected', onConnectedHandler);
 };
+
+/**
+ * 방 연결 시 이벤트 헨들러
+ * @param event
+ */
+function onConnectedHandler(event: MessageEvent) {
+  console.log('[Waiting] connected 이벤트 수신:', event.data);
+
+  // 내 playerId
+  const currentUserId = userStore.userInfo.id;
+
+  // 1) 자기 자신 ready
+  if (currentUserId !== null) {
+    setPlayerReady(currentUserId);
+  }
+
+}
 
 // 핸들러 함수 정의
 /**
@@ -94,6 +90,17 @@ const gameStartedHandler = (event: MessageEvent) => {
     path: `/multi/play/${roomId}`,
   });
 };
+
+/**
+ * 다시하기 이후 emitter 재갱신을 한 후 레디완료 처리
+ * @param event
+ */
+const playerReconnectedHandler = (event: MessageEvent) => {
+  console.log('playerReconnected 이벤트 수신:', event.data);
+  const readyPlayerId = JSON.parse(event.data).playerId;
+  setPlayerReady(readyPlayerId);
+
+}
 
 /**
  * 'player-left' 이벤트: 플레이어 제거
@@ -138,67 +145,36 @@ const hostChangedHandler = (event: MessageEvent) => {
   presentToast(JSON.parse(event.data).message);
 }
 
-/**
- * 플레이어 레디 핸들러
- */
-const playerReadyHandler = (event: MessageEvent) => {
-  console.log('player-ready 이벤트 수신:', event.data);
-
-  const readyPlayerId = JSON.parse(event.data).playerId;
-  setPlayerReady(readyPlayerId);
-}
-
-/**
- * 새로운 플레이어를 참가자 리스트에 추가
- */
+/** 참가자 추가 – 중복 없이 immutable하게 업데이트 **/
 const addPlayer = (data: any) => {
   const newPlayer = JSON.parse(data);
-  console.log('new player: ', newPlayer);
-
-  // 1) 이미 존재하는지 확인
-  const existingIndex = participants.value.findIndex(
-    p => p.playerId === newPlayer.playerId
-  );
-
-  if (existingIndex !== -1) {
-    // 이미 존재 -> 재연결 or 중복 처리
-    participants.value[existingIndex].ready = true;
-    return;
-  }
-
-  // 새로운 유저 정보를 participants 리스트에 추가
-  const emptySlotIndex = participants.value.findIndex(p => !p.isUserJoined);
-  if (emptySlotIndex !== -1) {
-    participants.value[emptySlotIndex] = {
+  console.log('new player:', newPlayer);
+  // 중복 여부 확인
+  const exists = participants.value.some(p => p.playerId === newPlayer.playerId);
+  if (!exists) {
+    participants.value = [...participants.value, {
       playerId: newPlayer.playerId,
       isUserJoined: true,
-      ready: true,
-      name: newPlayer.playerInfo.name,
-    };
-    console.log("들어간 플레이어 정보", participants.value[emptySlotIndex])
+      ready: newPlayer.ready,
+      name: newPlayer.playerInfo.name
+    }];
+  } else {
+    // 이미 존재하면 ready 상태 업데이트
+    participants.value = participants.value.map(p =>
+      p.playerId === newPlayer.playerId ? { ...p, ready: newPlayer.ready } : p
+    );
   }
-}
+  console.log("현재 participants:", participants.value);
+};
 
 /**
  * 플레이어를 참가자 리스트에서 제거
  */
 const deletePlayer = (data: any) => {
   const leavingPlayerId = Number(data);
-
-  // participants 배열에서 playerId가 일치하는 항목 찾기
-  const playerIndex = participants.value.findIndex(p => p.playerId === leavingPlayerId);
-  console.log("playerIndex", playerIndex)
-  if (playerIndex !== -1){
-    // 해당 슬롯을 초기 상태로 되돌리기
-    participants.value[playerIndex] = {
-      playerId: null,
-      isUserJoined: false,
-      ready: false,
-      name: '',
-    };
-  }  else {
-    console.log(`Player with ID ${leavingPlayerId} not found.`);
-  }
+  console.log("삭제 전 participants:", participants.value);
+  participants.value = participants.value.filter(p => p.playerId !== leavingPlayerId);
+  console.log("삭제 후 participants:", participants.value);
 }
 
 /**
@@ -260,37 +236,43 @@ const leaveRoom = async () => {
  * @param response
  */
 const fetchDeTails = (response: any) => {
-  participants.value = Array(headCount.value).fill({playerId: null, isUserJoined: false, name: ''});
-  console.log("화면이 보였을 때", response.players);
-  Object.values(response.players).forEach((player, index) => {
-    if (index < participants.value.length) {
-      participants.value[index] = {
-        playerId: player.playerId,
-        isUserJoined: true,
-        ready: player.ready,
-        name: player.playerInfo.name // 전달받은 player의 name 필드
-      };
-    }
-  });
+  // 서버의 players 객체를 배열로 변환
+  participants.value = Object.values(response.players).map((player: any) => ({
+    playerId: player.playerId,
+    isUserJoined: true,
+    ready: player.ready,
+    name: player.playerInfo.name
+  }));
+  console.log("fetch 이후 participants 상태:", participants.value);
   gameStore.setGameEnded(false);
 }
 
 /**
- * 사용자의 레디 상태 활성화
- * @param playerId
+ * UI 표시용: headCount 만큼의 배열을 만듭니다.
+ * 실제 입장한 플레이어들을 먼저 표시하고, 부족한 만큼은 placeholder로 채웁니다.
+ */
+const displayParticipants = computed(() => {
+  const joined = participants.value;
+  const placeholdersCount = headCount.value - joined.length;
+  const placeholders = Array.from({ length: placeholdersCount }, () => ({
+    playerId: null,
+    isUserJoined: false,
+    ready: false,
+    name: ''
+  }));
+  return [...joined, ...placeholders];
+});
+
+/**
+ * 플레이어의 ready 상태 업데이트
  */
 const setPlayerReady = (playerId: number) => {
-  const playerIndex = participants.value.findIndex(
-    (p) => p.playerId === playerId
+  participants.value = participants.value.map(p =>
+    p.playerId === playerId ? { ...p, ready: true } : p
   );
+  console.log("플레이어 ready 업데이트:", participants.value);
+};
 
-  if (playerIndex !== -1) {
-    participants.value[playerIndex].ready = true;
-    console.log("플레이어 레디 활성화");
-  } else {
-    console.log("참가자에서 플레이어 찾을 수 없음");
-  }
-}
 /**
  * 페이지가 뷰에 표시되기 직전에 호출됨
  */
@@ -312,6 +294,20 @@ onIonViewWillEnter(async () => {
 
     // SSE 연결
     connectToRoom();
+
+    if(eventSourceStore.eventSource) {
+      // 2) pingInterval 시작
+      eventSourceStore.startPingInterval(roomId);
+
+      // 그 외 이벤트 등록
+      eventSourceStore.addEventListener('not-in-room', notInRoomHandler);
+      eventSourceStore.addEventListener('player-joined', playerJoinedHandler);
+      eventSourceStore.addEventListener('game-started', gameStartedHandler);
+      eventSourceStore.addEventListener('player-left', playerLeftHandler);
+      eventSourceStore.addEventListener('host-assigned', hostAssignedHandler);
+      eventSourceStore.addEventListener('host-changed', hostChangedHandler);
+      eventSourceStore.addEventListener('player-reconnected', playerReconnectedHandler);
+    }
 
     fetchDeTails(response);
 
@@ -336,7 +332,7 @@ onIonViewWillLeave(() => {
   eventSourceStore.removeEventListener('game-started', gameStartedHandler);
   eventSourceStore.removeEventListener('host-assigned', hostAssignedHandler);
   eventSourceStore.removeEventListener('host-changed', hostChangedHandler);
-  eventSourceStore.removeEventListener('player-ready', playerReadyHandler);
+  eventSourceStore.removeEventListener('player-reconnected', playerReconnectedHandler);
   eventSourceStore.removeEventListener('not-in-room', notInRoomHandler);
   resetRoomState();
 })
@@ -353,7 +349,8 @@ const resetRoomState = () => {
  * 현재 참가자 수 계산
  */
 const currentParticipantCount = computed(() => {
-  return participants.value.filter(p => p.isUserJoined).length;
+  // 실제 입장한 참가자 수 (placeholder는 포함하지 않음)
+  return participants.value.length;
 });
 
 /**
@@ -365,7 +362,7 @@ const isRoomFull = computed(() => currentParticipantCount.value === headCount.va
  * 방에 있는 모든 인원이 준비완료했는지 확인
  */
 const allPlayerReady = computed(() => {
-  return participants.value.every((p => p.isUserJoined && p.ready));
+  return participants.value.every((p => p.ready));
 })
 
 const imageUrl = ref(null);
@@ -386,9 +383,10 @@ const createBarcode = (roomId) => {
  * 라우팅전 네비게이션 가드 함수
  */
 onBeforeRouteLeave(async (to, from, next) => {
-  if (isGameStarting.value || isLeaving.value) {
+  if (isGameStarting.value || isLeaving.value || gameStore.isGameEnded) {
     return next(); // 게임시작중이면 네비가이션 가드 우회;
   }
+
   const confirmed = await presentAlert();
   if (confirmed) {
     try {
@@ -448,7 +446,7 @@ const presentAlert = async (): Promise<boolean> => {
 const presentToast = async (message: string) => {
   const toast = await toastController.create({
     message: message,
-    cssClass: "top-toast",
+    cssClass: "top-toast toast-txt-center",
     duration: 1500,
     position: "top",
     positionAnchor:"backButtonHeader"
@@ -462,6 +460,7 @@ const presentToast = async (message: string) => {
 <template>
   <IonPage>
     <Header
+      id="backButtonHeader"
       :show-title="true"
       :header-title="'게임 대기'"
     ></Header>
@@ -495,20 +494,19 @@ const presentToast = async (message: string) => {
 
           <ion-list class="ion-no-padding">
             <UserItem
-                v-for="(participant, index) in participants"
-                :key="index"
-                :isUserJoined="participant.isUserJoined"
-                :name="participant.isUserJoined ? participant.name : ''"
-                :is-ready="participant.ready"
-            >
-            </UserItem>
+              v-for="(participant, index) in displayParticipants"
+              :key="participant.playerId !== null ? `player-${participant.playerId}` : `placeholder-${index}`"
+              :isUserJoined="participant.isUserJoined"
+              :name="participant.isUserJoined ? participant.name : '아직 입장하지 않음'"
+              :is-ready="participant.ready"
+            />
           </ion-list>
         </ion-card-content>
       </ion-card>
     </ion-content>
 
     <ion-footer class="ion-padding-start ion-padding-end ion-padding-bottom ion-no-border">
-      <ion-img class="start-speech-bubble ion-margin-start" v-if="isHost && isRoomFull" :src="canStartSpeechBubbleImg"></ion-img>
+      <ion-img class="start-speech-bubble ion-margin-start" v-if="isHost && isRoomFull && allPlayerReady" :src="canStartSpeechBubbleImg"></ion-img>
       <BaseButton :buttonText="isHost ? '게임시작' : '게임 나가기'" :isButtonDisabled="isHost ? !(isRoomFull && allPlayerReady) : false" @click="buttonClickHandler"></BaseButton>
     </ion-footer>
   </IonPage>
@@ -525,7 +523,7 @@ ion-content::part(background) {
   background: transparent;
 }
 
-::v-deep ion-toolbar {
+ion-toolbar {
   --background: transparent;
 }
 

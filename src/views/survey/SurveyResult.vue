@@ -163,6 +163,8 @@ ion-title{
   width: 100%;
   position: relative;
   margin-top: 20%; /* 봉투 상단 여백 조정 */
+  /* 애니메이션 추가: 1회 실행, ease-out 타이밍 */
+  animation: bounce 1s ease-out;
 }
 
 .envelope {
@@ -278,6 +280,24 @@ ion-footer{
     line-height: 1.25rem;
     --padding-top: 2vh;
     --padding-bottom: 2vh;
+  }
+}
+
+@keyframes bounce {
+  0% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-25px); /* 살짝 위로 */
+  }
+  50% {
+    transform: translateY(0);
+  }
+  70% {
+    transform: translateY(-10px); /* 약간 위로 */
+  }
+  100% {
+    transform: translateY(0);
   }
 }
 

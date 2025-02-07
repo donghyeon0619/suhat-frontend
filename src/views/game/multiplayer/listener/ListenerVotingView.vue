@@ -20,6 +20,7 @@ import {GameState} from "@/types/GameState";
 import {VoteResult} from "@/types/VoteResult";
 import {Player, RankingPlayer} from "@/types/Player";
 import {useGameStore} from "@/store/gameStore";
+import {useUserStore} from "@/store/user";
 
 const props = defineProps<{
   gameState: GameState;
@@ -61,7 +62,7 @@ const isVotingComplete = ref(false);
 const isFooterVisible = ref(true); // 버튼 표시 여부
 const currentAction = ref(""); // 현재 동의/비동의 상태
 const currentMessage = ref("이야기를 들은 생각은 어떠신가요?<br> 연관성이 높게 잘 말하셨나요?");
-
+const userStore = useUserStore();
 
 /**
  * 메시지를 동적으로 반환하는 computed 속성
@@ -93,6 +94,22 @@ const chatBubbleMessages = computed(() => {
       reVoteResultDisagree: `재투표 결과, '${currentSpeakerName.value}'가 퍼즐 조각 획득에 실패하셨어요.`,
     };
   }
+});
+
+/**
+ * nextActionTimer: 기본 5000밀리초이며,
+ * voteResult의 nextSpeakerId가 현재 사용자(userStore.id)와 같으면 7000밀리초로 변경
+ */
+const nextActionTimer = computed(() => {
+  // voteResult가 없으면 기본값 5000 밀리초 반환
+  if (!voteResult.value) return 6000;
+
+  // "puzzle-acquired" 타입인 경우에만 nextSpeakerId가 존재한다고 가정
+  if (voteResult.value.type === "puzzle-acquired" && voteResult.value.nextSpeakerId !== undefined) {
+    return voteResult.value.nextSpeakerId === userStore.id ? 7000 : 6000;
+  }
+  // 다른 경우에는 기본값 반환
+  return 5000;
 });
 
 // 투표 API 호출 함수
@@ -162,7 +179,7 @@ watch(voteResult, (newResult) => {
         timeoutId = setTimeout(() => {
           openSuccessModal(undefined, () => {
             emit("nextTurn", nextSpeakerId);
-          });
+          }, nextActionTimer.value);
         }, 3000);
       }
       break;
@@ -200,7 +217,7 @@ watch(voteResult, (newResult) => {
         timeoutId = setTimeout(() => {
           openFailureModal(() => {
             emit("nextTurn", nextSpeakerId);
-          });
+          }, nextActionTimer.value);
         }, 3000);
       }
       break;
@@ -219,7 +236,7 @@ watch(voteResult, (newResult) => {
 
       // 3초 이후 퍼즐 획득 모달 띄움
       timeoutId = setTimeout(() => {
-        openSuccessModal(rankingData);
+        openSuccessModal(rankingData, undefined, nextActionTimer.value);
       }, 3000);
       break;
     }
@@ -230,10 +247,12 @@ watch(voteResult, (newResult) => {
  * 퍼즐 획득 성공 모달 오픈 함수
  * @param rankingData - 게임 완료 시 필요한 랭킹 데이터
  * @param onConfirm - 모달에서 '확인' 버튼을 눌렀을 때 실행할 콜백 함수
+ * @param timerDelay - 모달 내부 타이머 지속시간(초). 예를 들어, 다음 턴의 스피커가 현재 사용자이면 7초, 아니면 5초
  */
 const openSuccessModal = async (
   rankingData?: Array<RankingPlayer>,
   onConfirm?: () => void,
+  timerDelay?: number
 ) => {
   const modal = await modalController.create({
     component: PuzzleSuccessModal,
@@ -261,14 +280,15 @@ const openSuccessModal = async (
       modal.dismiss();
       onConfirm();
     }
-  }, 7000);
+  }, timerDelay);
 };
 
 /**
  * 퍼즐 획득 실패 모달 오픈 함수
  * @param onConfirm - 모달에서 '확인' 버튼을 눌렀을 때 실행할 콜백 함수
+ * @param timerDelay - 모달 내부 타이머 지속시간(초). 예를 들어, 다음 턴의 스피커가 현재 사용자이면 7초, 아니면 5초
  */
-const openFailureModal = async (onConfirm?: () => void) => {
+const openFailureModal = async (onConfirm?: () => void, timerDelay?: number) => {
   const modal = await modalController.create({
     component: PuzzleFailureModal,
     cssClass: 'chat-bubble-modal',
@@ -284,7 +304,7 @@ const openFailureModal = async (onConfirm?: () => void) => {
       modal.dismiss();
       onConfirm();
     }
-  }, 7000);
+  }, timerDelay);
 };
 
 /**
