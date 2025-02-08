@@ -47,7 +47,7 @@ const gameStore = useGameStore();
  */
 const connectToRoom = () => {
   // eventSourceStore.connect(`https://suhat.kr/api/sse/rooms/connect/${roomId}`);
-  eventSourceStore.connect(`http://localhost:8443/api/sse/rooms/connect/${roomId}`);
+  eventSourceStore.connect(`https://10.0.2.2:8443/api/sse/rooms/connect/${roomId}`);
   // SSE "connected" 이벤트 수신 시, pingInterval 시작
   eventSourceStore.addEventListener('connected', onConnectedHandler);
 };

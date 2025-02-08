@@ -13,9 +13,9 @@ import {
   IonItemGroup,
   IonBadge,
   IonLabel,
-  IonItemDivider, onIonViewWillEnter, onIonViewWillLeave
+  IonItemDivider,
 } from '@ionic/vue';
-import {  ref } from 'vue';
+import {onMounted, onUnmounted, ref} from 'vue';
 import {closeOutline,checkmarkCircle,searchOutline} from "ionicons/icons";
 import {get} from "@/api/httpService";
 import {Keyboard, KeyboardInfo} from "@capacitor/keyboard";
@@ -102,29 +102,31 @@ const handleInput = async (event : CustomEvent) =>{
 const keyboardWillShowListener = ref<any>(null);
 const keyboardDidHideListener = ref<any>(null);
 
-onIonViewWillEnter(() => {
+onMounted(() => {
   keyboardWillShowListener.value = Keyboard.addListener('keyboardWillShow', (info: KeyboardInfo) =>{
     // .content-area 요소를 선택한다.
     const contentArea = document.querySelector('#content-area') as HTMLElement;
     if (contentArea) {
       // 키보드 높이 만큼 margin-top 적용 (필요에 따라 추가 offset 조정 가능)
-      contentArea.style.marginTop = `${info.keyboardHeight}px`;
+      contentArea.style.marginTop = `5%`;
     }
   });
 
   keyboardDidHideListener.value = Keyboard.addListener('keyboardDidHide', () => {
     const contentArea = document.querySelector('#content-area') as HTMLElement;
     if (contentArea) {
-      contentArea.style.marginTop = `0px`;
+      contentArea.style.marginTop = `0%`;
     }
   });
 })
 
-onIonViewWillLeave(() => {
+onUnmounted(() => {
   if (keyboardWillShowListener.value) {
+    keyboardWillShowListener.value.remove();
     keyboardWillShowListener.value = null;
   }
   if (keyboardDidHideListener.value) {
+    keyboardDidHideListener.value.remove();
     keyboardDidHideListener.value = null;
   }
 })

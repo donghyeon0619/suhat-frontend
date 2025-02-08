@@ -347,7 +347,7 @@ ion-input {
   --placeholder-font-weight: smaller;
 }
 
-::v-deep ion-input::placeholder {
+:v-deep(ion-input::placeholder) {
   font-size: 1px;
 }
 

@@ -5,7 +5,7 @@ import {onIonViewDidEnter, onIonViewWillEnter} from "@ionic/vue";
 
 
 // const BASE_URL = 'https://suhat.kr';
-const BASE_URL = 'http://localhost:8443';
+const BASE_URL = 'https://10.0.2.2:8443';
 
 
 // **HTTP 요청 함수**
