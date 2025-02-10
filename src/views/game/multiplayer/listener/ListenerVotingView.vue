@@ -105,7 +105,8 @@ const nextActionTimer = computed(() => {
   if (!voteResult.value) return 6000;
 
   // "puzzle-acquired" 타입인 경우에만 nextSpeakerId가 존재한다고 가정
-  if (voteResult.value.type === "puzzle-acquired" && voteResult.value.nextSpeakerId !== undefined) {
+  if ((voteResult.value.type === "puzzle-acquired" || voteResult.value.type === "puzzle-failed")
+    && voteResult.value.nextSpeakerId !== undefined) {
     return voteResult.value.nextSpeakerId === userStore.id ? 7000 : 6000;
   }
   // 다른 경우에는 기본값 반환
@@ -313,7 +314,7 @@ const openFailureModal = async (onConfirm?: () => void, timerDelay?: number) => 
 const presentToast = async (message: string) => {
   const toast = await toastController.create({
     message: message,
-    cssClass: "top-toast",
+    cssClass: "top-toast toast-txt-center",
     duration: 3000,
     position: "top",
     positionAnchor:"backButtonHeader"

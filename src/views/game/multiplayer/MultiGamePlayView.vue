@@ -14,7 +14,7 @@ import ListenerView from "@/views/game/multiplayer/listener/ListenerView.vue";
 import {onBeforeRouteLeave, useRoute} from "vue-router";
 import {deleteRequest, get} from "@/api/httpService";
 import {useEventSourceStore} from "@/store/eventSourceStore";
-import {GameState} from "@/types/GameState";
+import {GamePhase, GameState} from "@/types/GameState";
 import {useUserStore} from "@/store/user";
 import GameExitHeader from "@/components/game/GameExitHeader.vue";
 import {AssignedCard} from "@/types/Card";
@@ -39,7 +39,6 @@ const assignedCard = ref<AssignedCard | null>(null);
 const timerStartData = ref<{ startTime: number } | null>(null);
 const timeExtensionData = ref<{ additionalTime : number } | null>(null);
 let timeoutId: ReturnType<typeof  setTimeout> | null = null;
-const currentPhase = ref<string>('');
 const isLeaving = ref(false);
 
 // speaker 객체
@@ -63,6 +62,7 @@ const gameState = reactive<GameState>({
   currentPuzzlePieces: 0,
   currentTurn: 0,
   currentRound: 1,
+  currentPhase: GamePhase.NONE,
   players: [],
 })
 
@@ -202,7 +202,7 @@ const roundTwoStartedHandler = (event: MessageEvent) => {
 
   isSpeaker.value = userStore.id === eventData.speakerId;
 
-  currentPhase.value = isSpeaker.value ? 'speaking' : 'listening';
+  gameState.currentPhase = eventData.currentPhase;
 };
 
 /**
@@ -249,8 +249,8 @@ const timeExtendedHandler = (event: MessageEvent) => {
 const speakingEndHandler = (event: MessageEvent) => {
   const eventData = event.data;
   console.log('말하기가 종료 되었습니다.', eventData);
-  presentToast(eventData);
-  currentPhase.value = 'voting'
+  presentToast(eventData, true);
+  gameState.currentPhase = GamePhase.VOTING;
 }
 
 /**
@@ -369,7 +369,7 @@ const handleNextTurn = (nextSpeakerId: number) => {
   isSpeaker.value = userStore.userInfo.id === nextSpeakerId;
 
   // 4. currentPhase를 speaker인지 여부에 따라 설정
-  currentPhase.value = isSpeaker.value ? "speaking" : "listening";
+  gameState.currentPhase = GamePhase.DISCUSSION;
 
   console.log("발화자가 바꼈습니다. 다음 순번으로 넘어갑니다.");
 
@@ -429,7 +429,6 @@ const resetGameState = () => {
   assignedCard.value = null;
   timerStartData.value = null;
   timeExtensionData.value = null;
-  currentPhase.value = '';
   voteResult.value = null;
   isLeaving.value = false;
   if(syncInterval.value) {
@@ -562,11 +561,13 @@ const presentAlert = async () => {
 
 /**
  * 이벤트 생성시 해당 이벤트 메시지 알림 토스트
+ * @param message 토스트 메시지
+ * @param isCentered (선택) 텍스트를 중앙 정렬할지 여부 (기본값: false)
  */
-const presentToast = async (message: string) => {
+const presentToast = async (message: string, isCentered:boolean = false) => {
   const toast = await toastController.create({
     message: message,
-    cssClass: "top-toast",
+    cssClass: isCentered ? "top-toast toast-txt-center" : "top-toast",
     duration: 1500,
     position: "top",
     positionAnchor:"backButtonHeader"
@@ -593,14 +594,12 @@ const presentToast = async (message: string) => {
     <SpeakerView
       v-if="gameState.currentRound === 2 && isSpeaker"
       :game-state="gameState"
-      :current-phase="currentPhase"
       @next-turn="handleNextTurn"
     />
     <!-- 듣는 이 화면 -->
     <ListenerView
       v-if="gameState.currentRound === 2 && !isSpeaker"
       :game-state="gameState"
-      :current-phase="currentPhase"
       @next-turn="handleNextTurn"
     />
 </IonPage>

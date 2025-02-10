@@ -19,6 +19,7 @@ import {onMounted, onUnmounted, ref} from 'vue';
 import {closeOutline,checkmarkCircle,searchOutline} from "ionicons/icons";
 import {get} from "@/api/httpService";
 import {Keyboard, KeyboardInfo} from "@capacitor/keyboard";
+import {Capacitor} from "@capacitor/core";
 const schoolName = ref();
 const schoolSearchResults = ref<SchoolDetails[]>([]);
 const isSearchEmpty = ref(false);
@@ -42,15 +43,15 @@ const confirmSchool = (name: string) => {
   confirm(); // confirm 함수 호출하여 모달 닫기
 };
 
-const onFocus = (event) =>{
+const onFocus = (event: any) =>{
   event.target.style.borderColor = '#191F28';
 }
-const onBlur = (event) =>{
+const onBlur = (event: any) =>{
   event.target.style.borderColor = '#EBECEE';
 }
 
 // districtAddress에서 특정 키워드 이후의 부분만 남기는 함수
-function formatDistrictAddress(districtAddress) {
+function formatDistrictAddress(districtAddress: any) {
   // 구 단어를 기준으로 자르기 위한 키워드 설정
   const keyword = "구";
   const keywordIndex = districtAddress.indexOf(keyword);
@@ -103,21 +104,23 @@ const keyboardWillShowListener = ref<any>(null);
 const keyboardDidHideListener = ref<any>(null);
 
 onMounted(() => {
-  keyboardWillShowListener.value = Keyboard.addListener('keyboardWillShow', (info: KeyboardInfo) =>{
-    // .content-area 요소를 선택한다.
-    const contentArea = document.querySelector('#content-area') as HTMLElement;
-    if (contentArea) {
-      // 키보드 높이 만큼 margin-top 적용 (필요에 따라 추가 offset 조정 가능)
-      contentArea.style.marginTop = `5%`;
-    }
-  });
+  if(Capacitor.isNativePlatform()) {
+    keyboardWillShowListener.value = Keyboard.addListener('keyboardWillShow', (info: KeyboardInfo) => {
+      // .content-area 요소를 선택한다.
+      const contentArea = document.querySelector('#content-area') as HTMLElement;
+      if (contentArea) {
+        // 키보드 높이 만큼 margin-top 적용 (필요에 따라 추가 offset 조정 가능)
+        contentArea.style.marginTop = `5%`;
+      }
+    });
 
-  keyboardDidHideListener.value = Keyboard.addListener('keyboardDidHide', () => {
-    const contentArea = document.querySelector('#content-area') as HTMLElement;
-    if (contentArea) {
-      contentArea.style.marginTop = `0%`;
-    }
-  });
+    keyboardDidHideListener.value = Keyboard.addListener('keyboardDidHide', () => {
+      const contentArea = document.querySelector('#content-area') as HTMLElement;
+      if (contentArea) {
+        contentArea.style.marginTop = `0%`;
+      }
+    });
+  }
 })
 
 onUnmounted(() => {

@@ -27,7 +27,6 @@ export async function signup(){
       const { sessionId, userId } = response;
       userStore.setId(userId);
 
-      console.log("세션 값", sessionId);
       await setJSessionId(sessionId);
     }
     return response;

@@ -4,8 +4,9 @@ import {showAlert} from "@/utils/showAlert";
 import {onIonViewDidEnter, onIonViewWillEnter} from "@ionic/vue";
 
 
-// const BASE_URL = 'https://suhat.kr';
-const BASE_URL = 'https://10.0.2.2:8443';
+const BASE_URL = 'https://suhat.kr';
+// const BASE_URL = 'http://localhost:8443';
+// const BASE_URL = 'https://10.0.2.2:8443';
 
 
 // **HTTP 요청 함수**
@@ -84,7 +85,6 @@ export async function post(
   try {
     const response = await CapacitorHttp.post(options);
 
-    console.log("capacitorHttp post 요청 이후 응답 값", response);
     await validateHttpResponse(response)
 
     return returnFullResponse ? response : response.data;

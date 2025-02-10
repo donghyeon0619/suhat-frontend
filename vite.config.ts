@@ -16,6 +16,13 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  css:{
+    preprocessorOptions: {
+      scss: {
+        api: 'modern'
+      }
+    }
+  },
   server: {
     host: '0,0,0,0', // 모든 네트워크 인터페이스에서 접근 가능
     port: 8100, // 포트 번호 설정 (기본: 8101)

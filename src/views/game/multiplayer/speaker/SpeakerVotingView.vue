@@ -249,7 +249,7 @@ const openFailureModal = async (onConfirm?: () => void) => {
 const presentToast = async (message: string) => {
   const toast = await toastController.create({
     message: message,
-    cssClass: "top-toast",
+    cssClass: "top-toast toast-txt-center",
     duration: 3000,
     position: "top",
     positionAnchor:"backButtonHeader"
