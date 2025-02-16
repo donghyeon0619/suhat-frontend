@@ -14,6 +14,8 @@ export interface GameState {
   totalPuzzlePieces: number;
   currentPuzzlePieces: number;
   currentTurn: number;
+  assignedTextCardId: number;
+  assignedPictureCardId: number;
   currentPhase: GamePhase;
   currentRound: number;
   players: Player[];

@@ -53,12 +53,24 @@ onIonViewWillEnter(() => {
   fetchSurveys(); // 페이지가 보여질 때 설문 데이터 로드
 });
 
-// 현재 질문에 대해 답변이 선택되었는지 확인
+/**
+ * 현재 질문에 대해 답변이 선택되었는지 확인
+ */
 const isOptionSelected = computed(() => {
   return selectedAnswers.value[currentQuestionIndex.value] !== -1;
 });
 
-// 선택된 답변 핸들러
+/**
+ * 첫번째 질문인지 computed
+ */
+const isFirstQuestion = computed(()=> {
+  return currentQuestionIndex.value === 0;
+})
+
+/**
+ * 선택된 답변 핸들러
+ * @param value
+ */
 const selectOption = (value: number) => {
   if (selectedAnswers.value[currentQuestionIndex.value] === value) {
     // 동일한 옵션을 다시 선택하면 선택을 취소
@@ -69,9 +81,12 @@ const selectOption = (value: number) => {
   }
 };
 
-const totalScore = computed(()=>{
+/**
+ * 총 점수 computed
+ */
+const totalScore = computed(() => {
   return selectedAnswers.value.reduce((sum, current) => sum + (current !== -1 ? current : 0), 0)
-})
+});
 
 // 이전 문제 버튼 클릭 핸들러
 const goToPreviousQuestion = () => {
@@ -198,6 +213,7 @@ const submitSurvey = async () => {
                 expand="block"
                 fill="outline"
                 class="prev-button"
+                :disabled="isFirstQuestion"
                 @click="goToPreviousQuestion">이전 문제</ion-button>
           </ion-col>
           <ion-col size="6">

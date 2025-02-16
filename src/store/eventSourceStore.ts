@@ -1,11 +1,12 @@
 import { defineStore } from 'pinia';
-import {EventListener, EventSourcePolyfill} from "event-source-polyfill";
-import {getJSessionId} from "@/api/sessionService";
+import {EventSourcePolyfill} from "event-source-polyfill";
 import {showAlert} from "@/utils/showAlert";
 import router from "@/router";
 import {useGameStore} from "@/store/gameStore";
-import {play} from "ionicons/icons";
-import {get, post} from "@/api/httpService";
+import {post} from "@/api/httpService";
+
+const SSE_BASE_URL  = "https://suhat.kr/api/sse"
+// const SSE_BASE_URL = "http://10.0.2.2:8443/api/sse";
 
 export const useEventSourceStore = defineStore('eventSource', {
   state: () => ({
@@ -19,7 +20,7 @@ export const useEventSourceStore = defineStore('eventSource', {
   }),
 
   actions: {
-    connect(url: string){
+    connect(roomId: string){
 
       // 이미 연결되어 있으면 중복 연결 방지
       if(this.eventSource){
@@ -30,8 +31,8 @@ export const useEventSourceStore = defineStore('eventSource', {
       this.isDisconnectedByUser = false; // 의도적으로 끊김 상태 해제
       this.isConnected = false;
 
-      console.log(`SSE 연결중: ${url}`)
-      this.eventSource = new EventSourcePolyfill(url,
+      console.log(`방 ${roomId} 와 SSE 연결중~`)
+      this.eventSource = new EventSourcePolyfill(`${SSE_BASE_URL}/rooms/connect/${roomId}`,
         {
           withCredentials: true,
           heartbeatTimeout: 60 * 1000 * 30, // 30분 타임아웃
@@ -43,6 +44,7 @@ export const useEventSourceStore = defineStore('eventSource', {
         this.eventSource.onopen = () => {
           console.log('sse 연결이 열렸습니다.');
           this.isConnected = true;
+          this.startPingInterval(roomId);
         };
 
         // 서버로 부터 기본 메시지(onmessage)
@@ -63,23 +65,22 @@ export const useEventSourceStore = defineStore('eventSource', {
           if (!this.isDisconnectedByUser) {
             console.log('[SSE] 서버 혹은 네트워크 문제로 인한, 연결 종료', e);
             this.disconnect();
+            if (this.pingInterval) {
+              this.stopPingInterval();
+            }
+            useGameStore().setGameEnded(true);
             await showAlert(
               "연결 에러",
-              "서버 혹은 네트워크 문제로 연결 종료", [
+              "서버 혹은 네트워크 문제로 게임 연결 종료", [
                 {
                   text: "확인", role: "confirm", handler: () => {
-                    if(this.pingInterval){
-                      this.stopPingInterval();
-                    }
-                    useGameStore().setGameEnded(true);
                     router.replace("/game/home");
                   }
                 }]
             );
-          }
-          console.error('[SSE] 오류 발생 - 네트워크 및 서버 타임아웃으로 인한 연결 종료 ');
 
-          // 브라우저의 기본 재연결 로직에 따라 자동 재연결 시도
+            console.error('[SSE] 오류 발생 - 네트워크 및 서버 타임아웃으로 인한 연결 종료 ');
+          }
         };
       } else {
         console.log("sse 연결이 안됨");

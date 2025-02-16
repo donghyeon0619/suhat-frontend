@@ -19,7 +19,7 @@ import {useUserStore} from "@/store/user";
 import GameExitHeader from "@/components/game/GameExitHeader.vue";
 import {AssignedCard} from "@/types/Card";
 import {VoteResult} from "@/types/VoteResult";
-import {useGameStore} from "@/store/gameStore";
+import {RoomStatus, useGameStore} from "@/store/gameStore";
 
 // 라우트 파라미터
 const route = useRoute();
@@ -30,6 +30,7 @@ const router = useIonRouter();
 const eventSourceStore = useEventSourceStore();
 const userStore = useUserStore();
 const gameStore = useGameStore();
+const roomStatus = computed(() => gameStore.roomStatus);
 
 // 상태 플래그
 const orderAssigned = ref(false);
@@ -62,6 +63,8 @@ const gameState = reactive<GameState>({
   currentPuzzlePieces: 0,
   currentTurn: 0,
   currentRound: 1,
+  assignedPictureCardId: 0,
+  assignedTextCardId: 0,
   currentPhase: GamePhase.NONE,
   players: [],
 })
@@ -105,7 +108,7 @@ const calculateTimeDifference = async (): Promise<number> => {
 const gameEndedHandler = (event:MessageEvent) =>{
   console.log('game-ended 이벤트 수신:', event.data);
 
-  gameStore.setGameEnded(true);
+  gameStore.roomStatus = RoomStatus.ENDED;
   const toastMessage = "게임이 종료되어 홈으로 이동합니다.";
   // 메시지를 Toast에 표시
   presentToast(toastMessage);
@@ -124,7 +127,7 @@ const gameEndedHandler = (event:MessageEvent) =>{
 const notInRoomHandler = (event:MessageEvent) =>{
   console.log('not-in-room 이벤트 수신:', event.data);
 
-  gameStore.setGameEnded(true);
+  gameStore.roomStatus = RoomStatus.ENDED;
   const toastMessage = "방에서 나가져서 다시 입장 요청해야합니다.";
   // 메시지를 Toast에 표시
   presentToast(toastMessage);
@@ -150,7 +153,7 @@ const gameResetHandler = (event: MessageEvent) => {
   const dataMessage = eventData.data || "알 수 없는 데이터";
   const toastMessage = `${dataMessage}\n(사유: ${reason})`;
 
-  gameStore.setGameEnded(true);
+  gameStore.roomStatus = RoomStatus.ENDED;
 
   presentToast(toastMessage)
 
@@ -216,6 +219,11 @@ const cardAssignedHandler = (event: MessageEvent) => {
     cardType: eventData.cardType,
     cardId: eventData.cardId,
   };
+  if (eventData.cardType === "picture") {
+    gameState.assignedPictureCardId = eventData.cardId
+  } else {
+    gameState.assignedTextCardId = eventData.cardId
+  }
 }
 
 /**
@@ -400,19 +408,10 @@ onIonViewWillEnter(async () => {
   // 초기 시간 동기화
   timeDifference.value = await calculateTimeDifference();
 
+  addEventListeners();
+
   // 주기적인 시간 동기화 설정(매 10마다)
   syncInterval.value = setInterval(periodicTimeSync, 600000);
-
-  eventSourceStore.addEventListener("game-ended", gameEndedHandler);
-  eventSourceStore.addEventListener("not-in-room",notInRoomHandler)
-  eventSourceStore.addEventListener("player-order-assigned", playerOrderAssignedHandler);
-  eventSourceStore.addEventListener("round-2-started", roundTwoStartedHandler);
-  eventSourceStore.addEventListener("game-reset", gameResetHandler);
-  eventSourceStore.addEventListener("card-assigned", cardAssignedHandler);
-  eventSourceStore.addEventListener("timer-start", timerStartHandler);
-  eventSourceStore.addEventListener("time-extended", timeExtendedHandler);
-  eventSourceStore.addEventListener("speaking-end", speakingEndHandler);
-  eventSourceStore.addEventListener("vote-result", voteResultHandler);
 
   // 컴포넌트 재진입 시 `timerStartData` 및 `timeExtensionData` 초기화
   timerStartData.value = null;
@@ -441,6 +440,36 @@ const resetGameState = () => {
  */
 onIonViewWillLeave(() => {
   console.log('Leaving MultiGameView, cleaning up listeners');
+
+  removeEventListeners();
+
+  if(timeoutId) {
+    clearTimeout(timeoutId);
+  }
+
+  resetGameState();
+})
+
+/**
+ * 이벤트 리스너들 등록
+ */
+const addEventListeners = () => {
+  eventSourceStore.addEventListener("game-ended", gameEndedHandler);
+  eventSourceStore.addEventListener("not-in-room",notInRoomHandler)
+  eventSourceStore.addEventListener("player-order-assigned", playerOrderAssignedHandler);
+  eventSourceStore.addEventListener("round-2-started", roundTwoStartedHandler);
+  eventSourceStore.addEventListener("game-reset", gameResetHandler);
+  eventSourceStore.addEventListener("card-assigned", cardAssignedHandler);
+  eventSourceStore.addEventListener("timer-start", timerStartHandler);
+  eventSourceStore.addEventListener("time-extended", timeExtendedHandler);
+  eventSourceStore.addEventListener("speaking-end", speakingEndHandler);
+  eventSourceStore.addEventListener("vote-result", voteResultHandler);
+}
+
+/**
+ * 이벤트 리스너들 제거
+ */
+const removeEventListeners = () => {
   eventSourceStore.removeEventListener('game-ended', gameEndedHandler);
   eventSourceStore.removeEventListener('player-order-assigned', playerOrderAssignedHandler);
   eventSourceStore.removeEventListener('round-2-started', roundTwoStartedHandler);
@@ -451,13 +480,7 @@ onIonViewWillLeave(() => {
   eventSourceStore.removeEventListener("speaking-end", speakingEndHandler);
   eventSourceStore.removeEventListener("vote-result", voteResultHandler);
   eventSourceStore.removeEventListener("not-in-room", notInRoomHandler);
-
-  if(timeoutId) {
-    clearTimeout(timeoutId);
-  }
-
-  resetGameState();
-})
+}
 
 /**
  * 방 나가기 요청을 서버에 전송
@@ -474,7 +497,7 @@ const leaveRoom = async (): Promise<boolean> => {
 
     if(response.status == "200") {
       console.log('게임방 나가기 요청 성공');
-      gameStore.setGameEnded(true);
+      gameStore.roomStatus = RoomStatus.ENDED;
       return true;
     } else {
       console.error('게임 나가기 요청 실패', response);
@@ -495,8 +518,13 @@ const gameExit = async () => {
  * 라우팅전 네비게이션 가드 함수
  */
 onBeforeRouteLeave(async (to, from, next) => {
-  // 게임이 종료되었을 시 라우팅 바로 진행
-  if (gameStore.isGameEnded || isLeaving.value) {
+  // 게임이 종료되었거나 방이 사라졌을떄,
+  if (roomStatus.value === RoomStatus.ENDED || roomStatus.value === RoomStatus.CLOSED) {
+    return next;
+  }
+
+  // 게임 나가기 중일 때 라우팅 바로 진행
+  if (isLeaving.value) {
     return next();
   }
 

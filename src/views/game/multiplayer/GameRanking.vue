@@ -25,7 +25,7 @@ import {RankingPlayer} from "@/types/Player";
 import {deleteRequest, post} from "@/api/httpService";
 import {useEventSourceStore} from "@/store/eventSourceStore";
 import {showAlert} from "@/utils/showAlert";
-import {useGameStore} from "@/store/gameStore";
+import {RoomStatus, useGameStore} from "@/store/gameStore";
 import {ref} from "vue";
 
 // 사용자 랭킹 인터페이스
@@ -75,7 +75,7 @@ const goRetry = async () => {
     const response = await post(`games/${roomId}/retry`, null, true);
 
     if (response.status == "200") {
-      gameStore.setGameEnded(false);
+      gameStore.roomStatus = RoomStatus.WAITING;
       router.replace(`/game/waiting/${roomId}`);
     } else {
       console.log("다시하기 요청 이후 대기방으로 이동할 수 없음");

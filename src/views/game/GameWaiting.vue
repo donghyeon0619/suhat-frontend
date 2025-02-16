@@ -15,15 +15,26 @@ import {
 } from "@ionic/vue"
 import Header from "@/components/common/BackButtonHeader.vue";
 import JsBarcode from 'jsbarcode'
-import {ref, computed} from 'vue'
+import {ref, computed, onMounted} from 'vue'
 import UserItem from "@/components/game/UserItem.vue";
 import BaseButton from "@/components/common/BaseButton.vue";
 import {onBeforeRouteLeave, useRoute} from "vue-router";
 import {deleteRequest, get, post} from "@/api/httpService";
 import {useEventSourceStore} from "@/store/eventSourceStore";
 import {useUserStore} from "@/store/user";
-import {useGameStore} from "@/store/gameStore";
+import {RoomStatus, useGameStore} from "@/store/gameStore";
 import canStartSpeechBubbleImg from "@/assets/img/game/speech-bubble.svg"
+import { App } from "@capacitor/app"
+import {PluginListenerHandle} from "@capacitor/core";
+import { Network } from "@capacitor/network";
+import {showAlert} from "@/utils/showAlert";
+
+// capacitorApp 관련 변수
+let pauseHandle: PluginListenerHandle | undefined;
+let resumeHandle: PluginListenerHandle | undefined;
+let networkCheckInterval: ReturnType<typeof setInterval> | null = null;
+let resumeAttemptCount = 0; // 재연결 시도횟수를 추적할 수 있음
+let isConnecting = false;
 
 const route = useRoute();
 const router = useIonRouter();
@@ -31,7 +42,6 @@ const roomId = String(route.params.roomId);
 const roomName = ref('방 이름');
 const headCount = ref(4);
 const isHost = ref(false);
-const isGameStarting = ref(false);
 const isLeaving = ref(false);
 
 // 실제 입장한 플레이어 배열
@@ -39,18 +49,16 @@ const participants = ref<Array<{ playerId: number | null, isUserJoined: boolean,
 
 // sse 변수 선언
 const eventSourceStore = useEventSourceStore();
+
+// pinia 변수 선언
 const userStore = useUserStore();
 const gameStore = useGameStore();
-
+const roomStatus = computed(() => gameStore.roomStatus);
 /**
  * 방 연결
  */
 const connectToRoom = () => {
-  eventSourceStore.connect(`https://suhat.kr/api/sse/rooms/connect/${roomId}`);
-  // eventSourceStore.connect(`https://10.0.2.2:8443/api/sse/rooms/connect/${roomId}`);
-  // eventSourceStore.connect(`http://localhost:8443/api/sse/rooms/connect/${roomId}`);
-  // SSE "connected" 이벤트 수신 시, pingInterval 시작
-  eventSourceStore.addEventListener('connected', onConnectedHandler);
+  eventSourceStore.connect(roomId);
 };
 
 /**
@@ -86,7 +94,7 @@ const playerJoinedHandler = (event: MessageEvent) => {
  */
 const gameStartedHandler = (event: MessageEvent) => {
   console.log('game-started 이벤트 수신:', event.data);
-  isGameStarting.value = true;
+  gameStore.roomStatus = RoomStatus.IN_GAME;
   router.replace({
     path: `/multi/play/${roomId}`,
   });
@@ -245,7 +253,8 @@ const fetchDeTails = (response: any) => {
     name: player.playerInfo.name
   }));
   console.log("fetch 이후 participants 상태:", participants.value);
-  gameStore.setGameEnded(false);
+  gameStore.roomStatus = RoomStatus.WAITING;
+
 }
 
 /**
@@ -283,6 +292,7 @@ onIonViewWillEnter(async () => {
     const response = await get(`rooms/${roomId}`);
 
     if(response.roomStatus === "IN_GAME"){
+      gameStore.roomStatus = RoomStatus.IN_GAME;
       console.log("게임이 이미 시작되었습니다. 게임 화면으로 이동합니다");
       router.replace(`/multi/play/${roomId}`);
       return;
@@ -296,19 +306,21 @@ onIonViewWillEnter(async () => {
     // SSE 연결
     connectToRoom();
 
-    if(eventSourceStore.eventSource) {
-      // 2) pingInterval 시작
-      eventSourceStore.startPingInterval(roomId);
+    // 그 외 이벤트 등록
+    eventSourceStore.addEventListener('connected', onConnectedHandler);
+    eventSourceStore.addEventListener('not-in-room', notInRoomHandler);
+    eventSourceStore.addEventListener('player-joined', playerJoinedHandler);
+    eventSourceStore.addEventListener('game-started', gameStartedHandler);
+    eventSourceStore.addEventListener('player-left', playerLeftHandler);
+    eventSourceStore.addEventListener('host-assigned', hostAssignedHandler);
+    eventSourceStore.addEventListener('host-changed', hostChangedHandler);
+    eventSourceStore.addEventListener('player-reconnected', playerReconnectedHandler);
 
-      // 그 외 이벤트 등록
-      eventSourceStore.addEventListener('not-in-room', notInRoomHandler);
-      eventSourceStore.addEventListener('player-joined', playerJoinedHandler);
-      eventSourceStore.addEventListener('game-started', gameStartedHandler);
-      eventSourceStore.addEventListener('player-left', playerLeftHandler);
-      eventSourceStore.addEventListener('host-assigned', hostAssignedHandler);
-      eventSourceStore.addEventListener('host-changed', hostChangedHandler);
-      eventSourceStore.addEventListener('player-reconnected', playerReconnectedHandler);
-    }
+    // 앱이 백그라운드로 갈 때
+    pauseHandle = await App.addListener('pause', onPauseHandler);
+
+    // 앱이 포그라운드로 돌아올 때
+    resumeHandle = await App.addListener('resume', onResumeHandler)
 
     fetchDeTails(response);
 
@@ -324,6 +336,125 @@ onIonViewWillEnter(async () => {
 });
 
 /**
+ * 앱이 백그라운드로 갈떄 처리하는 핸들러
+ */
+function onPauseHandler() {
+  console.log("[GameWaiting] onPause -> disconnect SSE");
+  eventSourceStore.disconnectByUser();
+}
+
+/**
+ * 앱이 다시 포그라운드로 올떄 sse 연결을 다시 하는 핸들러
+ */
+async function onResumeHandler() {
+  console.log("[GameWaiting] onResume -> reconnect SSE if needed");
+
+  // 다시 SSE를 연결하기
+  if (isLeaving.value) {
+    console.log("[GameWaiting] 이미 방을 나갔으므로 SSE 재연결 생략");
+    return;
+  }
+
+  // 이미 연결이 살아 있는지 확인하는 코드
+  if (eventSourceStore.isConnected) {
+    return;
+  }
+
+  console.log("[GameWaiting] onResume -> Will check network after short delay...");
+
+  setTimeout(async () => {
+    // 네트워크 상태 확인
+    try {
+      const status = await Network.getStatus();
+      if (status.connected) {
+        console.log("[GameWaiting] network is connected, let's reconnect SSE");
+        await attemptReconnect();
+      } else {
+        // 네트워크 미연결이면 재시도 로직
+        scheduleNetworkRetry();
+      }
+    } catch (error) {
+      console.error("[GameWaiting] resume 시 방 상태 갱신 실패:", error);
+    }
+  }, 2000);
+}
+
+/**
+ * 일정 간격으로 Network 상태를 재확인 후, 연결되면 SSE 재연결
+ */
+function scheduleNetworkRetry() {
+
+  // 이미 interval이 있거나, 이미 isConnecting이면 skip
+  if (networkCheckInterval || isConnecting || eventSourceStore.isConnected) {
+    return;
+  }
+
+  resumeAttemptCount = 0;
+  networkCheckInterval = setInterval(async () => {
+    resumeAttemptCount++;
+    console.log(`[GameWaiting] Checking network again (#${resumeAttemptCount})...`);
+
+    try {
+      const status = await Network.getStatus();
+      if (status.connected) {
+        console.log("[GameWaiting] Network reconnected! Stopping interval.");
+        clearInterval(networkCheckInterval!);
+        networkCheckInterval = null;
+        await attemptReconnect();  //
+      } else if (resumeAttemptCount > 5) {
+        console.error("[GameWaiting] Still not connected after 5 retries. Stopping attempts.");
+        clearInterval(networkCheckInterval!);
+        networkCheckInterval = null;
+        router.replace("/game/home");
+      }
+    } catch (err) {
+      console.error("[GameWaiting] scheduleNetworkRetry -> 네트워크 상태 가져오기 실패:", err);
+    }
+  }, 2000);
+}
+
+/**
+ * 재연결 함수
+ */
+const attemptReconnect = async () => {
+
+  // 이미 연결 시도 중이면 스킵
+  if (isConnecting) {
+    console.log("[GameWaiting] 재연결이 이미 진행중이므로 스킵합니다");
+    return;
+  }
+  isConnecting = true;
+
+  // sse 재연결
+  console.log("[GameWaiting] Attempting SSE 재연결 시도중");
+  connectToRoom(); // SSE 연결
+
+  // 방 상태 조회
+  try {
+    const response = await get(`rooms/${roomId}`);
+    if (response.roomStatus === "IN_GAME") {
+      console.log("[GameWaiting] Game is already started. Moving to play screen.");
+      gameStore.roomStatus = RoomStatus.IN_GAME;
+      router.replace(`/multi/play/${roomId}`);
+    } else {
+      console.log("[GameWaiting] Updating waiting room details.");
+      fetchDeTails(response);
+    }
+  } catch (error) {
+    await showAlert(
+     "조회 에러",
+     "방 정보 조회 실패", [
+        {
+          text: "확인", role: "confirm",
+        }
+      ]
+    )
+  } finally {
+    isConnecting = false;
+  }
+}
+
+/**
  * 페이지를 떠날 때 리스너 제거
  */
 onIonViewWillLeave(() => {
@@ -335,8 +466,19 @@ onIonViewWillLeave(() => {
   eventSourceStore.removeEventListener('host-changed', hostChangedHandler);
   eventSourceStore.removeEventListener('player-reconnected', playerReconnectedHandler);
   eventSourceStore.removeEventListener('not-in-room', notInRoomHandler);
+
+  if (pauseHandle) {
+    pauseHandle.remove();
+    pauseHandle = undefined;
+  }
+
+  if (resumeHandle) {
+    resumeHandle.remove();
+    resumeHandle = undefined;
+  }
   resetRoomState();
 })
+
 
 /**
  * 방 초기화 함수
@@ -384,8 +526,15 @@ const createBarcode = (roomId) => {
  * 라우팅전 네비게이션 가드 함수
  */
 onBeforeRouteLeave(async (to, from, next) => {
-  if (isGameStarting.value || isLeaving.value || gameStore.isGameEnded) {
+
+  // 이미 나가기 중일떄,
+  if (isLeaving.value) {
     return next(); // 게임시작중이면 네비가이션 가드 우회;
+  }
+
+  // 방이 닫혔거나 game 중일떄
+  if (roomStatus.value === RoomStatus.CLOSED || roomStatus.value === RoomStatus.IN_GAME) {
+    return next();
   }
 
   const confirmed = await presentAlert();

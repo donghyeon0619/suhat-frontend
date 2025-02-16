@@ -43,19 +43,12 @@ async function enterGameRoom() {
 
     console.log("response: " + response);
 
-    let topModal = await modalController.getTop(); // 최상위 모달 가져오기
-
-    while (topModal) {
-      await modalController.dismiss(); // 현재 모달 닫기
-      topModal = await modalController.getTop(); // 다음 최상위 모달 확인
-    }
-
     router.push({
       path: `/game/waiting/${props.roomId}`,
     });
-  } catch (error) {
-    console.log('게임 방 입장 오류 발생: ', error);
-    await presentAlert('게임 방이 존재하지 않습니다.');
+  } catch (error: any) {
+    console.log('게임 방 입장 오류 발생: ', error.message);
+    await presentAlert(`${error.message}`);
   }
   // 게임 방 입장 처리 로직
 }
@@ -83,11 +76,7 @@ const presentAlert = async (message: string) => {
 
 async function closeModal() {
   console.log("closeModal 호출");
-  let topModal = await modalController.getTop(); // 최상위 모달 가져오기
-  while (topModal) {
-    await modalController.dismiss(); // 현재 모달 닫기
-    topModal = await modalController.getTop(); // 다음 최상위 모달 확인
-  }
+  await modalController.dismiss(); // 현재 모달 닫기
 }
 </script>
 

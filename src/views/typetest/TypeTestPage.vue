@@ -60,6 +60,13 @@ const isOptionSelected = computed(() =>
   selectedAnswers[currentQuestionIndex.value]?.id !== -1
 );
 
+/**
+ * 첫번째 질문인지 computed
+ */
+const isFirstQuestion = computed(() => {
+  return currentQuestionIndex.value === 0;
+})
+
 
 /**
  * 선택 로직: 선택된 옵션의 id와 score 저장
@@ -223,6 +230,7 @@ const presentAlert = async (header: string, message: string) => {
             <ion-button
                 expand="block"
                 class="prev-button"
+                :disabled="isFirstQuestion"
                 @click="goToPreviousQuestion">이전 문제</ion-button>
           </ion-col>
           <ion-col size="7">

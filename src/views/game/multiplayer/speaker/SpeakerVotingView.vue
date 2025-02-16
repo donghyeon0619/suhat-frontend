@@ -10,15 +10,13 @@ import PlayerProfile from "@/components/game/multiplayer/PlayerProfile.vue";
 import ChatBubbleWithBorder from "@/components/common/ChatBubbleWithBorder.vue";
 import ReVoteDetails from "@/components/game/multiplayer/ReVoteDetails.vue";
 import VotingResult from "@/components/game/multiplayer/VotingResult.vue";
-import {useRoute} from "vue-router";
 import PuzzleSuccessModal from "@/components/game/PuzzleSuccessModal.vue";
 import {enterAnimation, leaveAnimation} from "@/utils/puzzleModalAnimations";
 import PuzzleFailureModal from "@/components/game/PuzzleFailureModal.vue";
-import {useEventSourceStore} from "@/store/eventSourceStore";
 import {GameState} from "@/types/GameState";
 import {Player, RankingPlayer} from "@/types/Player";
 import {VoteResult} from "@/types/VoteResult";
-import {useGameStore} from "@/store/gameStore";
+import {RoomStatus, useGameStore} from "@/store/gameStore";
 
 const props = defineProps<{
   gameState: GameState;
@@ -36,6 +34,7 @@ let timeoutId: ReturnType<typeof  setTimeout> | null = null;
 const router = useIonRouter();
 const roomId = props.gameState.roomId;
 const gameStore = useGameStore();
+const roomStatus = computed(() => gameStore.roomStatus);
 
 /**
  * 상위 컴포넌트 상태 변수
@@ -208,7 +207,7 @@ const openSuccessModal = async (
   setTimeout(() => {
     console.log("모달 표시시간이 종료 되었습니다. 다음 액션 실행");
     if (currentPieces.value >= maxPieces.value && rankingData) {
-      gameStore.setGameEnded(true);
+      gameStore.roomStatus = RoomStatus.ENDED;
       modal.dismiss();
       goPuzzleCompletion(rankingData);
     }

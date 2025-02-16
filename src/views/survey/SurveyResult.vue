@@ -162,7 +162,7 @@ ion-title{
   align-items: center;
   width: 100%;
   position: relative;
-  margin-top: 20%; /* 봉투 상단 여백 조정 */
+  margin-top: 10%; /* 봉투 상단 여백 조정 */
   /* 애니메이션 추가: 1회 실행, ease-out 타이밍 */
   animation: bounce 1s ease-out;
 }

@@ -19,7 +19,7 @@ import PuzzleFailureModal from "@/components/game/PuzzleFailureModal.vue";
 import {GameState} from "@/types/GameState";
 import {VoteResult} from "@/types/VoteResult";
 import {Player, RankingPlayer} from "@/types/Player";
-import {useGameStore} from "@/store/gameStore";
+import {RoomStatus, useGameStore} from "@/store/gameStore";
 import {useUserStore} from "@/store/user";
 
 const props = defineProps<{
@@ -273,7 +273,7 @@ const openSuccessModal = async (
   setTimeout(() => {
     console.log("모달 표시시간이 종료 되었습니다. 다음 액션 실행");
     if (currentPieces.value >= maxPieces.value && rankingData) {
-      gameStore.setGameEnded(true);
+      gameStore.roomStatus = RoomStatus.ENDED;
       modal.dismiss();
       goPuzzleCompletion(rankingData);
     }
