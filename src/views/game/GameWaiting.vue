@@ -22,49 +22,61 @@ import {onBeforeRouteLeave, useRoute} from "vue-router";
 import {deleteRequest, get, post} from "@/api/httpService";
 import {useEventSourceStore} from "@/store/eventSourceStore";
 import {useUserStore} from "@/store/user";
-import {useGameStore} from "@/store/gameStore";
+import {RoomStatus, useGameStore} from "@/store/gameStore";
+import canStartSpeechBubbleImg from "@/assets/img/game/speech-bubble.svg"
+import { App } from "@capacitor/app"
+import {PluginListenerHandle} from "@capacitor/core";
+import { Network } from "@capacitor/network";
+import {showAlert} from "@/utils/showAlert";
+
+// capacitorApp 관련 변수
+let pauseHandle: PluginListenerHandle | undefined;
+let resumeHandle: PluginListenerHandle | undefined;
+let networkCheckInterval: ReturnType<typeof setInterval> | null = null;
+let resumeAttemptCount = 0; // 재연결 시도횟수를 추적할 수 있음
+let isConnecting = false;
 
 const route = useRoute();
 const router = useIonRouter();
-const roomId = route.params.roomId;
+const roomId = String(route.params.roomId);
 const roomName = ref('방 이름');
 const headCount = ref(4);
 const isHost = ref(false);
-const isGameStarting = ref(false);
 const isLeaving = ref(false);
 
-const participants = ref(
-  Array(headCount.value).fill({
-    playerId: null,
-    isUserJoined: false,
-    ready: false,
-    name: '' }));
+// 실제 입장한 플레이어 배열
+const participants = ref<Array<{ playerId: number | null, isUserJoined: boolean, ready: boolean, name: string }>>([]);
 
 // sse 변수 선언
 const eventSourceStore = useEventSourceStore();
+
+// pinia 변수 선언
 const userStore = useUserStore();
 const gameStore = useGameStore();
+const roomStatus = computed(() => gameStore.roomStatus);
 /**
- * 방 연결 및 이벤트 리스너 설정
+ * 방 연결
  */
 const connectToRoom = () => {
-
-  eventSourceStore.connect(`https://suhat.kr/api/rooms/connect/${roomId}`);
-  // eventSourceStore.connect(`http://10.0.2.2:8443/api/rooms/connect/${roomId}`);
-
-
-  eventSourceStore.addEventListener('connected', function(event) {
-    console.log('connected 이벤트 수신:', event.data);
-    // 이벤트 등록
-    eventSourceStore.addEventListener('not-in-room', notInRoomHandler);
-    eventSourceStore.addEventListener('player-joined', playerJoinedHandler);
-    eventSourceStore.addEventListener('game-started', gameStartedHandler);
-    eventSourceStore.addEventListener('player-left', playerLeftHandler);
-    eventSourceStore.addEventListener('host-assigned', hostAssignedHandler);
-    eventSourceStore.addEventListener('host-changed', hostChangedHandler);
-    eventSourceStore.addEventListener('player-ready', playerReadyHandler);
-  });
+  eventSourceStore.connect(roomId);
 };
+
+/**
+ * 방 연결 시 이벤트 헨들러
+ * @param event
+ */
+function onConnectedHandler(event: MessageEvent) {
+  console.log('[Waiting] connected 이벤트 수신:', event.data);
+
+  // 내 playerId
+  const currentUserId = userStore.userInfo.id;
+
+  // 1) 자기 자신 ready
+  if (currentUserId !== null) {
+    setPlayerReady(currentUserId);
+  }
+
+}
 
 // 핸들러 함수 정의
 /**
@@ -82,11 +94,22 @@ const playerJoinedHandler = (event: MessageEvent) => {
  */
 const gameStartedHandler = (event: MessageEvent) => {
   console.log('game-started 이벤트 수신:', event.data);
-  isGameStarting.value = true;
+  gameStore.roomStatus = RoomStatus.IN_GAME;
   router.replace({
     path: `/multi/play/${roomId}`,
   });
 };
+
+/**
+ * 다시하기 이후 emitter 재갱신을 한 후 레디완료 처리
+ * @param event
+ */
+const playerReconnectedHandler = (event: MessageEvent) => {
+  console.log('playerReconnected 이벤트 수신:', event.data);
+  const readyPlayerId = JSON.parse(event.data).playerId;
+  setPlayerReady(readyPlayerId);
+
+}
 
 /**
  * 'player-left' 이벤트: 플레이어 제거
@@ -102,13 +125,15 @@ const playerLeftHandler = (event: MessageEvent) => {
  */
 const notInRoomHandler = (event: MessageEvent) => {
   isLeaving.value = true;
-  const eventData = event.data;
-  presentToast(eventData)
+  gameStore.roomStatus = RoomStatus.CLOSED;
+  eventSourceStore.disconnectByUser();
+
+  presentToast(event.data);
   setTimeout(() => {
     router.replace({
       path: '/game/home'
     })
-  }, 2000);
+  }, 3000);
 }
 
 
@@ -132,74 +157,38 @@ const hostChangedHandler = (event: MessageEvent) => {
 }
 
 /**
- *
+ * 참가자 추가 – 중복 없이 immutable하게 업데이트
+ * @param data
  */
-const playerReadyHandler = (event: MessageEvent) => {
-  console.log('player-ready 이벤트 수신:', event.data);
-
-  const readyPlayerId = JSON.parse(event.data).playerId;
-
-  // 참가자 리스트에서 해당 플레이어 상태 업데이트
-  const playerIndex = participants.value.findIndex(
-    (p) => p.playerId === readyPlayerId
-  );
-
-  if (playerIndex !== -1) {
-    participants.value[playerIndex].ready = true;
-  }
-}
-
-/**
- * 새로운 플레이어를 참가자 리스트에 추가
- */
-const addPlayer = (data) => {
+const addPlayer = (data: any) => {
   const newPlayer = JSON.parse(data);
-  console.log('new player: ', newPlayer);
-
-  // 1) 이미 존재하는지 확인
-  const existingIndex = participants.value.findIndex(
-    p => p.playerId === newPlayer.playerId
-  );
-
-  if (existingIndex !== -1) {
-    // 이미 존재 -> 재연결 or 중복 처리
-    participants.value[existingIndex].ready = true;
-    return;
-  }
-
-  // 새로운 유저 정보를 participants 리스트에 추가
-  const emptySlotIndex = participants.value.findIndex(p => !p.isUserJoined);
-  if (emptySlotIndex !== -1) {
-    participants.value[emptySlotIndex] = {
+  console.log('new player:', newPlayer);
+  // 중복 여부 확인
+  const exists = participants.value.some(p => p.playerId === newPlayer.playerId);
+  if (!exists) {
+    participants.value = [...participants.value, {
       playerId: newPlayer.playerId,
       isUserJoined: true,
-      ready: true,
-      name: newPlayer.playerInfo.name,
-    };
-    console.log("들어간 플레이어 정보", participants.value[emptySlotIndex])
+      ready: newPlayer.ready,
+      name: newPlayer.playerInfo.name
+    }];
+  } else {
+    // 이미 존재하면 ready 상태 업데이트
+    participants.value = participants.value.map(p =>
+      p.playerId === newPlayer.playerId ? { ...p, ready: newPlayer.ready } : p
+    );
   }
-}
+  console.log("현재 participants:", participants.value);
+};
 
 /**
  * 플레이어를 참가자 리스트에서 제거
  */
-const deletePlayer = (data) => {
+const deletePlayer = (data: any) => {
   const leavingPlayerId = Number(data);
-
-  // participants 배열에서 playerId가 일치하는 항목 찾기
-  const playerIndex = participants.value.findIndex(p => p.playerId === leavingPlayerId);
-  console.log("playerIndex", playerIndex)
-  if (playerIndex !== -1){
-    // 해당 슬롯을 초기 상태로 되돌리기
-    participants.value[playerIndex] = {
-      playerId: null,
-      isUserJoined: false,
-      ready: false,
-      name: '',
-    };
-  }  else {
-    console.log(`Player with ID ${leavingPlayerId} not found.`);
-  }
+  console.log("삭제 전 participants:", participants.value);
+  participants.value = participants.value.filter(p => p.playerId !== leavingPlayerId);
+  console.log("삭제 후 participants:", participants.value);
 }
 
 /**
@@ -238,21 +227,26 @@ const startGame = async () => {
  */
 const leaveRoom = async () => {
   if(isLeaving.value){
-    return false;
+    return;
   }
   isLeaving.value = true;
+  eventSourceStore.disconnectByUser();
 
   try{
     const response = await deleteRequest(`rooms/${roomId}/players`, true);
-    eventSourceStore.disconnectByUser();
 
     if(response.status == "200") {
       console.log('게임방 나가기 요청 성공');
+      gameStore.roomStatus = RoomStatus.CLOSED;
     } else {
       console.error('게임 나가기 요청 실패', response);
+      gameStore.roomStatus = RoomStatus.CLOSED;
+      return;
     }
   } catch (error) {
-    console.error('게임방 나가기 요청 성공: ', error);
+    console.error('게임방 나가기 요청 중 에러 발생: ', error);
+    gameStore.roomStatus = RoomStatus.CLOSED;
+    return;
   }
 };
 
@@ -261,20 +255,43 @@ const leaveRoom = async () => {
  * @param response
  */
 const fetchDeTails = (response: any) => {
-  participants.value = Array(headCount.value).fill({playerId: null, isUserJoined: false, name: ''});
-  console.log("화면이 보였을 때", response.players);
-  Object.values(response.players).forEach((player, index) => {
-    if (index < participants.value.length) {
-      participants.value[index] = {
-        playerId: player.playerId,
-        isUserJoined: true,
-        ready: player.ready,
-        name: player.playerInfo.name // 전달받은 player의 name 필드
-      };
-    }
-  });
-  gameStore.setGameEnded(false);
+  // 서버의 players 객체를 배열로 변환
+  participants.value = Object.values(response.players).map((player: any) => ({
+    playerId: player.playerId,
+    isUserJoined: true,
+    ready: player.ready,
+    name: player.playerInfo.name
+  }));
+  console.log("fetch 이후 participants 상태:", participants.value);
+  gameStore.roomStatus = RoomStatus.WAITING;
+
 }
+
+/**
+ * UI 표시용: headCount 만큼의 배열을 만듭니다.
+ * 실제 입장한 플레이어들을 먼저 표시하고, 부족한 만큼은 placeholder로 채웁니다.
+ */
+const displayParticipants = computed(() => {
+  const joined = participants.value;
+  const placeholdersCount = headCount.value - joined.length;
+  const placeholders = Array.from({ length: placeholdersCount }, () => ({
+    playerId: null,
+    isUserJoined: false,
+    ready: false,
+    name: ''
+  }));
+  return [...joined, ...placeholders];
+});
+
+/**
+ * 플레이어의 ready 상태 업데이트
+ */
+const setPlayerReady = (playerId: number) => {
+  participants.value = participants.value.map(p =>
+    p.playerId === playerId ? { ...p, ready: true } : p
+  );
+  console.log("플레이어 ready 업데이트:", participants.value);
+};
 
 /**
  * 페이지가 뷰에 표시되기 직전에 호출됨
@@ -285,9 +302,18 @@ onIonViewWillEnter(async () => {
     const response = await get(`rooms/${roomId}`);
 
     if(response.roomStatus === "IN_GAME"){
+      gameStore.roomStatus = RoomStatus.IN_GAME;
       console.log("게임이 이미 시작되었습니다. 게임 화면으로 이동합니다");
       router.replace(`/multi/play/${roomId}`);
       return;
+    }
+
+    fetchDeTails(response);
+
+    // 호스트 여부 확인
+    const currentUserId = userStore.userInfo.id;
+    if(response.hostId === currentUserId) {
+      isHost.value = true;
     }
 
     roomName.value = response.roomName;
@@ -298,18 +324,154 @@ onIonViewWillEnter(async () => {
     // SSE 연결
     connectToRoom();
 
-    fetchDeTails(response);
+    // 그 외 이벤트 등록
+    eventSourceStore.addEventListener('connected', onConnectedHandler);
+    eventSourceStore.addEventListener('not-in-room', notInRoomHandler);
+    eventSourceStore.addEventListener('player-joined', playerJoinedHandler);
+    eventSourceStore.addEventListener('game-started', gameStartedHandler);
+    eventSourceStore.addEventListener('player-left', playerLeftHandler);
+    eventSourceStore.addEventListener('host-assigned', hostAssignedHandler);
+    eventSourceStore.addEventListener('host-changed', hostChangedHandler);
+    eventSourceStore.addEventListener('player-reconnected', playerReconnectedHandler);
 
-    // 호스트 여부 확인
-    const currentUserId = userStore.userInfo.id;
-    if(response.hostId === currentUserId) {
-      isHost.value = true;
-    }
+    // 앱이 백그라운드로 갈 때
+    pauseHandle = await App.addListener('pause', onPauseHandler);
+
+    // 앱이 포그라운드로 돌아올 때
+    resumeHandle = await App.addListener('resume', onResumeHandler);
 
   } catch (error) {
     console.log('방 데이터를 가져오지 못했습니다: ', error);
   }
 });
+
+/**
+ * 앱이 백그라운드로 갈떄 처리하는 핸들러
+ */
+function onPauseHandler() {
+  console.log("[GameWaiting] onPause -> disconnect SSE");
+  eventSourceStore.disconnectByUser();
+}
+
+/**
+ * 앱이 다시 포그라운드로 올떄 sse 연결을 다시 하는 핸들러
+ */
+async function onResumeHandler() {
+  console.log("[GameWaiting] onResume -> reconnect SSE if needed");
+
+  // 다시 SSE를 연결하기
+  if (isLeaving.value) {
+    console.log("[GameWaiting] 이미 방을 나갔으므로 SSE 재연결 생략");
+    return;
+  }
+
+  // 이미 연결이 살아 있는지 확인하는 코드
+  if (eventSourceStore.isConnected) {
+    return;
+  }
+
+  console.log("[GameWaiting] onResume -> Will check network after short delay...");
+
+  setTimeout(async () => {
+    // 네트워크 상태 확인
+    try {
+      const status = await Network.getStatus();
+      if (status.connected) {
+        console.log("[GameWaiting] network is connected, let's reconnect SSE");
+        await attemptReconnect();
+      } else {
+        // 네트워크 미연결이면 재시도 로직
+        scheduleNetworkRetry();
+      }
+    } catch (error) {
+      console.error("[GameWaiting] resume 시 방 상태 갱신 실패:", error);
+    }
+  }, 2000);
+}
+
+/**
+ * 일정 간격으로 Network 상태를 재확인 후, 연결되면 SSE 재연결
+ */
+function scheduleNetworkRetry() {
+
+  // 이미 interval이 있거나, 이미 isConnecting이면 skip
+  if (networkCheckInterval || isConnecting || eventSourceStore.isConnected) {
+    return;
+  }
+
+  resumeAttemptCount = 0;
+  networkCheckInterval = setInterval(async () => {
+    resumeAttemptCount++;
+    console.log(`[GameWaiting] Checking network again (#${resumeAttemptCount})...`);
+
+    try {
+      const status = await Network.getStatus();
+      if (status.connected) {
+        console.log("[GameWaiting] 네트워크 재연결 성공, 네트워크 체크 인터벌 삭제");
+        clearInterval(networkCheckInterval!);
+        networkCheckInterval = null;
+        await attemptReconnect();  //
+      } else if (resumeAttemptCount > 5) {
+        console.error("[GameWaiting] 네트워크 연결이 안되므로 오류 발생");
+        clearInterval(networkCheckInterval!);
+        networkCheckInterval = null;
+      }
+    } catch (err) {
+      console.error("[GameWaiting] scheduleNetworkRetry -> 네트워크 상태 가져오기 실패:", err);
+    }
+  }, 2000);
+}
+
+/**
+ * 재연결 함수
+ */
+const attemptReconnect = async () => {
+
+  // 이미 연결 시도 중이면 스킵
+  if (isConnecting) {
+    console.log("[GameWaiting] 재연결이 이미 진행중이므로 스킵합니다");
+    return;
+  }
+  isConnecting = true;
+
+  // sse 재연결
+  console.log("[GameWaiting] Attempting SSE 재연결 시도중");
+  connectToRoom(); // SSE 연결
+
+  // 방 상태 조회
+  try {
+    const response = await get(`rooms/${roomId}`);
+
+    // Fetch 응답 데이터에서 현재 사용자가 방에 있는지 확인
+    const userInRoom = response.players.some((player: any) => player.playerId === userStore.userInfo.id);
+    if(!userInRoom) {
+      console.log("[GameWaiting] Fetch 응답: 현재 사용자가 방에 존재하지 않습니다.");
+      await presentToast("방에 존재하지 않습니다. 홈으로 이동합니다.");
+      router.replace("/game/home");
+      return;
+    }
+
+    if (response.roomStatus === "IN_GAME") {
+      console.log("[GameWaiting] FETCH 응답: 게임이 이미 시작되었습니다.");
+      gameStore.roomStatus = RoomStatus.IN_GAME;
+      router.replace(`/multi/play/${roomId}`);
+    } else {
+      console.log("[GameWaiting] FETCH 응답: 대기실 정보 업데이트");
+      fetchDeTails(response);
+    }
+  } catch (error) {
+    await showAlert(
+     "조회 에러",
+     "방 정보 조회 실패", [
+        {
+          text: "확인", role: "confirm",
+        }
+      ]
+    )
+  } finally {
+    isConnecting = false;
+  }
+}
 
 /**
  * 페이지를 떠날 때 리스너 제거
@@ -321,10 +483,21 @@ onIonViewWillLeave(() => {
   eventSourceStore.removeEventListener('game-started', gameStartedHandler);
   eventSourceStore.removeEventListener('host-assigned', hostAssignedHandler);
   eventSourceStore.removeEventListener('host-changed', hostChangedHandler);
-  eventSourceStore.removeEventListener('player-ready', playerReadyHandler);
+  eventSourceStore.removeEventListener('player-reconnected', playerReconnectedHandler);
   eventSourceStore.removeEventListener('not-in-room', notInRoomHandler);
+
+  if (pauseHandle) {
+    pauseHandle.remove();
+    pauseHandle = undefined;
+  }
+
+  if (resumeHandle) {
+    resumeHandle.remove();
+    resumeHandle = undefined;
+  }
   resetRoomState();
 })
+
 
 /**
  * 방 초기화 함수
@@ -338,7 +511,8 @@ const resetRoomState = () => {
  * 현재 참가자 수 계산
  */
 const currentParticipantCount = computed(() => {
-  return participants.value.filter(p => p.isUserJoined).length;
+  // 실제 입장한 참가자 수 (placeholder는 포함하지 않음)
+  return participants.value.length;
 });
 
 /**
@@ -350,17 +524,17 @@ const isRoomFull = computed(() => currentParticipantCount.value === headCount.va
  * 방에 있는 모든 인원이 준비완료했는지 확인
  */
 const allPlayerReady = computed(() => {
-  return participants.value.every((p => p.isUserJoined && p.ready));
+  return participants.value.every((p => p.ready));
 })
 
-const imageUrl = ref(null);
+const imageUrl = ref('');
 
 
 /**
  * 방 코드 바코드 생성
  * @param roomId
  */
-const createBarcode = (roomId) => {
+const createBarcode = (roomId: any) => {
   const canvas = document.createElement('canvas');
   JsBarcode(canvas, roomId, { height: 50, width: 2, lineColor: "#333D4B", displayValue: true, text: "방 코드 : " + roomId, textMargin: 3, fontSize: 20, fontOptions: "bold", margin: 2 });
   imageUrl.value = canvas.toDataURL('image/png'); // 캔버스를 이미지 URL로 변환
@@ -371,16 +545,24 @@ const createBarcode = (roomId) => {
  * 라우팅전 네비게이션 가드 함수
  */
 onBeforeRouteLeave(async (to, from, next) => {
-  if (isGameStarting.value || isLeaving.value) {
+
+  // 이미 나가기 중일떄,
+  if (isLeaving.value) {
     return next(); // 게임시작중이면 네비가이션 가드 우회;
   }
+
+  // 방이 닫혔거나 game 중일떄
+  if (roomStatus.value === RoomStatus.CLOSED || roomStatus.value === RoomStatus.IN_GAME) {
+    return next();
+  }
+
   const confirmed = await presentAlert();
   if (confirmed) {
     try {
       await leaveRoom();
       next();
     } catch (error) {
-      next(false);
+      next();
     }
   } else {
     next(false);
@@ -391,39 +573,29 @@ onBeforeRouteLeave(async (to, from, next) => {
  * 방 나갈때 경고창 보여줌
  */
 const presentAlert = async (): Promise<boolean> => {
-  const alert = await alertController.create({
-    header: '방 나가기',
-    message: '정말로 방에서 나가시겠습니까?',
-    buttons: [
-      {
-        text: '확인',
-        role: 'confirm',
-        cssClass: "my-custom-alert-button-class",
-        handler: () => {
-          console.log('사용자가 나가기를 선택했습니다.');
-          resolvePromise(true);
-        }
-      },
-      {
-        text: '취소',
-        role: 'cancel',
-        cssClass: "my-custom-alert-button-class",
-        handler: () => {
-          console.log('사용자가 취소를 선택했습니다.');
-          resolvePromise(false);
-        }
-      },
-    ],
-    cssClass: "my-custom-alert-class"
+  return new Promise<boolean>((resolve) => {
+    alertController.create({
+      header: '방 나가기',
+      message: '정말로 방에서 나가시겠습니까?',
+      buttons: [
+        {
+          text: '확인',
+          role: 'confirm',
+          cssClass: "my-custom-alert-button-class",
+          handler: () => resolve(true),
+        },
+        {
+          text: '취소',
+          role: 'cancel',
+          cssClass: "my-custom-alert-button-class",
+          handler: () => resolve(false),
+        },
+      ],
+      cssClass: "my-custom-alert-class",
+    }).then(async (alert) => {
+      await alert.present();
+    });
   });
-
-  let resolvePromise: (value: boolean) => void;
-  const promise = new Promise<boolean>((resolve) => {
-    resolvePromise = resolve;
-  });
-
-  await alert.present();
-  return promise;
 };
 
 
@@ -433,7 +605,7 @@ const presentAlert = async (): Promise<boolean> => {
 const presentToast = async (message: string) => {
   const toast = await toastController.create({
     message: message,
-    cssClass: "top-toast",
+    cssClass: "top-toast toast-txt-center",
     duration: 1500,
     position: "top",
     positionAnchor:"backButtonHeader"
@@ -447,6 +619,7 @@ const presentToast = async (message: string) => {
 <template>
   <IonPage>
     <Header
+      id="backButtonHeader"
       :show-title="true"
       :header-title="'게임 대기'"
     ></Header>
@@ -480,20 +653,19 @@ const presentToast = async (message: string) => {
 
           <ion-list class="ion-no-padding">
             <UserItem
-                v-for="(participant, index) in participants"
-                :key="index"
-                :isUserJoined="participant.isUserJoined"
-                :name="participant.isUserJoined ? participant.name : ''"
-                :is-ready="participant.ready"
-            >
-            </UserItem>
+              v-for="(participant, index) in displayParticipants"
+              :key="participant.playerId !== null ? `player-${participant.playerId}` : `placeholder-${index}`"
+              :isUserJoined="participant.isUserJoined"
+              :name="participant.isUserJoined ? participant.name : '아직 입장하지 않음'"
+              :is-ready="participant.ready"
+            />
           </ion-list>
         </ion-card-content>
       </ion-card>
     </ion-content>
 
     <ion-footer class="ion-padding-start ion-padding-end ion-padding-bottom ion-no-border">
-      <ion-img class="start-speech-bubble ion-margin-start" v-if="isHost && isRoomFull" src="src/assets/icons/game/speech-bubble.svg"></ion-img>
+      <ion-img class="start-speech-bubble ion-margin-start" v-if="isHost && isRoomFull && allPlayerReady" :src="canStartSpeechBubbleImg"></ion-img>
       <BaseButton :buttonText="isHost ? '게임시작' : '게임 나가기'" :isButtonDisabled="isHost ? !(isRoomFull && allPlayerReady) : false" @click="buttonClickHandler"></BaseButton>
     </ion-footer>
   </IonPage>
@@ -510,7 +682,7 @@ ion-content::part(background) {
   background: transparent;
 }
 
-::v-deep ion-toolbar {
+ion-toolbar {
   --background: transparent;
 }
 

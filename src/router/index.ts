@@ -6,26 +6,15 @@ import LoginTerms from "@/views/auth/LoginTerms.vue";
 import LoginGender from "@/views/auth/LoginGender.vue";
 import LoginFinish from "@/views/auth/LoginFinish.vue";
 import LoginSchool from "@/views/auth/LoginSchool.vue";
-import Splash from "@/views/intro/Splash.vue";
-import SurveyPage from "@/views/survey/SurveyPage.vue";
-import SurveyResult from "@/views/survey/SurveyResult.vue";
 import GameHome from "@/views/game/GameHome.vue";
-import TypeTestPage from "@/views/typetest/TypeTestPage.vue";
-import TypeTestResult from "@/views/typetest/TypeTestResult.vue";
-import TypeTestSummary from "@/views/typetest/TypeTestSummary.vue";
 import HomePage from "@/views/home/HomePage.vue";
-import GameWaiting from "@/views/game/GameWaiting.vue";
-import SoloGameIntro from "@/views/game/solo/SoloGameIntro.vue";
-import SoloGamePlay from "@/views/game/solo/SoloGamePlay.vue";
-import PuzzleCompletion from "@/views/game/PuzzleCompletion.vue";
-import GameRanking from "@/views/game/multiplayer/GameRanking.vue";
-import MultiGamePlayView from "@/views/game/multiplayer/MultiGamePlayView.vue";
 import TestView from "@/views/TestView.vue"
-import GameTutorial from "@/views/game/tutorial/GameTutorial.vue";
 import {validateSession} from "@/api/sessionService";
 import {useAppStateStore} from "@/store/appState";
 import {useNetworkStore} from "@/store/network";
 import {showAlert} from "@/utils/showAlert";
+import SurveyPage from "@/views/survey/SurveyPage.vue";
+import SurveyResult from "@/views/survey/SurveyResult.vue";
 
 const routes: Array<RouteRecordRaw> = [
     {
@@ -105,22 +94,17 @@ const routes: Array<RouteRecordRaw> = [
     {
       path:'/intro/onboarding',
       name: 'IntroOnboarding',
-      component: () => import('@/views/intro/IntroOnboarding.vue')
-    },
-    {
-      path:'/intro/splash',
-      name:'Splash',
-      component:Splash
+      component: () => import("@/views/intro/IntroOnboarding.vue"),
     },
     {
       path: '/surveyPage',
       name: 'SurveyPage',
-      component:SurveyPage
+      component: SurveyPage,
     },
     {
       path: '/surveyResult',
       name: 'SurveyResult',
-      component:SurveyResult
+      component: SurveyResult
     },
     {
       path: '/game/home',
@@ -130,53 +114,53 @@ const routes: Array<RouteRecordRaw> = [
     {
         path: '/game/waiting/:roomId',
         name: 'GameWaiting',
-        component:GameWaiting,
+        component: () => import("@/views/game/GameWaiting.vue"),
         props: true
     },
     {
         path: '/game/tutorial',
         name: 'GameTutorial',
-        component:GameTutorial
+        component: () => import("@/views/game/tutorial/GameTutorial.vue"),
     },
     {
         path: '/typeTestPage',
         name: 'TypeTestPage',
-        component: TypeTestPage,
+        component: () => import("@/views/typetest/TypeTestPage.vue"),
     },
     {
         path: '/typeTestResult',
         name: 'TypeTestResult',
-        component: TypeTestResult,
+        component: () => import("@/views/typetest/TypeTestResult.vue"),
     },
     {
         path: '/typeTestSummary',
         name: 'TypeTestSummary',
-        component: TypeTestSummary,
+      component: () => import("@/views/typetest/TypeTestSummary.vue"),
     },
   {
     path: '/sologame/intro',
     name: 'SoloGameIntro',
-    component: SoloGameIntro
+    component: () => import("@/views/game/solo/SoloGameIntro.vue"),
   },
   {
     path: '/sologame/play',
     name: 'SoloGamePlay',
-    component: SoloGamePlay,
+    component: () => import("@/views/game/solo/SoloGamePlay.vue"),
   },
   {
     path: '/puzzlecompletion',
     name: 'PuzzleCompletion',
-    component: PuzzleCompletion,
+    component: () => import("@/views/game/PuzzleCompletion.vue"),
   },
   {
     path: '/multi/ranking',
     name: 'GameRanking',
-    component: GameRanking,
+    component: () => import("@/views/game/multiplayer/GameRanking.vue"),
   },
   {
     path: '/multi/play/:roomId',
     name: 'MultiGamePlay',
-    component: MultiGamePlayView
+    component: () => import("@/views/game/multiplayer/MultiGamePlayView.vue"),
   },
   {
     path: '/test',
@@ -192,17 +176,17 @@ const router = createRouter({
 
 router.beforeEach(async (to, from) => {
   const networkStore = useNetworkStore();
-  if(!networkStore.isOnline) {
+  if (!networkStore.isOnline) {
     await showAlert(
       "페이지 이동 오류",
       "네트워크 활성화 후 페이지 이동을 해주세요",
       [{
         text: "확인", role: "confirm",
 
-      }],"custom-one-button-alert"
+      }], "custom-one-button-alert"
     );
     return false;
   }
-})
+});
 
-export default router
+export default router;

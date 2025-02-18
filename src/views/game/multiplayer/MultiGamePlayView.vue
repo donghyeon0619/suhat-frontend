@@ -14,22 +14,30 @@ import ListenerView from "@/views/game/multiplayer/listener/ListenerView.vue";
 import {onBeforeRouteLeave, useRoute} from "vue-router";
 import {deleteRequest, get} from "@/api/httpService";
 import {useEventSourceStore} from "@/store/eventSourceStore";
-import {GameState} from "@/types/GameState";
+import {GamePhase, GameState} from "@/types/GameState";
 import {useUserStore} from "@/store/user";
 import GameExitHeader from "@/components/game/GameExitHeader.vue";
 import {AssignedCard} from "@/types/Card";
 import {VoteResult} from "@/types/VoteResult";
-import {useGameStore} from "@/store/gameStore";
+import {RoomStatus, useGameStore} from "@/store/gameStore";
+import {PluginListenerHandle} from "@capacitor/core";
+import {App} from "@capacitor/app";
 
 // 라우트 파라미터
 const route = useRoute();
 const roomId = String(route.params.roomId);
 const router = useIonRouter();
 
+// capacitorApp 관련 변수
+let pauseHandle: PluginListenerHandle | undefined;
+let resumeHandle: PluginListenerHandle | undefined;
+
+
 // store 변수 선언
 const eventSourceStore = useEventSourceStore();
 const userStore = useUserStore();
 const gameStore = useGameStore();
+const roomStatus = computed(() => gameStore.roomStatus);
 
 // 상태 플래그
 const orderAssigned = ref(false);
@@ -38,7 +46,7 @@ const isSpeaker = ref(true); // 발언자인지 여부 (서버에서 결정되�
 const assignedCard = ref<AssignedCard | null>(null);
 const timerStartData = ref<{ startTime: number } | null>(null);
 const timeExtensionData = ref<{ additionalTime : number } | null>(null);
-const currentPhase = ref<string>('');
+let timeoutId: ReturnType<typeof  setTimeout> | null = null;
 const isLeaving = ref(false);
 
 // speaker 객체
@@ -62,6 +70,9 @@ const gameState = reactive<GameState>({
   currentPuzzlePieces: 0,
   currentTurn: 0,
   currentRound: 1,
+  assignedPictureCardId: 0,
+  assignedTextCardId: 0,
+  currentPhase: GamePhase.NONE,
   players: [],
 })
 
@@ -104,7 +115,7 @@ const calculateTimeDifference = async (): Promise<number> => {
 const gameEndedHandler = (event:MessageEvent) =>{
   console.log('game-ended 이벤트 수신:', event.data);
 
-  gameStore.setGameEnded(true);
+  gameStore.roomStatus = RoomStatus.ENDED;
   const toastMessage = "게임이 종료되어 홈으로 이동합니다.";
   // 메시지를 Toast에 표시
   presentToast(toastMessage);
@@ -117,16 +128,18 @@ const gameEndedHandler = (event:MessageEvent) =>{
 }
 
 /**
- * 'game-ended' 이벤트: 플레이어  떠남으로 인한 게임종료
+ * 'not-in-room' 게임 다시 입장 시 방에 없어서 홈으로 이동
  * @param event
  */
 const notInRoomHandler = (event:MessageEvent) =>{
-  console.log('game-ended 이벤트 수신:', event.data);
+  console.log('not-in-room 이벤트 수신:', event.data);
 
-  gameStore.setGameEnded(true);
-  const toastMessage = "방에서 나가져서 다시 입장 요청해야합니다.";
+  isLeaving.value = true;
+  gameStore.roomStatus = RoomStatus.CLOSED;
+  eventSourceStore.disconnectByUser();
+
   // 메시지를 Toast에 표시
-  presentToast(toastMessage);
+  presentToast(event.data);
 
   setTimeout(() => {
     router.replace({
@@ -149,7 +162,7 @@ const gameResetHandler = (event: MessageEvent) => {
   const dataMessage = eventData.data || "알 수 없는 데이터";
   const toastMessage = `${dataMessage}\n(사유: ${reason})`;
 
-  gameStore.setGameEnded(true);
+  gameStore.roomStatus = RoomStatus.ENDED;
 
   presentToast(toastMessage)
 
@@ -201,7 +214,7 @@ const roundTwoStartedHandler = (event: MessageEvent) => {
 
   isSpeaker.value = userStore.id === eventData.speakerId;
 
-  currentPhase.value = isSpeaker.value ? 'speaking' : 'listening';
+  gameState.currentPhase = eventData.currentPhase;
 };
 
 /**
@@ -215,7 +228,13 @@ const cardAssignedHandler = (event: MessageEvent) => {
     cardType: eventData.cardType,
     cardId: eventData.cardId,
   };
+  if (eventData.cardType === "picture") {
+    gameState.assignedPictureCardId = eventData.cardId
+  } else {
+    gameState.assignedTextCardId = eventData.cardId
+  }
 }
+
 /**
  * 타이머 시작 이벤트 핸들러 함수
  * @param event
@@ -247,8 +266,8 @@ const timeExtendedHandler = (event: MessageEvent) => {
 const speakingEndHandler = (event: MessageEvent) => {
   const eventData = event.data;
   console.log('말하기가 종료 되었습니다.', eventData);
-  presentToast(eventData);
-  currentPhase.value = 'voting'
+  presentToast(eventData, true);
+  gameState.currentPhase = GamePhase.VOTING;
 }
 
 /**
@@ -261,7 +280,10 @@ const voteResultHandler = (event: MessageEvent) => {
   switch (eventData.result) {
     // 퍼즐 획득 후 다음 턴으로 이동해야 할때
     case "puzzle-acquired-next-turn":
-      incrementPuzzlePieces();
+      // 1.5초 이후 퍼즐 갯수 증가
+      timeoutId = setTimeout(() => {
+        incrementPuzzlePieces();
+      }, 1500);
       voteResult.value = {
         ...voteResult.value,
         type: "puzzle-acquired",
@@ -296,7 +318,10 @@ const voteResultHandler = (event: MessageEvent) => {
 
     // 퍼즐을 전부 모아 게임 끝났을 때
     case "game-completed":
-      incrementPuzzlePieces();
+      // 1.5초 이후 퍼즐 갯수 증가
+      timeoutId = setTimeout(() => {
+        incrementPuzzlePieces();
+      }, 1500);
       voteResult.value = {
         ...voteResult.value,
         type: "game-completed",
@@ -311,6 +336,24 @@ const voteResultHandler = (event: MessageEvent) => {
     default:
       console.log("알수 없는 결과 타입", eventData.result);
   }
+}
+
+/**
+ * 앱이 pause 되었을 떄, 핸들러
+ */
+const onPauseHandler = () => {
+  console.log("앱이 퍼즈상태로 갈때 게임 종료 요청");
+  // 앱이 퍼즈상태가 되면 게임 종료 요청을 보내게 함
+  eventSourceStore.disconnectByUser();
+  deleteRequest(`rooms/${roomId}/players`, true);
+}
+
+/**
+ * 앱에 다시 접속했을 때 방에 나가졌으므로 홈으로 이동
+ */
+const onResumeHandler = () => {
+  gameStore.roomStatus = RoomStatus.CLOSED;
+  router.replace("/game/home");
 }
 
 /**
@@ -361,7 +404,7 @@ const handleNextTurn = (nextSpeakerId: number) => {
   isSpeaker.value = userStore.userInfo.id === nextSpeakerId;
 
   // 4. currentPhase를 speaker인지 여부에 따라 설정
-  currentPhase.value = isSpeaker.value ? "speaking" : "listening";
+  gameState.currentPhase = GamePhase.DISCUSSION;
 
   console.log("발화자가 바꼈습니다. 다음 순번으로 넘어갑니다.");
 
@@ -374,6 +417,7 @@ onIonViewWillEnter(async () => {
 
   console.log("게임 시작되어 게임상태를 불러옵니다.")
   try {
+
     const response = await get(`games/${roomId}/state`);
     Object.assign(gameState, response); // 서버에서 가져온 데이터를 gamestate에 병합
 
@@ -391,19 +435,10 @@ onIonViewWillEnter(async () => {
   // 초기 시간 동기화
   timeDifference.value = await calculateTimeDifference();
 
+  await addEventListeners();
+
   // 주기적인 시간 동기화 설정(매 10마다)
   syncInterval.value = setInterval(periodicTimeSync, 600000);
-
-  eventSourceStore.addEventListener("game-ended", gameEndedHandler);
-  eventSourceStore.addEventListener("not-in-room",notInRoomHandler)
-  eventSourceStore.addEventListener("player-order-assigned", playerOrderAssignedHandler);
-  eventSourceStore.addEventListener("round-2-started", roundTwoStartedHandler);
-  eventSourceStore.addEventListener("game-reset", gameResetHandler);
-  eventSourceStore.addEventListener("card-assigned", cardAssignedHandler);
-  eventSourceStore.addEventListener("timer-start", timerStartHandler);
-  eventSourceStore.addEventListener("time-extended", timeExtendedHandler);
-  eventSourceStore.addEventListener("speaking-end", speakingEndHandler);
-  eventSourceStore.addEventListener("vote-result", voteResultHandler);
 
   // 컴포넌트 재진입 시 `timerStartData` 및 `timeExtensionData` 초기화
   timerStartData.value = null;
@@ -420,7 +455,6 @@ const resetGameState = () => {
   assignedCard.value = null;
   timerStartData.value = null;
   timeExtensionData.value = null;
-  currentPhase.value = '';
   voteResult.value = null;
   isLeaving.value = false;
   if(syncInterval.value) {
@@ -431,8 +465,45 @@ const resetGameState = () => {
 /**
  * 페이지를 떠날 때 리스너 제거
  */
-onIonViewWillLeave(() => {
-  console.log('Leaving GameWaiting, cleaning up listeners');
+onIonViewWillLeave(async () => {
+  console.log('Leaving MultiGameView, cleaning up listeners');
+
+  removeEventListeners();
+
+  if(timeoutId) {
+    clearTimeout(timeoutId);
+  }
+
+  resetGameState();
+})
+
+/**
+ * 이벤트 리스너들 등록
+ */
+const addEventListeners = async () => {
+  eventSourceStore.addEventListener("game-ended", gameEndedHandler);
+  eventSourceStore.addEventListener("not-in-room",notInRoomHandler)
+  eventSourceStore.addEventListener("player-order-assigned", playerOrderAssignedHandler);
+  eventSourceStore.addEventListener("round-2-started", roundTwoStartedHandler);
+  eventSourceStore.addEventListener("game-reset", gameResetHandler);
+  eventSourceStore.addEventListener("card-assigned", cardAssignedHandler);
+  eventSourceStore.addEventListener("timer-start", timerStartHandler);
+  eventSourceStore.addEventListener("time-extended", timeExtendedHandler);
+  eventSourceStore.addEventListener("speaking-end", speakingEndHandler);
+  eventSourceStore.addEventListener("vote-result", voteResultHandler);
+
+  // 앱이 백그라운드 갈때의 이벤트 리스너
+  pauseHandle = await App.addListener('pause', onPauseHandler);
+
+  // 앱이 포그라운드로 돌아올 때
+  resumeHandle = await App.addListener('resume', onResumeHandler);
+
+}
+
+/**
+ * 이벤트 리스너들 제거
+ */
+const removeEventListeners = () => {
   eventSourceStore.removeEventListener('game-ended', gameEndedHandler);
   eventSourceStore.removeEventListener('player-order-assigned', playerOrderAssignedHandler);
   eventSourceStore.removeEventListener('round-2-started', roundTwoStartedHandler);
@@ -442,34 +513,44 @@ onIonViewWillLeave(() => {
   eventSourceStore.removeEventListener("time-extended", timeExtendedHandler);
   eventSourceStore.removeEventListener("speaking-end", speakingEndHandler);
   eventSourceStore.removeEventListener("vote-result", voteResultHandler);
-  eventSourceStore.removeEventListener("not-in-room", notInRoomHandler)
-  resetGameState();
-})
+  eventSourceStore.removeEventListener("not-in-room", notInRoomHandler);
+
+  if (pauseHandle) {
+    pauseHandle.remove();
+    pauseHandle = undefined;
+  }
+
+  if (resumeHandle) {
+    resumeHandle.remove();
+    resumeHandle = undefined;
+  }
+}
 
 /**
  * 방 나가기 요청을 서버에 전송
  */
-const leaveRoom = async (): Promise<boolean> => {
+const leaveRoom = async () => {
   if (isLeaving.value) {
-    return false;
+    return;
   }
   isLeaving.value = true;
+  eventSourceStore.disconnectByUser();
 
   try{
     const response = await deleteRequest(`rooms/${roomId}/players`, true);
-    eventSourceStore.disconnectByUser();
 
     if(response.status == "200") {
       console.log('게임방 나가기 요청 성공');
-      gameStore.setGameEnded(true);
-      return true;
+      gameStore.roomStatus = RoomStatus.CLOSED;
     } else {
       console.error('게임 나가기 요청 실패', response);
-      return false;
+      gameStore.roomStatus = RoomStatus.CLOSED;
+      return;
     }
   } catch (error) {
-    console.error('게임방 나가기 요청 실패: ', error);
-    return false;
+    console.error('게임방 나가기 요청 중 에러 발생: ', error);
+    gameStore.roomStatus = RoomStatus.CLOSED;
+    return;
   }
 };
 
@@ -482,17 +563,26 @@ const gameExit = async () => {
  * 라우팅전 네비게이션 가드 함수
  */
 onBeforeRouteLeave(async (to, from, next) => {
-  // 게임이 종료되었을 시 라우팅 바로 진행
-  if (gameStore.isGameEnded || isLeaving.value) {
-    return next();
+
+  // 게임 나가기 중일 때 바로 진행
+  if (isLeaving.value) {
+    next();
+    return;
+  }
+
+  // 게임이 종료되었거나 방이 사라졌을 때,
+  if (roomStatus.value === RoomStatus.ENDED || roomStatus.value === RoomStatus.CLOSED) {
+    next();
+    return;
   }
 
   const confirmed = await presentAlert();
   if (confirmed) {
     try {
+      await leaveRoom();
       next();
     } catch (error) {
-      next(false);
+      next();
     }
   } else {
     next(false);
@@ -502,41 +592,23 @@ onBeforeRouteLeave(async (to, from, next) => {
 /**
  * 방 나갈때 경고창 보여줌
  */
-const presentAlert = async () => {
-  return new Promise((resolve) => {
+const presentAlert = async (): Promise<boolean> => {
+  return new Promise<boolean>((resolve) => {
     alertController.create({
       header: '방 나가기',
-      message: '정말로 방에서 나가시겠습니까? 나가면 게임이 종료됩니다.',
+      message: '정말로 방에서 나가시겠습니까?',
       buttons: [
         {
           text: '확인',
           role: 'confirm',
           cssClass: "my-custom-alert-button-class",
-          handler: async () => {
-            console.log('사용자가 나가기를 선택했습니다.');
-            try {
-              const success = await leaveRoom();
-              if (success) {
-                resolve(true); // "나가기" 클릭 시 true 반환
-              } else {
-                await presentToast("방나가기 중 오류 발생");
-                resolve(true);
-              }
-            } catch (error) {
-              console.error("방 나가기에 실패:", error);
-              await presentToast("방 나가기에 실패했습니다.");
-              resolve(false);
-            }
-          }
+          handler: () => resolve(true),
         },
         {
           text: '취소',
           role: 'cancel',
           cssClass: "my-custom-alert-button-class",
-          handler: () => {
-            console.log('사용자가 취소를 선택했습니다.');
-            resolve(false); // "취소" 클릭 시 false 반환
-          }
+          handler: () => resolve(false),
         },
       ],
       cssClass: "my-custom-alert-class",
@@ -548,11 +620,13 @@ const presentAlert = async () => {
 
 /**
  * 이벤트 생성시 해당 이벤트 메시지 알림 토스트
+ * @param message 토스트 메시지
+ * @param isCentered (선택) 텍스트를 중앙 정렬할지 여부 (기본값: false)
  */
-const presentToast = async (message: string) => {
+const presentToast = async (message: string, isCentered:boolean = false) => {
   const toast = await toastController.create({
     message: message,
-    cssClass: "top-toast",
+    cssClass: isCentered ? "top-toast toast-txt-center" : "top-toast",
     duration: 1500,
     position: "top",
     positionAnchor:"backButtonHeader"
@@ -579,14 +653,12 @@ const presentToast = async (message: string) => {
     <SpeakerView
       v-if="gameState.currentRound === 2 && isSpeaker"
       :game-state="gameState"
-      :current-phase="currentPhase"
       @next-turn="handleNextTurn"
     />
     <!-- 듣는 이 화면 -->
     <ListenerView
       v-if="gameState.currentRound === 2 && !isSpeaker"
       :game-state="gameState"
-      :current-phase="currentPhase"
       @next-turn="handleNextTurn"
     />
 </IonPage>

@@ -13,12 +13,13 @@ import {
   IonItemGroup,
   IonBadge,
   IonLabel,
-  IonItemDivider
+  IonItemDivider,
 } from '@ionic/vue';
-import {  ref } from 'vue';
+import {onMounted, onUnmounted, ref} from 'vue';
 import {closeOutline,checkmarkCircle,searchOutline} from "ionicons/icons";
 import {get} from "@/api/httpService";
-import {KeyboardInfo} from "@capacitor/keyboard";
+import {Keyboard, KeyboardInfo} from "@capacitor/keyboard";
+import {Capacitor} from "@capacitor/core";
 const schoolName = ref();
 const schoolSearchResults = ref<SchoolDetails[]>([]);
 const isSearchEmpty = ref(false);
@@ -42,15 +43,15 @@ const confirmSchool = (name: string) => {
   confirm(); // confirm 함수 호출하여 모달 닫기
 };
 
-const onFocus = (event) =>{
+const onFocus = (event: any) =>{
   event.target.style.borderColor = '#191F28';
 }
-const onBlur = (event) =>{
+const onBlur = (event: any) =>{
   event.target.style.borderColor = '#EBECEE';
 }
 
 // districtAddress에서 특정 키워드 이후의 부분만 남기는 함수
-function formatDistrictAddress(districtAddress) {
+function formatDistrictAddress(districtAddress: any) {
   // 구 단어를 기준으로 자르기 위한 키워드 설정
   const keyword = "구";
   const keywordIndex = districtAddress.indexOf(keyword);
@@ -96,25 +97,42 @@ const handleInput = async (event : CustomEvent) =>{
   }
 }
 
-// /**
-//  * searchbar 키보드 출력 시 컨텐츠 올라오는 현상 수정
-//  */
-// const input = document.querySelector('ion-searchbar');
-//
-// if (input) {
-//   window.addEventListener('keyboardWillShow', (ev) => {
-//     const event = ev as CustomEvent<KeyboardInfo>
-//     const { keyboardHeight } = event.detail;
-//
-//     input.style.setProperty(
-//       'transform',
-//       `translate3d(0, ${keyboardHeight}px, 0)`
-//     );
-//   });
-//   window.addEventListener('keyboardDidHide', () => {
-//     input.style.removeProperty('transform');
-//   });
-// }
+/**
+ * 키보드 이벤트 리스너를 통해서 ion-searchbar 클릭시 content-area가 올라오는 현상 수정
+ */
+const keyboardWillShowListener = ref<any>(null);
+const keyboardDidHideListener = ref<any>(null);
+
+onMounted(() => {
+  if(Capacitor.isNativePlatform()) {
+    keyboardWillShowListener.value = Keyboard.addListener('keyboardWillShow', (info: KeyboardInfo) => {
+      // .content-area 요소를 선택한다.
+      const contentArea = document.querySelector('#content-area') as HTMLElement;
+      if (contentArea) {
+        // 키보드 높이 만큼 margin-top 적용 (필요에 따라 추가 offset 조정 가능)
+        contentArea.style.marginTop = `3%`;
+      }
+    });
+
+    keyboardDidHideListener.value = Keyboard.addListener('keyboardDidHide', () => {
+      const contentArea = document.querySelector('#content-area') as HTMLElement;
+      if (contentArea) {
+        contentArea.style.marginTop = `0%`;
+      }
+    });
+  }
+})
+
+onUnmounted(() => {
+  if (keyboardWillShowListener.value) {
+    keyboardWillShowListener.value.remove();
+    keyboardWillShowListener.value = null;
+  }
+  if (keyboardDidHideListener.value) {
+    keyboardDidHideListener.value.remove();
+    keyboardDidHideListener.value = null;
+  }
+})
 
 // 검색어가 없는 경우 초기화 함수
 const clearSearch = () =>{
@@ -149,7 +167,7 @@ const clearSearch = () =>{
     </div>
 
     <!--컨텐츠 출력 부분 -->
-    <div class="content-area">
+    <div class="content-area" id="content-area">
       <!-- 예시 리스트 -->
       <div v-if="!isSearchPerformed" class="example-container">
         <ion-list lines="none">

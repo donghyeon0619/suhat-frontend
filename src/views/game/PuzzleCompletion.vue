@@ -18,7 +18,7 @@ import SoloPuzzleImg from "@/assets/img/game/puzzle/img-solo-puzzle.png"
 import MultiPuzzleImg from "@/assets/img/game/puzzle/img-multi-puzzle.png"
 import SuhatSign from "@/assets/img/common/img-suhat-sign.svg"
 import BaseButtonFooter from "@/components/common/BaseButtonFooter.vue";
-import {useRoute} from "vue-router";
+import {onBeforeRouteLeave, useRoute} from "vue-router";
 
 const router = useIonRouter();
 const route = useRoute();
@@ -69,6 +69,18 @@ const handleButtonClick = () => {
     goRanking();
   }
 };
+
+/**
+ * 뒤로가기 로직 막기
+ */
+onBeforeRouteLeave(async (to, from, next) =>{
+  if (to.name === 'HomePage' || to.name === 'GameRanking') {
+    next();
+  } else {
+    next(false);
+  }
+})
+
 </script>
 
 <template>

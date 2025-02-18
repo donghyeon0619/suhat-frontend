@@ -1,12 +1,20 @@
 import {defineStore} from "pinia";
 
+export enum RoomStatus {
+  WAITING = 'WAITING',
+  IN_GAME = 'IN_GAME',
+  ENDED = 'ENDED',
+  CLOSED = 'CLOSED',
+}
+
 export const useGameStore = defineStore("game",{
   state: () => ({
-    isGameEnded: false, // 게임 종료 상태
+    roomStatus: RoomStatus.WAITING as RoomStatus,
+
   }),
   actions: {
-    setGameEnded(status: boolean) {
-      this.isGameEnded = status;
+    setGameEnded(status: RoomStatus) {
+      this.roomStatus = status;
     },
   }
 })

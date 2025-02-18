@@ -1,16 +1,15 @@
 <script setup lang="ts">
 import SpeakerSpeakingView from "@/views/game/multiplayer/speaker/SpeakerSpeakingView.vue";
 import SpeakerVotingView from "@/views/game/multiplayer/speaker/SpeakerVotingView.vue";
-import {computed, PropType, ref} from "vue";
-import {GameState} from "@/types/GameState";
+import {computed} from "vue";
+import {GamePhase, GameState} from "@/types/GameState";
 
 const props = defineProps<{
   gameState: GameState;
-  currentPhase: string;
 
 }>()
 
-const currentPhase = computed(() => props.currentPhase);
+const currentPhase = computed(() => props.gameState.currentPhase);
 
 const emit = defineEmits<{
   (e: "nextTurn", nextSpeakerId: number): void;
@@ -32,11 +31,11 @@ const handleNextTurn = (nextSpeakerId: number) => {
 
 <template>
   <SpeakerSpeakingView
-    v-if="currentPhase === 'speaking' && currentSpeaker"
+    v-if="currentPhase === GamePhase.DISCUSSION && currentSpeaker"
     :current-speaker="currentSpeaker"
   />
   <SpeakerVotingView
-    v-if="currentPhase === 'voting' && currentSpeaker"
+    v-if="currentPhase === GamePhase.VOTING && currentSpeaker"
     :current-speaker="currentSpeaker"
     :game-state="props.gameState"
     @next-turn="handleNextTurn"

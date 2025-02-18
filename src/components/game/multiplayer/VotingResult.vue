@@ -75,7 +75,8 @@ defineProps({
 .disagree-text, .agree-text{
   margin-left: 1vw;
 }
-.vote-content ion-label, .vote-content ion-text{
+
+.vote-count, .agree-text, .disagree-text{
   font-size: 1.125rem;
   line-height: 1.6;
   font-weight: 700;

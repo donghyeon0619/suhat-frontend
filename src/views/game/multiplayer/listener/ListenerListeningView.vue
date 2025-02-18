@@ -193,7 +193,7 @@ onBeforeUnmount(() => {
   <IonRow class="card-footer ion-padding ">
     <div class="speech-bubble-wrapper">
       <div class="speech-bubble">
-        <IonLabel>(설정- 디지털 웰빙 및 자녀 보호기능)에서 확인가능!</IonLabel>
+        <IonLabel>설명을 주의깊게 잘 들어주세요!</IonLabel>
       </div>
     </div>
     <IonCol class= "timer-display">

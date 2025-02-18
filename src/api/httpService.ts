@@ -1,10 +1,12 @@
 import {CapacitorHttp, HttpOptions } from '@capacitor/core';
 import router from "@/router";
 import {showAlert} from "@/utils/showAlert";
+import {onIonViewDidEnter, onIonViewWillEnter} from "@ionic/vue";
 
 
-const BASE_URL = 'https://suhat.kr';
-// const BASE_URL = 'http://10.0.2.2:8443';
+// const BASE_URL = 'https://suhat.kr';
+const BASE_URL = 'http://localhost:8443';
+
 
 // **HTTP 요청 함수**
 /**
@@ -82,7 +84,6 @@ export async function post(
   try {
     const response = await CapacitorHttp.post(options);
 
-    console.log("capacitorHttp post 요청 이후 응답 값", response);
     await validateHttpResponse(response)
 
     return returnFullResponse ? response : response.data;
@@ -148,20 +149,19 @@ export async function validateHttpResponse(response: any): Promise<void> {
     return;
   }
 
-  if (status === 403) {
-    console.warn("403 Forbidden - 접근 권한이 없습니다.");
-    throw new Error("403 Forbidden - 접근 권한이 없습니다.");
+  if (status > 401) {
+    throw new Error(`${response.status}, ${response.data}`);
   }
 
-  if (status >= 500) {
-    console.error(`500 Internal Server Error - 서버에서 문제가 발생했습니다.`);
-    throw new Error(`서버 에러: ${response.status}, ${response.data}`);
-  }
+    if (status >= 500) {
+      console.error(`500 Internal Server Error - 서버에서 문제가 발생했습니다.`);
+      throw new Error(`서버 에러: ${response.status}, ${response.data}`);
+    }
 
-  if (status >= 400) {
-    throw new Error(`클라이언트 에러: ${response.status}, ${response.data}`);
+    if (status >= 400) {
+      throw new Error(`클라이언트 에러: ${response.status}, ${response.data}`);
+    }
   }
-}
 
 
 /**

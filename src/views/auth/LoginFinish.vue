@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {IonPage, IonContent, IonText, IonIcon, useIonRouter} from "@ionic/vue";
+import {IonPage, IonContent, IonText, useIonRouter} from "@ionic/vue";
 import LoginFooter from "@/views/auth/components/LoginFooter.vue";
 import {ref, onMounted} from "vue";
 import lottie from 'lottie-web';

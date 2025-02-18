@@ -11,7 +11,7 @@ export const useUserStore = defineStore('user', {
   state: (): UserState => ({
     id: localStorage.getItem('userId') ? Number(localStorage.getItem('userId')) : null,
     name: localStorage.getItem('name') || '',
-    gender: localStorage.getItem('gender') ? JSON.parse(localStorage.getItem('userGender')!) : null,
+    gender: localStorage.getItem('gender') ? Number(localStorage.getItem('gender')) : null,
     school: localStorage.getItem('school') || '',
   }),
   getters: {
@@ -31,7 +31,7 @@ export const useUserStore = defineStore('user', {
       this.name = name;
       localStorage.setItem('name', name);
     },
-    setGender(gender: number | null) {
+    setGender(gender: number) {
       this.gender = gender;
       localStorage.setItem('gender', JSON.stringify(gender));
     },

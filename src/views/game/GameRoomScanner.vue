@@ -8,7 +8,7 @@ import {
   IonModal,
   IonButton,
   modalController,
-  alertController,
+  alertController, IonToolbar, IonHeader,
 } from "@ionic/vue"
 import Header from "@/components/common/BackButtonHeader.vue";
 import BaseButton from "@/components/common/BaseButton.vue";
@@ -99,7 +99,10 @@ async function scanBarcode() {
 </script>
 
 <template>
-  <Header></Header>
+  <IonHeader class="ion-no-border">
+    <IonToolbar>
+    </IonToolbar>
+  </IonHeader>
   <ion-content class="background">
     <ion-title class="title">방 입장하기</ion-title>
     <ion-text class="description">아래 버튼을 눌러주세요</ion-text><br>
@@ -143,12 +146,12 @@ async function scanBarcode() {
   text-align: center;
 }
 
-::v-deep ion-toolbar {
+:deep(ion-toolbar) {
   --background: black;
   opacity: 0.8;
 }
 
-::v-deep ion-back-button::part(icon) {
+:deep(ion-back-button::part(icon)) {
   color: white;
 }
 

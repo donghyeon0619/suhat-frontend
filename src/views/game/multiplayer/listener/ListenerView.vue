@@ -2,11 +2,10 @@
 import {computed} from "vue";
 import ListenerListeningView from "@/views/game/multiplayer/listener/ListenerListeningView.vue";
 import ListenerVotingView from "@/views/game/multiplayer/listener/ListenerVotingView.vue";
-import {GameState} from "@/types/GameState";
+import {GamePhase, GameState} from "@/types/GameState";
 
 const props = defineProps<{
   gameState: GameState;
-  currentPhase: string;
 }>()
 
 const emit = defineEmits<{
@@ -25,17 +24,17 @@ const handleNextTurn = (nextSpeakerId: number) => {
   emit("nextTurn", nextSpeakerId);
 }
 
-const currentPhase = computed(() => props.currentPhase);
+const currentPhase = computed(() => props.gameState.currentPhase);
 
 </script>
 
 <template>
   <ListenerListeningView
-    v-if="currentPhase === 'listening' && currentSpeaker"
+    v-if="currentPhase === GamePhase.DISCUSSION && currentSpeaker"
     :current-speaker="currentSpeaker"
   />
   <ListenerVotingView
-    v-if="currentPhase === 'voting' && currentSpeaker"
+    v-if="currentPhase === GamePhase.VOTING && currentSpeaker"
     :current-speaker="currentSpeaker"
     :game-state="props.gameState"
     @next-turn="handleNextTurn"

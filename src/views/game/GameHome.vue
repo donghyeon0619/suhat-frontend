@@ -1,5 +1,19 @@
 <script setup lang="ts">
-import {IonPage, IonContent, IonIcon, IonText, IonInput, IonButton, IonModal, modalController, IonGrid, IonRow, IonCol, useIonRouter} from "@ionic/vue"
+import {
+  IonPage,
+  IonContent,
+  IonIcon,
+  IonText,
+  IonInput,
+  IonButton,
+  IonModal,
+  modalController,
+  IonGrid,
+  IonRow,
+  IonCol,
+  useIonRouter,
+  onIonViewWillLeave
+} from "@ionic/vue"
 import Header from "@/components/common/BackButtonHeader.vue";
 import BaseButton from "@/components/common/BaseButton.vue";
 import {onMounted, ref} from "vue";
@@ -8,6 +22,7 @@ import {post} from "@/api/httpService";
 import {useUserStore} from "@/store/user";
 import {useSurveyStore} from "@/store/survey";
 import GameRoomScanner from "@/views/game/GameRoomScanner.vue";
+import {showAlert} from "@/utils/showAlert";
 
 const roomName = ref('');
 const errorMessage = ref('');
@@ -36,6 +51,9 @@ function validateRoomName() {
   errorMessage.value = '';
 }
 
+/**
+ * 방 생성 함수
+ */
 async function createGameRoom() {
   console.log("createGameRoom");
   try {
@@ -44,18 +62,25 @@ async function createGameRoom() {
       totalPlayers: selectedHeadCount.value,
       hostInfo: userStore.userInfo,
       surveyScore: surveyStore.latestScore
-    });
+    }, true);
 
-    console.log("roomId: " + response.roomId);
-    const roomId = response.roomId;
-
-    closeModal();
-
-    router.push({
-      path: `/game/waiting/${roomId}`,
-    });
+    if(response.status === 200) {
+      console.log("roomId: " + response.data.roomId);
+      const roomId = response.data.roomId;
+      closeModal();
+      router.push({
+        path: `/game/waiting/${roomId}`,
+      });
+    }
   } catch (error) {
-    console.log('방 생성 오류 발생: ', error);
+    await showAlert(
+      "방 생성",
+      "방 생성 중 오류 발생하셨습니다.", [
+        {
+          text: "확인", role: "confirm",
+        }
+      ]
+    )
   }
 }
 
@@ -89,9 +114,18 @@ function closeModal() {
   modalController.dismiss();
 }
 
-onMounted(() => {
-  console.log('pinia userInfo: ', userStore.userInfo);
-})
+/**
+ * 페이지 이동전  모든 모달 언마운트
+ */
+onIonViewWillLeave(async () => {
+  let topModal = await modalController.getTop(); // 최상위 모달 가져오기
+
+  while (topModal) {
+    await modalController.dismiss(); // 현재 모달 닫기
+    topModal = await modalController.getTop(); // 다음 최상위 모달 확인
+  }
+});
+
 </script>
 
 <template>
@@ -220,12 +254,11 @@ onMounted(() => {
 ion-content::part(background) {
   background: transparent;
 }
-
-::v-deep ion-toolbar {
+ion-toolbar{
   --background: transparent;
 }
 
-::v-deep ion-back-button::part(icon) {
+:deep(ion-back-button::part(icon)) {
   color: white;
 }
 
@@ -348,7 +381,7 @@ ion-input {
   --placeholder-font-weight: smaller;
 }
 
-::v-deep ion-input::placeholder {
+:v-deep(ion-input::placeholder) {
   font-size: 1px;
 }
 

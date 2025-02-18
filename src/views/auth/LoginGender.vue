@@ -29,16 +29,15 @@ watch(selectedGender,(newValue) => {
 });
 
 // 선택된 성별 값을 다루는 이벤트 함수 함수
-const handleSelectionChange= (event) =>{
+const handleSelectionChange= (event: any) =>{
   selectedGender.value = event.detail.value; // 선택 취소 및 변경 시 selectedGender값 변경
 }
 
 // 성별을 저장하고 LoginSchool로 라우팅
 const saveGenderAndProceed = async () => {
-  userStore.setGender(selectedGender.value);
+  userStore.setGender(selectedGender.value ?? 0);
   router.push('/loginSchool', undefined);
 }
-
 </script>
 
 <template>

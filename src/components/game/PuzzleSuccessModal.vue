@@ -4,6 +4,11 @@ import PuzzleAcquiredTxt from "@/assets/img/game/text-puzzle-acquired.svg"
 import PuzzlePieceIcon from "@/assets/icons/game/icon-puzzle-piece.svg"
 import ChatBubbleWithBorder from "@/components/common/ChatBubbleWithBorder.vue";
 const confirm = () => modalController.dismiss(null, 'confirm');
+// maxPieces prop을 정의하고 기본값을 6으로 지정합니다.
+// 구조 분해하여 maxPieces 변수를 선언 (기본값 6)
+const { maxPieces = 6 } = defineProps<{ maxPieces?: number }>();
+
+
 </script>
 <template>
   <IonContent scroll-y="false">
@@ -14,7 +19,7 @@ const confirm = () => modalController.dismiss(null, 'confirm');
       </IonThumbnail>
       <div class="puzzle-text">
       <IonText class="puzzle-title">퍼즐조각 x1</IonText>
-      <IonText class="puzzle-description">조각 6개 획득 시 그림을 완성할 수 있어요 </IonText>
+      <IonText class="puzzle-description">조각 {{ maxPieces }}개 획득 시 그림을 완성할 수 있어요 </IonText>
       </div>
     </div>
     <div class="chat-bubble-wrapper">

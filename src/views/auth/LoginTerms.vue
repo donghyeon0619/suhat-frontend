@@ -47,7 +47,7 @@ watch([() => checkboxes.serviceTerms, () => checkboxes.privacyPolicy], () => {
 // userInfo 초기화 및 loginName 라우팅
 const initUserInfoAndProceed = async () => {
   userStore.resetUserInfo();
-  router.replace('/loginName');
+  router.push('/loginName');
 }
 
 /**

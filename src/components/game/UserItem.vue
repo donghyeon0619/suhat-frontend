@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {IonItem, IonImg, IonLabel, IonBadge, IonSpinner} from "@ionic/vue"
-
+import profileIcon from "@/assets/icons/game/profile-icon.svg";
 const props = defineProps({
   name: {
     type: String,
@@ -21,7 +21,7 @@ const props = defineProps({
 <template>
   <ion-item :class="['item', { 'waiting-item': !isUserJoined }]">
     <template v-if="isUserJoined">
-      <ion-img class="profile-icon" src="src/assets/icons/game/profile-icon.svg"></ion-img>
+      <img class="profile-icon" :src="profileIcon" alt="아이콘" />
       <ion-label class="name">{{name}}</ion-label>
       <template v-if="isReady">
         <ion-badge class="ready-badge" slot="end">준비완료</ion-badge>

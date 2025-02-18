@@ -107,11 +107,11 @@ ion-content::part(background) {
   background: transparent;
 }
 
-::v-deep ion-toolbar {
+ion-toolbar {
   --background: transparent;
 }
 
-::v-deep ion-back-button::part(icon) {
+:deep(ion-back-button::part(icon)) {
   color: white;
 }
 

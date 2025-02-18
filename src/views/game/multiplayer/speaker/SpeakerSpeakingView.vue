@@ -48,6 +48,7 @@ const timeExtensionData = inject<Ref<{ additionalTime: number } | null>>("timeEx
 // 시간 연장 유무
 const hasExtended = ref(false);
 const speakingStarted = ref(false);
+const hasEnded = ref(false);
 
 /**
  * 카드 관련 변수
@@ -145,6 +146,12 @@ const startTimer = (serverStartTime: number) => {
     timer.value = remainingTime
     formattedTime.value = formatTime(timer.value);
 
+    // 이미 존재한다면 다시 클리어 하고 시작.
+    if (timerInterval !== null) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+
     timerInterval = setInterval(() => {
       if (timer.value > 0) {
         timer.value -= 1
@@ -183,11 +190,15 @@ const stopTimer = async () => {
  * "말하기 종료" 버튼 클릭 시 타이머 정지 및 다음 phase 전환 함수
  */
 const handleEndSpeaking = async () => {
+
+  if (hasEnded.value) return; // 이미 종료 처리되었으면 리턴
+
   if (!speakingStarted.value) {
-    await presentAlert("말하기가 아직 시작되지 않았습니다. 시작 후 종료를 시도하세요");
+    await presentAlert("말하기가 아직 시작되지 않았습니다. 먼저 그림카드, 글자카드를 뒤집어서 말하기를 시작 후 종료를 시도하세요");
     return;
   }
 
+  hasEnded.value = true;
   await stopTimer();
   try {
     const response = await post(`games/${roomId}/speaking/end`);

@@ -4,10 +4,8 @@ import {
   IonHeader,
   IonContent,
   IonToolbar,
-  IonButtons,
   IonFooter,
   IonButton,
-  IonImg,
   IonGrid,
   IonRow,
   IonCol,
@@ -18,7 +16,6 @@ import {
 } from "@ionic/vue";
 import {onBeforeRouteLeave, useRoute} from "vue-router";
 
-import goHome from "@/assets/icons/common/icon-go-home.svg"
 import ListIcon from "@/assets/icons/home/icon-list.svg"
 import FlagIcon from "@/assets/icons/home/icon-flag.svg"
 import XIcon from "@/assets/icons/home/icon-x-orange.svg"
@@ -26,7 +23,6 @@ import PeopleIcon from "@/assets/icons/home/icon-people.svg"
 import GameIcon from "@/assets/icons/home/icon-game.svg"
 import VideoCamIcon from "@/assets/icons/home/icon-videocam.svg"
 import RoadMapImg from "@/assets/img/home/img-roadmap.svg"
-import {beforeEach} from "vitest";
 
 const serviceTypes = [
   {id: 1, name: "소셜 미디어"},
@@ -97,14 +93,8 @@ onBeforeRouteLeave(async (to, from, next) =>{
     <!-- 헤더 부분 -->
     <IonHeader class="ion-no-border">
       <IonToolbar>
-        <IonButtons slot="end">
-          <ion-button style="--padding-start: 4vw">
-            <ion-img :src="goHome"></ion-img>
-          </ion-button>
-        </IonButtons>
       </IonToolbar>
     </IonHeader>
-
     <!-- 메인 컨텐츠 부분 -->
     <IonContent class="ion-padding" scroll-y="false" >
 
