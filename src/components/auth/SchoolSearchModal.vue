@@ -110,7 +110,7 @@ onMounted(() => {
       const contentArea = document.querySelector('#content-area') as HTMLElement;
       if (contentArea) {
         // 키보드 높이 만큼 margin-top 적용 (필요에 따라 추가 offset 조정 가능)
-        contentArea.style.marginTop = `5%`;
+        contentArea.style.marginTop = `3%`;
       }
     });
 

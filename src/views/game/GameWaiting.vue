@@ -15,7 +15,7 @@ import {
 } from "@ionic/vue"
 import Header from "@/components/common/BackButtonHeader.vue";
 import JsBarcode from 'jsbarcode'
-import {ref, computed, onMounted} from 'vue'
+import {ref, computed} from 'vue'
 import UserItem from "@/components/game/UserItem.vue";
 import BaseButton from "@/components/common/BaseButton.vue";
 import {onBeforeRouteLeave, useRoute} from "vue-router";
@@ -125,13 +125,15 @@ const playerLeftHandler = (event: MessageEvent) => {
  */
 const notInRoomHandler = (event: MessageEvent) => {
   isLeaving.value = true;
-  const eventData = event.data;
-  presentToast(eventData)
+  gameStore.roomStatus = RoomStatus.CLOSED;
+  eventSourceStore.disconnectByUser();
+
+  presentToast(event.data);
   setTimeout(() => {
     router.replace({
       path: '/game/home'
     })
-  }, 2000);
+  }, 3000);
 }
 
 
@@ -154,7 +156,10 @@ const hostChangedHandler = (event: MessageEvent) => {
   presentToast(JSON.parse(event.data).message);
 }
 
-/** 참가자 추가 – 중복 없이 immutable하게 업데이트 **/
+/**
+ * 참가자 추가 – 중복 없이 immutable하게 업데이트
+ * @param data
+ */
 const addPlayer = (data: any) => {
   const newPlayer = JSON.parse(data);
   console.log('new player:', newPlayer);
@@ -222,7 +227,7 @@ const startGame = async () => {
  */
 const leaveRoom = async () => {
   if(isLeaving.value){
-    return false;
+    return;
   }
   isLeaving.value = true;
   eventSourceStore.disconnectByUser();
@@ -232,11 +237,16 @@ const leaveRoom = async () => {
 
     if(response.status == "200") {
       console.log('게임방 나가기 요청 성공');
+      gameStore.roomStatus = RoomStatus.CLOSED;
     } else {
       console.error('게임 나가기 요청 실패', response);
+      gameStore.roomStatus = RoomStatus.CLOSED;
+      return;
     }
   } catch (error) {
-    console.error('게임방 나가기 요청 성공: ', error);
+    console.error('게임방 나가기 요청 중 에러 발생: ', error);
+    gameStore.roomStatus = RoomStatus.CLOSED;
+    return;
   }
 };
 
@@ -298,6 +308,14 @@ onIonViewWillEnter(async () => {
       return;
     }
 
+    fetchDeTails(response);
+
+    // 호스트 여부 확인
+    const currentUserId = userStore.userInfo.id;
+    if(response.hostId === currentUserId) {
+      isHost.value = true;
+    }
+
     roomName.value = response.roomName;
     headCount.value = response.totalPlayers;
 
@@ -320,15 +338,7 @@ onIonViewWillEnter(async () => {
     pauseHandle = await App.addListener('pause', onPauseHandler);
 
     // 앱이 포그라운드로 돌아올 때
-    resumeHandle = await App.addListener('resume', onResumeHandler)
-
-    fetchDeTails(response);
-
-    // 호스트 여부 확인
-    const currentUserId = userStore.userInfo.id;
-    if(response.hostId === currentUserId) {
-      isHost.value = true;
-    }
+    resumeHandle = await App.addListener('resume', onResumeHandler);
 
   } catch (error) {
     console.log('방 데이터를 가져오지 못했습니다: ', error);
@@ -397,15 +407,14 @@ function scheduleNetworkRetry() {
     try {
       const status = await Network.getStatus();
       if (status.connected) {
-        console.log("[GameWaiting] Network reconnected! Stopping interval.");
+        console.log("[GameWaiting] 네트워크 재연결 성공, 네트워크 체크 인터벌 삭제");
         clearInterval(networkCheckInterval!);
         networkCheckInterval = null;
         await attemptReconnect();  //
       } else if (resumeAttemptCount > 5) {
-        console.error("[GameWaiting] Still not connected after 5 retries. Stopping attempts.");
+        console.error("[GameWaiting] 네트워크 연결이 안되므로 오류 발생");
         clearInterval(networkCheckInterval!);
         networkCheckInterval = null;
-        router.replace("/game/home");
       }
     } catch (err) {
       console.error("[GameWaiting] scheduleNetworkRetry -> 네트워크 상태 가져오기 실패:", err);
@@ -432,12 +441,22 @@ const attemptReconnect = async () => {
   // 방 상태 조회
   try {
     const response = await get(`rooms/${roomId}`);
+
+    // Fetch 응답 데이터에서 현재 사용자가 방에 있는지 확인
+    const userInRoom = response.players.some((player: any) => player.playerId === userStore.userInfo.id);
+    if(!userInRoom) {
+      console.log("[GameWaiting] Fetch 응답: 현재 사용자가 방에 존재하지 않습니다.");
+      await presentToast("방에 존재하지 않습니다. 홈으로 이동합니다.");
+      router.replace("/game/home");
+      return;
+    }
+
     if (response.roomStatus === "IN_GAME") {
-      console.log("[GameWaiting] Game is already started. Moving to play screen.");
+      console.log("[GameWaiting] FETCH 응답: 게임이 이미 시작되었습니다.");
       gameStore.roomStatus = RoomStatus.IN_GAME;
       router.replace(`/multi/play/${roomId}`);
     } else {
-      console.log("[GameWaiting] Updating waiting room details.");
+      console.log("[GameWaiting] FETCH 응답: 대기실 정보 업데이트");
       fetchDeTails(response);
     }
   } catch (error) {
@@ -508,14 +527,14 @@ const allPlayerReady = computed(() => {
   return participants.value.every((p => p.ready));
 })
 
-const imageUrl = ref(null);
+const imageUrl = ref('');
 
 
 /**
  * 방 코드 바코드 생성
  * @param roomId
  */
-const createBarcode = (roomId) => {
+const createBarcode = (roomId: any) => {
   const canvas = document.createElement('canvas');
   JsBarcode(canvas, roomId, { height: 50, width: 2, lineColor: "#333D4B", displayValue: true, text: "방 코드 : " + roomId, textMargin: 3, fontSize: 20, fontOptions: "bold", margin: 2 });
   imageUrl.value = canvas.toDataURL('image/png'); // 캔버스를 이미지 URL로 변환
@@ -543,7 +562,7 @@ onBeforeRouteLeave(async (to, from, next) => {
       await leaveRoom();
       next();
     } catch (error) {
-      next(false);
+      next();
     }
   } else {
     next(false);
@@ -554,39 +573,29 @@ onBeforeRouteLeave(async (to, from, next) => {
  * 방 나갈때 경고창 보여줌
  */
 const presentAlert = async (): Promise<boolean> => {
-  const alert = await alertController.create({
-    header: '방 나가기',
-    message: '정말로 방에서 나가시겠습니까?',
-    buttons: [
-      {
-        text: '확인',
-        role: 'confirm',
-        cssClass: "my-custom-alert-button-class",
-        handler: () => {
-          console.log('사용자가 나가기를 선택했습니다.');
-          resolvePromise(true);
-        }
-      },
-      {
-        text: '취소',
-        role: 'cancel',
-        cssClass: "my-custom-alert-button-class",
-        handler: () => {
-          console.log('사용자가 취소를 선택했습니다.');
-          resolvePromise(false);
-        }
-      },
-    ],
-    cssClass: "my-custom-alert-class"
+  return new Promise<boolean>((resolve) => {
+    alertController.create({
+      header: '방 나가기',
+      message: '정말로 방에서 나가시겠습니까?',
+      buttons: [
+        {
+          text: '확인',
+          role: 'confirm',
+          cssClass: "my-custom-alert-button-class",
+          handler: () => resolve(true),
+        },
+        {
+          text: '취소',
+          role: 'cancel',
+          cssClass: "my-custom-alert-button-class",
+          handler: () => resolve(false),
+        },
+      ],
+      cssClass: "my-custom-alert-class",
+    }).then(async (alert) => {
+      await alert.present();
+    });
   });
-
-  let resolvePromise: (value: boolean) => void;
-  const promise = new Promise<boolean>((resolve) => {
-    resolvePromise = resolve;
-  });
-
-  await alert.present();
-  return promise;
 };
 
 

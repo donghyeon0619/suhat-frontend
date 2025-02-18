@@ -2,11 +2,11 @@ import { defineStore } from 'pinia';
 import {EventSourcePolyfill} from "event-source-polyfill";
 import {showAlert} from "@/utils/showAlert";
 import router from "@/router";
-import {useGameStore} from "@/store/gameStore";
+import {RoomStatus, useGameStore} from "@/store/gameStore";
 import {post} from "@/api/httpService";
 
-const SSE_BASE_URL  = "https://suhat.kr/api/sse"
-// const SSE_BASE_URL = "http://10.0.2.2:8443/api/sse";
+// const SSE_BASE_URL  = "https://suhat.kr/api/sse"
+const SSE_BASE_URL = "http://localhost:8443/api/sse";
 
 export const useEventSourceStore = defineStore('eventSource', {
   state: () => ({
@@ -57,7 +57,7 @@ export const useEventSourceStore = defineStore('eventSource', {
         // 오류 발생 시 (네트워크 단절, 서버 타임아웃 등)
         this.eventSource.onerror =  async (e) => {
           // 만약 게임이 이미 종료된 상태라면, 오류 처리는 건너뜀
-          if (useGameStore().isGameEnded) {
+          if (useGameStore().roomStatus === RoomStatus.ENDED) {
             console.log("[SSE] 이미 게임 종료 상태입니다. onerror 무시");
             return;
           }
@@ -68,7 +68,7 @@ export const useEventSourceStore = defineStore('eventSource', {
             if (this.pingInterval) {
               this.stopPingInterval();
             }
-            useGameStore().setGameEnded(true);
+            useGameStore().roomStatus = RoomStatus.CLOSED;
             await showAlert(
               "연결 에러",
               "서버 혹은 네트워크 문제로 게임 연결 종료", [

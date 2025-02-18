@@ -20,11 +20,18 @@ import GameExitHeader from "@/components/game/GameExitHeader.vue";
 import {AssignedCard} from "@/types/Card";
 import {VoteResult} from "@/types/VoteResult";
 import {RoomStatus, useGameStore} from "@/store/gameStore";
+import {PluginListenerHandle} from "@capacitor/core";
+import {App} from "@capacitor/app";
 
 // 라우트 파라미터
 const route = useRoute();
 const roomId = String(route.params.roomId);
 const router = useIonRouter();
+
+// capacitorApp 관련 변수
+let pauseHandle: PluginListenerHandle | undefined;
+let resumeHandle: PluginListenerHandle | undefined;
+
 
 // store 변수 선언
 const eventSourceStore = useEventSourceStore();
@@ -121,16 +128,18 @@ const gameEndedHandler = (event:MessageEvent) =>{
 }
 
 /**
- * 'game-ended' 이벤트: 플레이어  떠남으로 인한 게임종료
+ * 'not-in-room' 게임 다시 입장 시 방에 없어서 홈으로 이동
  * @param event
  */
 const notInRoomHandler = (event:MessageEvent) =>{
   console.log('not-in-room 이벤트 수신:', event.data);
 
-  gameStore.roomStatus = RoomStatus.ENDED;
-  const toastMessage = "방에서 나가져서 다시 입장 요청해야합니다.";
+  isLeaving.value = true;
+  gameStore.roomStatus = RoomStatus.CLOSED;
+  eventSourceStore.disconnectByUser();
+
   // 메시지를 Toast에 표시
-  presentToast(toastMessage);
+  presentToast(event.data);
 
   setTimeout(() => {
     router.replace({
@@ -330,6 +339,24 @@ const voteResultHandler = (event: MessageEvent) => {
 }
 
 /**
+ * 앱이 pause 되었을 떄, 핸들러
+ */
+const onPauseHandler = () => {
+  console.log("앱이 퍼즈상태로 갈때 게임 종료 요청");
+  // 앱이 퍼즈상태가 되면 게임 종료 요청을 보내게 함
+  eventSourceStore.disconnectByUser();
+  deleteRequest(`rooms/${roomId}/players`, true);
+}
+
+/**
+ * 앱에 다시 접속했을 때 방에 나가졌으므로 홈으로 이동
+ */
+const onResumeHandler = () => {
+  gameStore.roomStatus = RoomStatus.CLOSED;
+  router.replace("/game/home");
+}
+
+/**
  * 퍼즐 갯수 증가 함수
  */
 const incrementPuzzlePieces = () => {
@@ -408,7 +435,7 @@ onIonViewWillEnter(async () => {
   // 초기 시간 동기화
   timeDifference.value = await calculateTimeDifference();
 
-  addEventListeners();
+  await addEventListeners();
 
   // 주기적인 시간 동기화 설정(매 10마다)
   syncInterval.value = setInterval(periodicTimeSync, 600000);
@@ -438,7 +465,7 @@ const resetGameState = () => {
 /**
  * 페이지를 떠날 때 리스너 제거
  */
-onIonViewWillLeave(() => {
+onIonViewWillLeave(async () => {
   console.log('Leaving MultiGameView, cleaning up listeners');
 
   removeEventListeners();
@@ -453,7 +480,7 @@ onIonViewWillLeave(() => {
 /**
  * 이벤트 리스너들 등록
  */
-const addEventListeners = () => {
+const addEventListeners = async () => {
   eventSourceStore.addEventListener("game-ended", gameEndedHandler);
   eventSourceStore.addEventListener("not-in-room",notInRoomHandler)
   eventSourceStore.addEventListener("player-order-assigned", playerOrderAssignedHandler);
@@ -464,6 +491,13 @@ const addEventListeners = () => {
   eventSourceStore.addEventListener("time-extended", timeExtendedHandler);
   eventSourceStore.addEventListener("speaking-end", speakingEndHandler);
   eventSourceStore.addEventListener("vote-result", voteResultHandler);
+
+  // 앱이 백그라운드 갈때의 이벤트 리스너
+  pauseHandle = await App.addListener('pause', onPauseHandler);
+
+  // 앱이 포그라운드로 돌아올 때
+  resumeHandle = await App.addListener('resume', onResumeHandler);
+
 }
 
 /**
@@ -480,14 +514,24 @@ const removeEventListeners = () => {
   eventSourceStore.removeEventListener("speaking-end", speakingEndHandler);
   eventSourceStore.removeEventListener("vote-result", voteResultHandler);
   eventSourceStore.removeEventListener("not-in-room", notInRoomHandler);
+
+  if (pauseHandle) {
+    pauseHandle.remove();
+    pauseHandle = undefined;
+  }
+
+  if (resumeHandle) {
+    resumeHandle.remove();
+    resumeHandle = undefined;
+  }
 }
 
 /**
  * 방 나가기 요청을 서버에 전송
  */
-const leaveRoom = async (): Promise<boolean> => {
+const leaveRoom = async () => {
   if (isLeaving.value) {
-    return false;
+    return;
   }
   isLeaving.value = true;
   eventSourceStore.disconnectByUser();
@@ -497,15 +541,16 @@ const leaveRoom = async (): Promise<boolean> => {
 
     if(response.status == "200") {
       console.log('게임방 나가기 요청 성공');
-      gameStore.roomStatus = RoomStatus.ENDED;
-      return true;
+      gameStore.roomStatus = RoomStatus.CLOSED;
     } else {
       console.error('게임 나가기 요청 실패', response);
-      return false;
+      gameStore.roomStatus = RoomStatus.CLOSED;
+      return;
     }
   } catch (error) {
-    console.error('게임방 나가기 요청 실패: ', error);
-    return false;
+    console.error('게임방 나가기 요청 중 에러 발생: ', error);
+    gameStore.roomStatus = RoomStatus.CLOSED;
+    return;
   }
 };
 
@@ -518,22 +563,26 @@ const gameExit = async () => {
  * 라우팅전 네비게이션 가드 함수
  */
 onBeforeRouteLeave(async (to, from, next) => {
-  // 게임이 종료되었거나 방이 사라졌을떄,
-  if (roomStatus.value === RoomStatus.ENDED || roomStatus.value === RoomStatus.CLOSED) {
-    return next;
+
+  // 게임 나가기 중일 때 바로 진행
+  if (isLeaving.value) {
+    next();
+    return;
   }
 
-  // 게임 나가기 중일 때 라우팅 바로 진행
-  if (isLeaving.value) {
-    return next();
+  // 게임이 종료되었거나 방이 사라졌을 때,
+  if (roomStatus.value === RoomStatus.ENDED || roomStatus.value === RoomStatus.CLOSED) {
+    next();
+    return;
   }
 
   const confirmed = await presentAlert();
   if (confirmed) {
     try {
+      await leaveRoom();
       next();
     } catch (error) {
-      next(false);
+      next();
     }
   } else {
     next(false);
@@ -543,41 +592,23 @@ onBeforeRouteLeave(async (to, from, next) => {
 /**
  * 방 나갈때 경고창 보여줌
  */
-const presentAlert = async () => {
-  return new Promise((resolve) => {
+const presentAlert = async (): Promise<boolean> => {
+  return new Promise<boolean>((resolve) => {
     alertController.create({
       header: '방 나가기',
-      message: '정말로 방에서 나가시겠습니까? 나가면 게임이 종료됩니다.',
+      message: '정말로 방에서 나가시겠습니까?',
       buttons: [
         {
           text: '확인',
           role: 'confirm',
           cssClass: "my-custom-alert-button-class",
-          handler: async () => {
-            console.log('사용자가 나가기를 선택했습니다.');
-            try {
-              const success = await leaveRoom();
-              if (success) {
-                resolve(true); // "나가기" 클릭 시 true 반환
-              } else {
-                await presentToast("방나가기 중 오류 발생으로 홈으로 이동");
-                resolve(true);
-              }
-            } catch (error) {
-              console.error("방 나가기에 실패:", error);
-              await presentToast("방 나가기에 실패했습니다.");
-              resolve(false);
-            }
-          }
+          handler: () => resolve(true),
         },
         {
           text: '취소',
           role: 'cancel',
           cssClass: "my-custom-alert-button-class",
-          handler: () => {
-            console.log('사용자가 취소를 선택했습니다.');
-            resolve(false); // "취소" 클릭 시 false 반환
-          }
+          handler: () => resolve(false),
         },
       ],
       cssClass: "my-custom-alert-class",

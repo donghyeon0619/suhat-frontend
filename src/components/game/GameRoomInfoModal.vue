@@ -10,7 +10,6 @@ import {
   modalController, useIonRouter
 } from "@ionic/vue";
 import BaseButton from "@/components/common/BaseButton.vue";
-import {onMounted} from "vue";
 import {post} from "@/api/httpService";
 import {useUserStore} from "@/store/user";
 import {useSurveyStore} from "@/store/survey";
