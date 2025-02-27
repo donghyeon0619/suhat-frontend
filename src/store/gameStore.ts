@@ -10,7 +10,6 @@ export enum RoomStatus {
 export const useGameStore = defineStore("game",{
   state: () => ({
     roomStatus: RoomStatus.WAITING as RoomStatus,
-
   }),
   actions: {
     setGameEnded(status: RoomStatus) {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {
   alertController,
-  IonPage,
+  IonPage, modalController,
   onIonViewWillEnter,
   onIonViewWillLeave,
   toastController,
@@ -103,7 +103,7 @@ const calculateTimeDifference = async (): Promise<number> => {
 
     return estimatedServerTime - responseTime; // 클라이언트 시간과 서버 시간의 차이
   } catch (error) {
-    console.error("서버 시간 가져오기 실패:', error)");
+    console.error("서버 시간 가져오기 실패:', error");
     return 0;
   }
 }
@@ -124,7 +124,7 @@ const gameEndedHandler = (event:MessageEvent) =>{
     router.replace({
       path: '/game/home'
     });
-  }, 3000);
+  }, 2000);
 }
 
 /**
@@ -145,7 +145,7 @@ const notInRoomHandler = (event:MessageEvent) =>{
     router.replace({
       path: '/game/home'
     });
-  }, 3000);
+  }, 1500);
 }
 
 /**
@@ -202,6 +202,8 @@ const roundTwoStartedHandler = (event: MessageEvent) => {
   gameState.currentRound = eventData.round;
   gameState.currentTurn = 1;
 
+  isSpeaker.value = userStore.id === eventData.speakerId;
+
   const currentSpeaker = gameState.players.find(
     (player) => player.playerId === eventData.speakerId
   );
@@ -211,8 +213,6 @@ const roundTwoStartedHandler = (event: MessageEvent) => {
   } else {
     console.error(`${eventData.speakerId} 의 플레이어가 존재하지 않습니다.`);
   }
-
-  isSpeaker.value = userStore.id === eventData.speakerId;
 
   gameState.currentPhase = eventData.currentPhase;
 };
@@ -338,6 +338,7 @@ const voteResultHandler = (event: MessageEvent) => {
   }
 }
 
+
 /**
  * 앱이 pause 되었을 떄, 핸들러
  */
@@ -389,6 +390,9 @@ const handleNextTurn = (nextSpeakerId: number) => {
     speaker.value.isSpeaking = false
   }
 
+  // 3. 현재 사용자가 speaker인지 확인
+  isSpeaker.value = userStore.userInfo.id === nextSpeakerId;
+
   // 2. nextSpeakerId에 해당하는 player의 isSpeaking을 true로 설정
   const nextSpeaker = gameState.players.find(
     (player) => player.playerId === nextSpeakerId
@@ -399,9 +403,6 @@ const handleNextTurn = (nextSpeakerId: number) => {
   } else {
     console.error(`${nextSpeakerId}의 플레이어가 존재하지 않습니다`);
   }
-
-  // 3. 현재 사용자가 speaker인지 확인
-  isSpeaker.value = userStore.userInfo.id === nextSpeakerId;
 
   // 4. currentPhase를 speaker인지 여부에 따라 설정
   gameState.currentPhase = GamePhase.DISCUSSION;
@@ -440,10 +441,7 @@ onIonViewWillEnter(async () => {
   // 주기적인 시간 동기화 설정(매 10마다)
   syncInterval.value = setInterval(periodicTimeSync, 600000);
 
-  // 컴포넌트 재진입 시 `timerStartData` 및 `timeExtensionData` 초기화
-  timerStartData.value = null;
-  timeExtensionData.value = null;
-})
+});
 
 /**
  * 게임 상태를 초기화 하는 함수
@@ -468,6 +466,13 @@ const resetGameState = () => {
 onIonViewWillLeave(async () => {
   console.log('Leaving MultiGameView, cleaning up listeners');
 
+  let topModal = await modalController.getTop(); // 최상위 모달 가져오기
+
+  while (topModal) {
+    await modalController.dismiss(); // 현재 모달 닫기
+    topModal = await modalController.getTop(); // 다음 최상위 모달 확인
+  }
+
   removeEventListeners();
 
   if(timeoutId) {
@@ -475,6 +480,7 @@ onIonViewWillLeave(async () => {
   }
 
   resetGameState();
+
 })
 
 /**
@@ -482,7 +488,7 @@ onIonViewWillLeave(async () => {
  */
 const addEventListeners = async () => {
   eventSourceStore.addEventListener("game-ended", gameEndedHandler);
-  eventSourceStore.addEventListener("not-in-room",notInRoomHandler)
+  eventSourceStore.addEventListener("not-in-room", notInRoomHandler)
   eventSourceStore.addEventListener("player-order-assigned", playerOrderAssignedHandler);
   eventSourceStore.addEventListener("round-2-started", roundTwoStartedHandler);
   eventSourceStore.addEventListener("game-reset", gameResetHandler);
@@ -666,6 +672,6 @@ const presentToast = async (message: string, isCentered:boolean = false) => {
 
 <style scoped>
 .ion-page {
-background-image: url('../../../assets/img/typetest/bg-type-test-page.png'); /* 이미지를 직접 넣는 방법 */
+  background-image: url('../../../assets/img/typetest/bg-type-test-page.png'); /* 이미지를 직접 넣는 방법 */
 }
 </style>

@@ -138,7 +138,7 @@ const goHome = async () => {
       <IonRow>
         <!-- 각각의 왕관 뱃지 및 막대 -->
         <IonCol
-          v-for="(user, index) in rankings"
+          v-for="(user, index) in rankings.slice(0,3)"
           :key="index"
           size="4"
           class="ranking-item"
@@ -252,11 +252,14 @@ ion-content::part(background) {
   z-index: 1;
 }
 
-.user-chip{
+.user-chip {
   --background: #FFFFFF;
   --color: transparent;
   padding: 0 4vw 0 4vw;
   border-radius: 12px;
+  min-width: 100%;
+  justify-content: center;
+  margin: auto;
 }
 
 .user-name{

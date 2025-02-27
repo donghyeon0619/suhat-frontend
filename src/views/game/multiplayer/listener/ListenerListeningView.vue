@@ -73,7 +73,7 @@ watch(
       startTimer(newTimerData.startTime);
     }
   }
-)
+);
 
 // "MM:SS" 로 바꾸는 함수
 const formatTime = (seconds: number) => {
@@ -106,13 +106,13 @@ const startTimer = (serverStartTime: number) => {
 watch(
   () => timeExtensionData?.value,
   (newExtensionData) => {
-    if (newExtensionData && newExtensionData.additionalTime > 0 ) {
+    if (newExtensionData && newExtensionData.additionalTime > 0) {
       timer.value += newExtensionData.additionalTime;
       formattedTime.value = formatTime(timer.value);
       presentToast();
     }
   }
-)
+);
 
 /**
  * 시간 연장시 상단 토스트 출현
@@ -222,7 +222,9 @@ ion-content::part(background) {
   --color: transparent;
   border: 2.4px solid #C7E399;
   border-radius: 12px;
-  padding: 0.8vh 3.8vw;
+  padding: 0.8vh 2.8vw;
+  min-width: 20vw;
+  justify-content: center;
 }
 
 .player-name{

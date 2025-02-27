@@ -14,7 +14,7 @@ import {
   IonText,
   actionSheetController, useIonRouter,
 } from "@ionic/vue";
-import {onBeforeRouteLeave, useRoute} from "vue-router";
+import {onBeforeRouteLeave} from "vue-router";
 
 import ListIcon from "@/assets/icons/home/icon-list.svg"
 import FlagIcon from "@/assets/icons/home/icon-flag.svg"
@@ -70,7 +70,6 @@ const showGameModeActionSheet = async () => {
   await actionSheet.present();
 };
 
-const route = useRoute();
 const router = useIonRouter();
 
 const goSurveyPage = () =>{
@@ -79,7 +78,7 @@ const goSurveyPage = () =>{
 
 onBeforeRouteLeave(async (to, from, next) =>{
   //이동하는 경로가 회원가입 로직일 떄, 뒤로가기 막기
-  if (to.name === 'LoginSchool') {
+  if (to.name === 'LoginSchool' || to.name === 'PuzzleCompletion' || to.name === 'GameRanking') {
     next(false);
   } else {
     next();

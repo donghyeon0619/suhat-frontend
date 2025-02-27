@@ -44,7 +44,7 @@ export const useNetworkStore = defineStore('network', () => {
             // "확인" 버튼을 누른 순간 네트워크 다시 체크
             const status = await Network.getStatus();
             if (!status.connected) {
-              // 여전히 오프란이라면 다시 알림창 띄우기
+              // 여전히 오프라인라면 다시 알림창 띄우기
               await showOfflineAlert();
             }
           }

@@ -16,7 +16,7 @@ import {
 } from "@ionic/vue"
 import Header from "@/components/common/BackButtonHeader.vue";
 import BaseButton from "@/components/common/BaseButton.vue";
-import {onMounted, ref} from "vue";
+import {ref} from "vue";
 import {chevronForwardOutline} from "ionicons/icons";
 import {post} from "@/api/httpService";
 import {useUserStore} from "@/store/user";

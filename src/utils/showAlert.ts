@@ -31,6 +31,7 @@ export const showAlert = async (
     message,
     buttons,
     cssClass,
+    backdropDismiss: false,
   });
 
   await alert.present();

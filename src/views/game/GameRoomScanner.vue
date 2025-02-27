@@ -1,19 +1,20 @@
 <script setup lang="ts">
 import {
+  alertController,
+  IonButton,
   IonContent,
-  IonTitle,
-  IonText,
+  IonHeader,
   IonIcon,
   IonInput,
   IonModal,
-  IonButton,
+  IonText,
+  IonTitle,
+  IonToolbar,
   modalController,
-  alertController, IonToolbar, IonHeader,
 } from "@ionic/vue"
-import Header from "@/components/common/BackButtonHeader.vue";
 import BaseButton from "@/components/common/BaseButton.vue";
-import { ref } from "vue";
-import { get } from "@/api/httpService";
+import {ref} from "vue";
+import {get} from "@/api/httpService";
 import GameRoomInfoModal from "@/components/game/GameRoomInfoModal.vue";
 import InformationIcon from "@/assets/icons/game/informaion-icon.svg";
 import CancelIcon from "@/assets/icons/game/cancel-icon.svg";
@@ -88,8 +89,7 @@ const options: CapacitorBarcodeScannerOptions = {
 
 async function scanBarcode() {
   try {
-    const result = (await CapacitorBarcodeScanner.scanBarcode(options)).ScanResult;
-    roomId.value = result;
+    roomId.value = (await CapacitorBarcodeScanner.scanBarcode(options)).ScanResult;
     console.error("스캔 성공: ", roomId.value);
     await findRoom();
   } catch (error) {

@@ -45,7 +45,7 @@ const isHost = ref(false);
 const isLeaving = ref(false);
 
 // 실제 입장한 플레이어 배열
-const participants = ref<Array<{ playerId: number | null, isUserJoined: boolean, ready: boolean, name: string }>>([]);
+const participants = ref<Array<{ playerId: number | null, seatIndex: number | null,  isUserJoined: boolean, ready: boolean, name: string }>>([]);
 
 // sse 변수 선언
 const eventSourceStore = useEventSourceStore();
@@ -54,6 +54,7 @@ const eventSourceStore = useEventSourceStore();
 const userStore = useUserStore();
 const gameStore = useGameStore();
 const roomStatus = computed(() => gameStore.roomStatus);
+
 /**
  * 방 연결
  */
@@ -133,7 +134,7 @@ const notInRoomHandler = (event: MessageEvent) => {
     router.replace({
       path: '/game/home'
     })
-  }, 3000);
+  }, 1500);
 }
 
 
@@ -165,13 +166,18 @@ const addPlayer = (data: any) => {
   console.log('new player:', newPlayer);
   // 중복 여부 확인
   const exists = participants.value.some(p => p.playerId === newPlayer.playerId);
+
   if (!exists) {
-    participants.value = [...participants.value, {
-      playerId: newPlayer.playerId,
-      isUserJoined: true,
-      ready: newPlayer.ready,
-      name: newPlayer.playerInfo.name
-    }];
+    participants.value = [
+      ...participants.value,
+      {
+        playerId: newPlayer.playerId,
+        seatIndex: newPlayer.seatIndex,
+        isUserJoined: true,
+        ready: newPlayer.ready,
+        name: newPlayer.playerInfo.name
+      }
+    ];
   } else {
     // 이미 존재하면 ready 상태 업데이트
     participants.value = participants.value.map(p =>
@@ -255,9 +261,13 @@ const leaveRoom = async () => {
  * @param response
  */
 const fetchDeTails = (response: any) => {
+  // 1) participants를 seatIndex 오름차순으로 정렬해 저장
+  const sortedPlayers = response.players.sort((a: any, b: any) => a.seatIndex - b.seatIndex);
+
   // 서버의 players 객체를 배열로 변환
-  participants.value = Object.values(response.players).map((player: any) => ({
+  participants.value = sortedPlayers.map((player: any) => ({
     playerId: player.playerId,
+    seatIndex: player.seatIndex,
     isUserJoined: true,
     ready: player.ready,
     name: player.playerInfo.name
@@ -272,15 +282,30 @@ const fetchDeTails = (response: any) => {
  * 실제 입장한 플레이어들을 먼저 표시하고, 부족한 만큼은 placeholder로 채웁니다.
  */
 const displayParticipants = computed(() => {
-  const joined = participants.value;
-  const placeholdersCount = headCount.value - joined.length;
-  const placeholders = Array.from({ length: placeholdersCount }, () => ({
-    playerId: null,
-    isUserJoined: false,
-    ready: false,
-    name: ''
-  }));
-  return [...joined, ...placeholders];
+
+  // 1) seatArray: 길이가 headCount인 배열을 만들고 모두 null
+  const seatArray = Array(headCount.value).fill(null);
+
+  // 2) participants.value 를 순회하며 seatIndex에 배치
+  participants.value.forEach(p => {
+    if (p.seatIndex !== null && p.seatIndex >= 0 && p.seatIndex < headCount.value) {
+      seatArray[p.seatIndex] = p;
+    }
+  });
+
+// 3) seatArray에서 null인 곳은 placeholder로
+  return seatArray.map(slot => {
+    if (!slot) {
+      return {
+        playerId: null,
+        seatIndex: -1,
+        isUserJoined: false,
+        ready: false,
+        name: ''
+      };
+    }
+    return slot;
+  });
 });
 
 /**
@@ -436,7 +461,6 @@ const attemptReconnect = async () => {
 
   // sse 재연결
   console.log("[GameWaiting] Attempting SSE 재연결 시도중");
-  connectToRoom(); // SSE 연결
 
   // 방 상태 조회
   try {
@@ -447,6 +471,7 @@ const attemptReconnect = async () => {
     if(!userInRoom) {
       console.log("[GameWaiting] Fetch 응답: 현재 사용자가 방에 존재하지 않습니다.");
       await presentToast("방에 존재하지 않습니다. 홈으로 이동합니다.");
+      gameStore.roomStatus = RoomStatus.CLOSED;
       router.replace("/game/home");
       return;
     }
@@ -456,6 +481,7 @@ const attemptReconnect = async () => {
       gameStore.roomStatus = RoomStatus.IN_GAME;
       router.replace(`/multi/play/${roomId}`);
     } else {
+      connectToRoom(); // SSE 재연결
       console.log("[GameWaiting] FETCH 응답: 대기실 정보 업데이트");
       fetchDeTails(response);
     }
@@ -478,6 +504,7 @@ const attemptReconnect = async () => {
  */
 onIonViewWillLeave(() => {
   console.log('Leaving GameWaiting, cleaning up listeners');
+  eventSourceStore.removeEventListener('connected', onConnectedHandler);
   eventSourceStore.removeEventListener('player-joined', playerJoinedHandler);
   eventSourceStore.removeEventListener('player-left', playerLeftHandler);
   eventSourceStore.removeEventListener('game-started', gameStartedHandler);

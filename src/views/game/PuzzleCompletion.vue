@@ -10,7 +10,7 @@ import {
   IonThumbnail,
   IonRow,
   IonCol,
-  useIonRouter, IonHeader, IonToolbar
+  useIonRouter, IonHeader, IonToolbar, onIonViewWillEnter
 } from "@ionic/vue";
 import ChatBubbleWithBorder from "@/components/common/ChatBubbleWithBorder.vue";
 import PuzzleCompletionBadge from "@/assets/icons/game/icon-completion-badge.svg"
@@ -19,20 +19,38 @@ import MultiPuzzleImg from "@/assets/img/game/puzzle/img-multi-puzzle.png"
 import SuhatSign from "@/assets/img/common/img-suhat-sign.svg"
 import BaseButtonFooter from "@/components/common/BaseButtonFooter.vue";
 import {onBeforeRouteLeave, useRoute} from "vue-router";
+import {computed, ref, watch} from "vue";
 
 const router = useIonRouter();
 const route = useRoute();
 
-const mode = route.query.mode || "solo"; // solo 또는 multi 모드
+/**
+ * mode를 ref로 만들어놓고, route.query.mode가 변경될 때마다 갱신해서
+ * 라우트 재마운트 없이도 화면이 업데이트 되도록 처리
+ */
+const mode = ref("");
 
-const puzzleImage = mode === "solo" ? SoloPuzzleImg : MultiPuzzleImg;
 
-// 랭킹 데이터는 multi 모드에서만 파싱
-const rankingData = route.query.rankingData
-  ? JSON.parse(route.query.rankingData as string)
-  : []; // multi 모드일 때만 처리
+/**
+ * puzzleImage 또한 mode 값을 보고 동적으로 결정
+ */
+const puzzleImage = computed(() => {
+  return mode.value === "solo" ? SoloPuzzleImg : MultiPuzzleImg;
+});
 
-const roomId = route.query.roomId || "";
+/**
+ * 멀티 모드일 때만 랭킹 데이터를 파싱
+ */
+const rankingData = ref<any[]>([]);
+if (route.query.rankingData) {
+  try {
+    rankingData.value = JSON.parse(route.query.rankingData as string);
+  } catch (e) {
+    console.error("랭킹 데이터 파싱 오류:", e);
+  }
+}
+
+const roomId = ref(route.query.roomId as string || "");
 
 /**
  * 홈 리우팅 함수
@@ -46,12 +64,12 @@ const goHome = () =>{
  * 랭킹 페이지로 이동 함수
  */
 const goRanking = () => {
-  if(rankingData.length > 0){
+  if(rankingData.value.length > 0){
     router.replace({
       path: "/multi/ranking",
       query: {
-        rankingData: JSON.stringify(rankingData),
-        roomId: roomId,
+        rankingData: JSON.stringify(rankingData.value),
+        roomId: roomId.value,
       }
     })
   } else {
@@ -63,12 +81,21 @@ const goRanking = () => {
  * 버튼 클릭 이벤트 핸들러함수
  */
 const handleButtonClick = () => {
-  if (mode === 'solo') {
+  if (mode.value === 'solo') {
     goHome();
   } else {
     goRanking();
   }
 };
+
+onIonViewWillEnter(() => {
+  const queryMode = route.query.mode as string | undefined;
+  if (queryMode) {
+    mode.value = queryMode;
+  } else  {
+    mode.value = 'solo';
+  }
+})
 
 /**
  * 뒤로가기 로직 막기
@@ -91,7 +118,9 @@ onBeforeRouteLeave(async (to, from, next) =>{
   <IonContent class="ion-padding" scroll-y="false">
     <!-- Congratulatory Title -->
     <div class="title-section">
-      <IonText class="completion-subtitle">혼자하기 미션</IonText>
+      <IonText class="completion-subtitle">
+        {{ mode === 'solo' ? '혼자하기 미션' : '함께하기 미션' }}
+      </IonText>
       <IonText class="completion-title">퍼즐 완성!</IonText>
     </div>
 

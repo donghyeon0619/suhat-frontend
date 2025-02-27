@@ -17,6 +17,7 @@ import {GameState} from "@/types/GameState";
 import {Player, RankingPlayer} from "@/types/Player";
 import {VoteResult} from "@/types/VoteResult";
 import {RoomStatus, useGameStore} from "@/store/gameStore";
+import {useEventSourceStore} from "@/store/eventSourceStore";
 
 const props = defineProps<{
   gameState: GameState;
@@ -205,7 +206,6 @@ const openSuccessModal = async (
 
   // 모달 닫기와 상관 없이 3초후 다음 액션 실행
   setTimeout(() => {
-    console.log("모달 표시시간이 종료 되었습니다. 다음 액션 실행");
     if (currentPieces.value >= maxPieces.value && rankingData) {
       gameStore.roomStatus = RoomStatus.ENDED;
       modal.dismiss();

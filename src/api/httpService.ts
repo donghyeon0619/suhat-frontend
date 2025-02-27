@@ -1,7 +1,6 @@
 import {CapacitorHttp, HttpOptions } from '@capacitor/core';
 import router from "@/router";
 import {showAlert} from "@/utils/showAlert";
-import {onIonViewDidEnter, onIonViewWillEnter} from "@ionic/vue";
 
 
 // const BASE_URL = 'https://suhat.kr';

@@ -6,7 +6,6 @@ import {GamePhase, GameState} from "@/types/GameState";
 
 const props = defineProps<{
   gameState: GameState;
-
 }>()
 
 const currentPhase = computed(() => props.gameState.currentPhase);

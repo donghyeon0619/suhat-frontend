@@ -10,9 +10,7 @@ import ChatBubbleWithBorder from "@/components/common/ChatBubbleWithBorder.vue";
 import ReVoteDetails from "@/components/game/multiplayer/ReVoteDetails.vue";
 import VotingResult from "@/components/game/multiplayer/VotingResult.vue";
 import BaseDoubleButtonFooter from "@/components/common/BaseDoubleButtonFooter.vue";
-import {useRoute} from "vue-router";
 import {post} from "@/api/httpService";
-import {useEventSourceStore} from "@/store/eventSourceStore";
 import PuzzleSuccessModal from "@/components/game/PuzzleSuccessModal.vue";
 import {enterAnimation, leaveAnimation} from "@/utils/puzzleModalAnimations";
 import PuzzleFailureModal from "@/components/game/PuzzleFailureModal.vue";
@@ -271,7 +269,6 @@ const openSuccessModal = async (
 
   // 모달 닫기와 상관 없이 3초후 다음 액션 실행
   setTimeout(() => {
-    console.log("모달 표시시간이 종료 되었습니다. 다음 액션 실행");
     if (currentPieces.value >= maxPieces.value && rankingData) {
       gameStore.roomStatus = RoomStatus.ENDED;
       modal.dismiss();

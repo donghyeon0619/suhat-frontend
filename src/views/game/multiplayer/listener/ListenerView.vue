@@ -8,10 +8,11 @@ const props = defineProps<{
   gameState: GameState;
 }>()
 
+const currentPhase = computed(() => props.gameState.currentPhase);
+
 const emit = defineEmits<{
   (e: "nextTurn", nextSpeakerId: number): void;
 }>()
-
 
 /**
  * speaking이 true인 사람의 정보를 computed로 가져옴
@@ -23,9 +24,6 @@ const currentSpeaker = computed(() => {
 const handleNextTurn = (nextSpeakerId: number) => {
   emit("nextTurn", nextSpeakerId);
 }
-
-const currentPhase = computed(() => props.gameState.currentPhase);
-
 </script>
 
 <template>

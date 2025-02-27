@@ -20,10 +20,10 @@ export const useEventSourceStore = defineStore('eventSource', {
   }),
 
   actions: {
-    connect(roomId: string){
+    connect(roomId: string) {
 
       // 이미 연결되어 있으면 중복 연결 방지
-      if(this.eventSource){
+      if (this.eventSource) {
         console.log('SSE 가 이미 연결됬거나 연결중입니다')
         return;
       }
@@ -39,7 +39,7 @@ export const useEventSourceStore = defineStore('eventSource', {
         },
       );
 
-      if(this.eventSource) {
+      if (this.eventSource) {
         // 연결이 열렸을 때
         this.eventSource.onopen = () => {
           console.log('sse 연결이 열렸습니다.');
@@ -55,19 +55,16 @@ export const useEventSourceStore = defineStore('eventSource', {
 
 
         // 오류 발생 시 (네트워크 단절, 서버 타임아웃 등)
-        this.eventSource.onerror =  async (e) => {
-          // 만약 게임이 이미 종료된 상태라면, 오류 처리는 건너뜀
+        this.eventSource.onerror = async (e) => {
           if (useGameStore().roomStatus === RoomStatus.ENDED) {
             console.log("[SSE] 이미 게임 종료 상태입니다. onerror 무시");
             return;
           }
 
           if (!this.isDisconnectedByUser) {
-            console.log('[SSE] 서버 혹은 네트워크 문제로 인한, 연결 종료', e);
+            console.log('[SSE] 서버 혹은 네트워크 문제로 인한, 연결 종료');
             this.disconnect();
-            if (this.pingInterval) {
-              this.stopPingInterval();
-            }
+            this.stopPingInterval();
             useGameStore().roomStatus = RoomStatus.CLOSED;
             await showAlert(
               "연결 에러",
@@ -78,7 +75,6 @@ export const useEventSourceStore = defineStore('eventSource', {
                   }
                 }]
             );
-
             console.error('[SSE] 오류 발생 - 네트워크 및 서버 타임아웃으로 인한 연결 종료 ');
           }
         };
@@ -105,7 +101,7 @@ export const useEventSourceStore = defineStore('eventSource', {
      * @param eventName 이벤트 이름
      * @param handler 제거할 콜백함수
      */
-    removeEventListener(eventName: string, handler: (event: MessageEvent) => void){
+    removeEventListener(eventName: string, handler: (event: MessageEvent) => void) {
       if (!this.eventSource) {
         return;
       }
@@ -115,7 +111,7 @@ export const useEventSourceStore = defineStore('eventSource', {
     /**
      * 사용자가 "나가기" 등을 눌러 직접 끊을 때 호출
      */
-    disconnectByUser(){
+    disconnectByUser() {
       this.isDisconnectedByUser = true;
       this.disconnect();
       this.stopPingInterval(); // ping 중단
@@ -124,8 +120,8 @@ export const useEventSourceStore = defineStore('eventSource', {
     /**
      * SSE 연결 해제 (내부 메서드)
      */
-    disconnect(){
-      if(this.eventSource) {
+    disconnect() {
+      if (this.eventSource) {
         console.log("연결을 끊습니다")
         this.eventSource.close();
         this.eventSource = null;
@@ -152,12 +148,8 @@ export const useEventSourceStore = defineStore('eventSource', {
         } catch (error: any) {
           if (error.response.status === 404) {
             console.warn("[Ping] 이미 방에서 제거됨(404). 홈으로 이동합니다.");
-            // pingInterval 중단
             this.stopPingInterval();
-            // SSE disconnect
             this.disconnectByUser();
-            // 라우터로 홈 이동
-            await router.replace('/game/home');
           } else {
             console.error("[Ping] 전송 실패", error);
           }
@@ -165,13 +157,12 @@ export const useEventSourceStore = defineStore('eventSource', {
       }, 30_000); // 30초 주기로 ping
     },
 
-    stopPingInterval(){
+    stopPingInterval() {
       if (this.pingInterval) {
         clearInterval(this.pingInterval);
         this.pingInterval = null;
         console.log("[Ping] pingInterval을 중단합니다.");
       }
     }
-
   }
-})
+});

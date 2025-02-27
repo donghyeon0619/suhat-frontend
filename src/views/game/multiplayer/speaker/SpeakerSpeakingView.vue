@@ -461,7 +461,9 @@ ion-content::part(background) {
   --color: transparent;
   border: 2.4px solid #C7E399;
   border-radius: 12px;
-  padding: 0.8vh 3.8vw;
+  padding: 0.8vh 2.8vw;
+  min-width: 20vw;
+  justify-content: center;
 }
 
 .player-name{
