@@ -1,8 +1,8 @@
 import {CapacitorCookies, CapacitorHttp} from "@capacitor/core";
 import {get, getHttpOptions} from "@/api/httpService";
 
-// const BASE_URL = 'https://suhat.kr';
-const BASE_URL = 'http://localhost:8443';
+const BASE_URL = 'https://suhat.kr';
+// const BASE_URL = 'http://10.0.2.2:8443';
 
 /**
  * 쿠키 및 세션 관리 모듈

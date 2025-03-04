@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import {IonItem, IonImg, IonLabel, IonBadge, IonSpinner} from "@ionic/vue"
 import profileIcon from "@/assets/icons/game/profile-icon.svg";
+import {computed} from "vue";
+import {playerAvatarIcons} from "@/data/playerAvatarIcon";
 const props = defineProps({
   name: {
     type: String,
@@ -13,15 +15,28 @@ const props = defineProps({
   isReady: {
     type: Boolean,
     default: false,
-
+  },
+  avatarId: {
+    type: Number,
+    default: 0,
   }
+})
+
+const avatarUrl = computed(() => {
+  if (!props.avatarId) {
+    // avatarId가 0이거나 유효하지 않으면 기본 아이콘
+    return "@/assets/icons/game/player/icon-player-avatar-1.svg";
+  }
+  // PlayerAvatarIcons에서 id가 props.IconId인 객체를 찾아 url 반환
+  return playerAvatarIcons.find((icon) => icon.id === props.avatarId)?.url
+    || "@/assets/icons/game/player/icon-player-avatar-1.svg"
 })
 </script>
 
 <template>
   <ion-item :class="['item', { 'waiting-item': !isUserJoined }]">
     <template v-if="isUserJoined">
-      <img class="profile-icon" :src="profileIcon" alt="아이콘" />
+      <img class="profile-icon" :src="avatarUrl" alt="아이콘" />
       <ion-label class="name">{{name}}</ion-label>
       <template v-if="isReady">
         <ion-badge class="ready-badge" slot="end">준비완료</ion-badge>

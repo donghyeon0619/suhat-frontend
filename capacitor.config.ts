@@ -23,9 +23,6 @@ const config: CapacitorConfig = {
       androidScaleType: 'FIT_CENTER',
 
     },
-    // android : {
-    //   allowMixedContent: true
-    // }
   },
   server: {
     hostname: 'suhat.kr',

@@ -440,7 +440,6 @@ onIonViewWillEnter(async () => {
 
   // 주기적인 시간 동기화 설정(매 10마다)
   syncInterval.value = setInterval(periodicTimeSync, 600000);
-
 });
 
 /**

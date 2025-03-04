@@ -5,8 +5,7 @@ import router from "@/router";
 import {RoomStatus, useGameStore} from "@/store/gameStore";
 import {post} from "@/api/httpService";
 
-// const SSE_BASE_URL  = "https://suhat.kr/api/sse"
-const SSE_BASE_URL = "http://localhost:8443/api/sse";
+const SSE_BASE_URL  = "https://suhat.kr/api/sse"
 
 export const useEventSourceStore = defineStore('eventSource', {
   state: () => ({

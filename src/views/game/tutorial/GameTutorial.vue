@@ -134,13 +134,18 @@ ion-toolbar {
 
 .example-img-card {
   height: 45vh;
-  margin: auto;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 87%;
 }
 
 .example-img-answer {
   height: 50vh;
-  margin: auto;
-
+  position: absolute;
+  transform: translateX(-50%);
+  left: 50%;
+  width: 85%;
 }
 
 ion-content.dimmed::after {

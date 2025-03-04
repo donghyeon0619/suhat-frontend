@@ -27,6 +27,7 @@ import {useEventSourceStore} from "@/store/eventSourceStore";
 import {showAlert} from "@/utils/showAlert";
 import {RoomStatus, useGameStore} from "@/store/gameStore";
 import {ref} from "vue";
+import {playerAvatarIcons} from "@/data/playerAvatarIcon";
 
 // 사용자 랭킹 인터페이스
 interface UserRanking {
@@ -50,18 +51,21 @@ const gameStore = useGameStore();
 // 순위별 왕관 이미지
 const crownIcons = [IconRankingFirst, IconRankingSecond, IconRankingThird];
 
-// 성별 아이콘 무작위 선택
-const randomGenderIcons = [IconRankingMan, IconRankingWoman, IconRankingOther];
-const getRandomGenderIcon = () => {
-  return randomGenderIcons[Math.floor(Math.random() * randomGenderIcons.length)];
-};
+// 아바타 아이코 url 찾기
+const getAvatarUrl = (avatarId: number) => {
+  const found = playerAvatarIcons.find(icon => icon.id === avatarId);
+  if (!found) {
+    return "@/assets/icons/game/player/icon-player-avatar-1.svg";
+  }
+  return found.url;
+}
 
 const rankings = ref<UserRanking[]>(
   rankingData.map((player: any, index: number) => ({
     name: player.playerName,
     puzzleCount: player.puzzlePieces,
     crownSrc: crownIcons[index],  //순위에 맞는 왕관 이미지
-    avatarSrc: getRandomGenderIcon(),
+    avatarSrc: getAvatarUrl(player.avatarId),
     rank: index + 1
   }))
 )

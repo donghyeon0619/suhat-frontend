@@ -45,7 +45,7 @@ const isHost = ref(false);
 const isLeaving = ref(false);
 
 // 실제 입장한 플레이어 배열
-const participants = ref<Array<{ playerId: number | null, seatIndex: number | null,  isUserJoined: boolean, ready: boolean, name: string }>>([]);
+const participants = ref<Array<{ playerId: number | null, seatIndex: number | null,  isUserJoined: boolean, ready: boolean, name: string, avatarId: number }>>([]);
 
 // sse 변수 선언
 const eventSourceStore = useEventSourceStore();
@@ -175,7 +175,8 @@ const addPlayer = (data: any) => {
         seatIndex: newPlayer.seatIndex,
         isUserJoined: true,
         ready: newPlayer.ready,
-        name: newPlayer.playerInfo.name
+        name: newPlayer.playerInfo.name,
+        avatarId: newPlayer.avatarId,
       }
     ];
   } else {
@@ -270,11 +271,17 @@ const fetchDeTails = (response: any) => {
     seatIndex: player.seatIndex,
     isUserJoined: true,
     ready: player.ready,
-    name: player.playerInfo.name
+    name: player.playerInfo.name,
+    avatarId: player.avatarId,
   }));
   console.log("fetch 이후 participants 상태:", participants.value);
   gameStore.roomStatus = RoomStatus.WAITING;
 
+  // 호스트 여부 확인
+  const currentUserId = userStore.userInfo.id;
+  if(response.hostId === currentUserId) {
+    isHost.value = true;
+  }
 }
 
 /**
@@ -335,12 +342,6 @@ onIonViewWillEnter(async () => {
 
     fetchDeTails(response);
 
-    // 호스트 여부 확인
-    const currentUserId = userStore.userInfo.id;
-    if(response.hostId === currentUserId) {
-      isHost.value = true;
-    }
-
     roomName.value = response.roomName;
     headCount.value = response.totalPlayers;
 
@@ -376,14 +377,14 @@ onIonViewWillEnter(async () => {
 function onPauseHandler() {
   console.log("[GameWaiting] onPause -> disconnect SSE");
   eventSourceStore.disconnectByUser();
+  const response = get(`rooms/${roomId}/canRqInPause`);
+  console.log("api 응답:", response);
 }
 
 /**
  * 앱이 다시 포그라운드로 올떄 sse 연결을 다시 하는 핸들러
  */
 async function onResumeHandler() {
-  console.log("[GameWaiting] onResume -> reconnect SSE if needed");
-
   // 다시 SSE를 연결하기
   if (isLeaving.value) {
     console.log("[GameWaiting] 이미 방을 나갔으므로 SSE 재연결 생략");
@@ -395,7 +396,7 @@ async function onResumeHandler() {
     return;
   }
 
-  console.log("[GameWaiting] onResume -> Will check network after short delay...");
+  console.log("[GameWaiting] onResume -> reconnect SSE if needed");
 
   setTimeout(async () => {
     // 네트워크 상태 확인
@@ -685,6 +686,7 @@ const presentToast = async (message: string) => {
               :isUserJoined="participant.isUserJoined"
               :name="participant.isUserJoined ? participant.name : '아직 입장하지 않음'"
               :is-ready="participant.ready"
+              :avatar-id="participant.avatarId"
             />
           </ion-list>
         </ion-card-content>

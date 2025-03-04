@@ -23,6 +23,7 @@ import {useUserStore} from "@/store/user";
 import {useSurveyStore} from "@/store/survey";
 import GameRoomScanner from "@/views/game/GameRoomScanner.vue";
 import {showAlert} from "@/utils/showAlert";
+import {playerAvatarIcons} from "@/data/playerAvatarIcon";
 
 const roomName = ref('');
 const errorMessage = ref('');
@@ -61,7 +62,8 @@ async function createGameRoom() {
       roomName: roomName.value,
       totalPlayers: selectedHeadCount.value,
       hostInfo: userStore.userInfo,
-      surveyScore: surveyStore.latestScore
+      surveyScore: surveyStore.latestScore,
+      avatarMaxId: playerAvatarIcons.length,
     }, true);
 
     if(response.status === 200) {

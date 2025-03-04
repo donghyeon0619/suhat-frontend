@@ -195,7 +195,8 @@ const presentAlert = async (header: string, message: string) => {
       <!-- 질문 영역 -->
       <div class="question-container">
         <IonText class="question-number">
-          <IonLabel style="color: #13BD7E">{{currentQuestionIndex + 1}}</IonLabel>/15
+          <IonLabel style="color: #13BD7E">{{currentQuestionIndex + 1}}</IonLabel>
+          <IonLabel>/{{questions.length}}</IonLabel>
         </IonText>
         <IonLabel class="question-title">{{ questions[currentQuestionIndex].content}}</IonLabel>
       </div>
@@ -286,7 +287,8 @@ ion-buttons{
   margin-top: 5%;
   display: flex;
   flex-direction: column;
-  align-items: start;
+  align-items: center;
+  text-align: center;
   min-height: 12vh;
 }
 
@@ -298,10 +300,9 @@ ion-buttons{
 }
 
 .question-title {
-  margin-top: 3%;
+  margin-top: 5%;
   font-weight: 800;
   width: 100%;
-  text-align: start;
   font-size: 1.75rem;
   line-height: 1.3;
   color: #333D4B;
@@ -316,7 +317,7 @@ ion-buttons{
   width: 90%;
   left: 50%;
   transform: translateX(-50%);
-  margin-top: 3vh;
+  bottom: 1%;
 }
 
 ion-card{
@@ -404,7 +405,7 @@ ion-footer{
 
 
   .question-container {
-    margin-top: 3%; /* Reduce top margin for question container */
+    margin-top: 1%; /* Reduce top margin for question container */
   }
 
 
