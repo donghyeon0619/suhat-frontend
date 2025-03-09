@@ -377,8 +377,6 @@ onIonViewWillEnter(async () => {
 function onPauseHandler() {
   console.log("[GameWaiting] onPause -> disconnect SSE");
   eventSourceStore.disconnectByUser();
-  const response = get(`rooms/${roomId}/canRqInPause`);
-  console.log("api 응답:", response);
 }
 
 /**
