@@ -284,7 +284,6 @@ ion-buttons{
 }
 
 .question-container {
-  margin-top: 5%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -300,10 +299,10 @@ ion-buttons{
 }
 
 .question-title {
-  margin-top: 5%;
-  font-weight: 800;
+  margin-top: 3%;
+  font-weight: 700;
   width: 100%;
-  font-size: 1.75rem;
+  font-size: 1.625rem;
   line-height: 1.3;
   color: #333D4B;
 }

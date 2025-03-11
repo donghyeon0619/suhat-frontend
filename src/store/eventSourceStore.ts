@@ -49,6 +49,7 @@ export const useEventSourceStore = defineStore('eventSource', {
         // 서버로 부터 기본 메시지(onmessage)
         this.eventSource.onmessage = (event) => {
           const data = JSON.parse(event.data);
+          console.log(event.data);
           console.log(data.message);
         };
 

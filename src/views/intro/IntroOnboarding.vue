@@ -17,6 +17,8 @@ import {useAppStateStore} from "@/store/appState";
 const appStateStore = useAppStateStore();
 const router = useIonRouter();
 
+const isLoading = ref(false);
+
 // 슬라이드 데이터 선언
 const slides = ref([
   {
@@ -45,6 +47,9 @@ const onSlideChange = (swiper) => {
 };
 
 const completeOnboarding = async () => {
+  if (isLoading.value) return; // 이미 진행 중이면 무시
+  isLoading.value = true;
+
   appStateStore.markOnboardingComplete(); // 온보딩 완료
   router.replace('/home'); // 홈화면으로 이동
 }
