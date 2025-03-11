@@ -42,13 +42,6 @@ const puzzleImage = computed(() => {
  * 멀티 모드일 때만 랭킹 데이터를 파싱
  */
 const rankingData = ref<any[]>([]);
-if (route.query.rankingData) {
-  try {
-    rankingData.value = JSON.parse(route.query.rankingData as string);
-  } catch (e) {
-    console.error("랭킹 데이터 파싱 오류:", e);
-  }
-}
 
 const roomId = ref(route.query.roomId as string || "");
 
@@ -57,7 +50,7 @@ const roomId = ref(route.query.roomId as string || "");
  */
 const goHome = () =>{
   console.log("홈으로 이동")
-  router.push("/home");
+  router.replace("/home");
 }
 
 /**
@@ -90,10 +83,16 @@ const handleButtonClick = () => {
 
 onIonViewWillEnter(() => {
   const queryMode = route.query.mode as string | undefined;
-  if (queryMode) {
-    mode.value = queryMode;
-  } else  {
-    mode.value = 'solo';
+  mode.value = queryMode || 'solo';
+
+  if (route.query.rankingData) {
+    try {
+      // URL 인코딩된 rankingData를 먼저 디코딩
+      const decodedRankingData = decodeURIComponent(route.query.rankingData as string);
+      rankingData.value = JSON.parse(decodedRankingData);
+    } catch (e) {
+      console.error("랭킹 데이터 파싱 오류:", e);
+    }
   }
 })
 

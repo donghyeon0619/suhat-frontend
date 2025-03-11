@@ -346,7 +346,14 @@ const onPauseHandler = () => {
   console.log("앱이 퍼즈상태로 갈때 게임 종료 요청");
   // 앱이 퍼즈상태가 되면 게임 종료 요청을 보내게 함
   eventSourceStore.disconnectByUser();
-  deleteRequest(`rooms/${roomId}/players`, true);
+  try {
+    deleteRequest(`rooms/${roomId}/players`, true);
+  } catch (error: any) {
+    // 서버 응답에서 오류 메시지를 가져와 경고창 표시
+    const errorMessage = error?.message || "알 수 없는 오류가 발생했습니다.";
+    console.error('방 나가기 중:', errorMessage);
+
+  }
 }
 
 /**

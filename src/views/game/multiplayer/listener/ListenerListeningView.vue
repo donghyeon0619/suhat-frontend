@@ -364,7 +364,7 @@ ion-content::part(background) {
   padding-top: 2vh;
   padding-bottom: 2vh;
   text-align: center;
-  margin: 7% 1% 15% 1%;
+  margin: 7% 1% 13% 1%;
 }
 
 .timer-text{

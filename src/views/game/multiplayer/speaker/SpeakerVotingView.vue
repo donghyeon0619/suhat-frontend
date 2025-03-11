@@ -264,7 +264,7 @@ const goPuzzleCompletion = (rankingData: Array<RankingPlayer>) => {
   router.replace({
     path: "/puzzlecompletion",
     query: {
-      rankingData: JSON.stringify(rankingData),
+      rankingData: encodeURIComponent(JSON.stringify(rankingData)),
       mode: "multi",
       roomId: roomId,
     }

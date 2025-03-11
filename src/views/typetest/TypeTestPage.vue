@@ -202,7 +202,7 @@ const presentAlert = async (header: string, message: string) => {
       </div>
 
       <div class="option-container">
-        <img class="chat-bubble" :src="SpeechBubbleimg" alt="말풍선 이미지" style="width: 65%"/>
+        <img class="chat-bubble" :src="SpeechBubbleimg" alt="말풍선 이미지" style="width: 60%"/>
         <!-- 선택지 -->
         <IonCard>
           <IonCardContent>
@@ -313,7 +313,7 @@ ion-buttons{
 
 .option-container{
   position: absolute;
-  width: 90%;
+  width: 87%;
   left: 50%;
   transform: translateX(-50%);
   bottom: 1%;

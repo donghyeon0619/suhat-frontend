@@ -61,7 +61,9 @@ const route = useRoute();
 const score = route.query.score;
 
 const goHome = () => {
-  router.replace('/');
+  router.replace({
+    name: "HomePage",
+  });
 }
 
 </script>

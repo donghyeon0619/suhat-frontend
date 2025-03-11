@@ -433,7 +433,7 @@ onBeforeUnmount(() => {
             </IonCol>
           </IonRow>
       </IonCardContent>
-      <IonRow class="card-footer ">
+      <IonRow class="card-footer">
         <IonCol class= "timer-display">
           <IonLabel class="timer-text">남은 시간 {{ formattedTime }}</IonLabel>
         </IonCol>
@@ -611,7 +611,7 @@ ion-content::part(background) {
   padding-top: 2vh;
   padding-bottom: 2vh;
   text-align: center;
-  margin: 7% 1% 15% 1%;
+  margin: 7% 1% 13% 1%;
 }
 
 .timer-text{

@@ -3,7 +3,7 @@ import {EventSourcePolyfill} from "event-source-polyfill";
 import {showAlert} from "@/utils/showAlert";
 import router from "@/router";
 import {RoomStatus, useGameStore} from "@/store/gameStore";
-import {post} from "@/api/httpService";
+import {deleteRequest, post} from "@/api/httpService";
 
 const SSE_BASE_URL  = "https://suhat.kr/api/sse"
 
@@ -71,6 +71,13 @@ export const useEventSourceStore = defineStore('eventSource', {
               "서버 혹은 네트워크 문제로 게임 연결 종료", [
                 {
                   text: "확인", role: "confirm", handler: () => {
+                    try {
+                      deleteRequest(`rooms/${roomId}/players`, true);
+                    } catch (error: any) {
+                      // 서버 응답에서 오류 메시지를 가져와 경고창 표시
+                      const errorMessage = error?.message || "알 수 없는 오류가 발생했습니다.";
+                      console.error('방 나가기 중:', errorMessage);
+                    }
                     router.replace("/game/home");
                   }
                 }]
