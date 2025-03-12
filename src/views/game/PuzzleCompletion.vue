@@ -81,20 +81,33 @@ const handleButtonClick = () => {
   }
 };
 
-onIonViewWillEnter(() => {
+/**
+ * 쿼리 값 업데이트를 위한 함수
+ */
+const updateQueryData = () => {
   const queryMode = route.query.mode as string | undefined;
-  mode.value = queryMode || 'solo';
+  if (queryMode) {
+    mode.value = queryMode;
+  }
 
   if (route.query.rankingData) {
     try {
-      // URL 인코딩된 rankingData를 먼저 디코딩
+      // URL 인코딩된 rankingData 디코딩 후 JSON 파싱
       const decodedRankingData = decodeURIComponent(route.query.rankingData as string);
       rankingData.value = JSON.parse(decodedRankingData);
     } catch (e) {
       console.error("랭킹 데이터 파싱 오류:", e);
     }
   }
-})
+};
+
+/**
+ * 페이지가 진입할 때 업데이트
+ */
+onIonViewWillEnter(() => {
+  updateQueryData();
+});
+
 
 /**
  * 뒤로가기 로직 막기

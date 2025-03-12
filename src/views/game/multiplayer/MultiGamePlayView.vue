@@ -22,6 +22,7 @@ import {VoteResult} from "@/types/VoteResult";
 import {RoomStatus, useGameStore} from "@/store/gameStore";
 import {PluginListenerHandle} from "@capacitor/core";
 import {App} from "@capacitor/app";
+import {showAlert} from "@/utils/showAlert";
 
 // 라우트 파라미터
 const route = useRoute();
@@ -361,7 +362,15 @@ const onPauseHandler = () => {
  */
 const onResumeHandler = () => {
   gameStore.roomStatus = RoomStatus.CLOSED;
-  router.replace("/game/home");
+  showAlert(
+    "연결 끊김",
+    "게임 도중 네트워크 문제로 연결이 끊어져 방에서 나가게 되었습니다. 홈으로 이동합니다.", [
+      {
+        text: "확인", role: "confirm", handler: () => {
+          router.back();
+        }
+      }]
+  );
 }
 
 /**
@@ -515,7 +524,7 @@ const addEventListeners = async () => {
 /**
  * 이벤트 리스너들 제거
  */
-const removeEventListeners = () => {
+const removeEventListeners = async () => {
   eventSourceStore.removeEventListener('game-ended', gameEndedHandler);
   eventSourceStore.removeEventListener('player-order-assigned', playerOrderAssignedHandler);
   eventSourceStore.removeEventListener('round-2-started', roundTwoStartedHandler);
@@ -528,12 +537,12 @@ const removeEventListeners = () => {
   eventSourceStore.removeEventListener("not-in-room", notInRoomHandler);
 
   if (pauseHandle) {
-    pauseHandle.remove();
+    await pauseHandle.remove();
     pauseHandle = undefined;
   }
 
   if (resumeHandle) {
-    resumeHandle.remove();
+    await resumeHandle.remove();
     resumeHandle = undefined;
   }
 }
@@ -568,7 +577,7 @@ const leaveRoom = async () => {
 
 // 방나가기 함수
 const gameExit = async () => {
-  router.replace("/game/home");
+  router.back();
 }
 
 /**

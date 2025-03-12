@@ -200,7 +200,7 @@ const openSuccessModal = async (
   });
 
   await modal.present();
-  const toastMessage = currentPhase.value === "completed" ? "퍼즐 완성! 결과 화면으로 이동합니다." : "다음 차례로 넘어갑니다."
+  const toastMessage = currentPhase.value === "completed" ? "퍼즐 완성! 잠시 후 결과 화면으로 이동합니다." : "잠시 후 다음 차례로 넘어갑니다."
   await presentToast(toastMessage);
 
 
@@ -234,7 +234,7 @@ const openFailureModal = async (onConfirm?: () => void) => {
 
   // 모달 닫기와 상관 없이 3초후 다음 액션 실행
   setTimeout(() => {
-    console.log("모달 표시시간이 종료 되었습니다. 다음 액션 실행");;
+    console.log("모달 표시시간이 종료 되었습니다. 다음 액션 실행");
     if (onConfirm) {
       modal.dismiss();
       onConfirm();

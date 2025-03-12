@@ -131,9 +131,7 @@ const notInRoomHandler = (event: MessageEvent) => {
 
   presentToast(event.data);
   setTimeout(() => {
-    router.replace({
-      path: '/game/home'
-    })
+    router.back();
   }, 1500);
 }
 
@@ -347,24 +345,9 @@ onIonViewWillEnter(async () => {
 
     createBarcode(roomId);
 
-    // SSE 연결
+    // SSE 연결 및 sse 핸들러 등록
     connectToRoom();
-
-    // 그 외 이벤트 등록
-    eventSourceStore.addEventListener('connected', onConnectedHandler);
-    eventSourceStore.addEventListener('not-in-room', notInRoomHandler);
-    eventSourceStore.addEventListener('player-joined', playerJoinedHandler);
-    eventSourceStore.addEventListener('game-started', gameStartedHandler);
-    eventSourceStore.addEventListener('player-left', playerLeftHandler);
-    eventSourceStore.addEventListener('host-assigned', hostAssignedHandler);
-    eventSourceStore.addEventListener('host-changed', hostChangedHandler);
-    eventSourceStore.addEventListener('player-reconnected', playerReconnectedHandler);
-
-    // 앱이 백그라운드로 갈 때
-    pauseHandle = await App.addListener('pause', onPauseHandler);
-
-    // 앱이 포그라운드로 돌아올 때
-    resumeHandle = await App.addListener('resume', onResumeHandler);
+    await addEventListeners();
 
   } catch (error) {
     console.log('방 데이터를 가져오지 못했습니다: ', error);
@@ -389,13 +372,6 @@ async function onResumeHandler() {
     return;
   }
 
-  // 이미 연결이 살아 있는지 확인하는 코드
-  if (eventSourceStore.isConnected) {
-    return;
-  }
-
-  console.log("[GameWaiting] onResume -> reconnect SSE if needed");
-
   setTimeout(async () => {
     // 네트워크 상태 확인
     try {
@@ -410,7 +386,7 @@ async function onResumeHandler() {
     } catch (error) {
       console.error("[GameWaiting] resume 시 방 상태 갱신 실패:", error);
     }
-  }, 2000);
+  }, 500);
 }
 
 /**
@@ -475,12 +451,15 @@ const attemptReconnect = async () => {
       return;
     }
 
+    // sse 재연결 및 핸들러 재등록
+    connectToRoom();
+    await addEventListeners();
+
     if (response.roomStatus === "IN_GAME") {
       console.log("[GameWaiting] FETCH 응답: 게임이 이미 시작되었습니다.");
       gameStore.roomStatus = RoomStatus.IN_GAME;
       router.replace(`/multi/play/${roomId}`);
     } else {
-      connectToRoom(); // SSE 재연결
       console.log("[GameWaiting] FETCH 응답: 대기실 정보 업데이트");
       fetchDeTails(response);
     }
@@ -503,6 +482,29 @@ const attemptReconnect = async () => {
  */
 onIonViewWillLeave(() => {
   console.log('Leaving GameWaiting, cleaning up listeners');
+  removeEventListeners();
+  resetRoomState();
+})
+
+const addEventListeners = async () => {
+  // 그 외 이벤트 등록
+  eventSourceStore.addEventListener('connected', onConnectedHandler);
+  eventSourceStore.addEventListener('not-in-room', notInRoomHandler);
+  eventSourceStore.addEventListener('player-joined', playerJoinedHandler);
+  eventSourceStore.addEventListener('game-started', gameStartedHandler);
+  eventSourceStore.addEventListener('player-left', playerLeftHandler);
+  eventSourceStore.addEventListener('host-assigned', hostAssignedHandler);
+  eventSourceStore.addEventListener('host-changed', hostChangedHandler);
+  eventSourceStore.addEventListener('player-reconnected', playerReconnectedHandler);
+
+  // 앱이 백그라운드로 갈 때
+  pauseHandle = await App.addListener('pause', onPauseHandler);
+
+  // 앱이 포그라운드로 돌아올 때
+  resumeHandle = await App.addListener('resume', onResumeHandler);
+}
+
+const removeEventListeners = async () => {
   eventSourceStore.removeEventListener('connected', onConnectedHandler);
   eventSourceStore.removeEventListener('player-joined', playerJoinedHandler);
   eventSourceStore.removeEventListener('player-left', playerLeftHandler);
@@ -513,17 +515,15 @@ onIonViewWillLeave(() => {
   eventSourceStore.removeEventListener('not-in-room', notInRoomHandler);
 
   if (pauseHandle) {
-    pauseHandle.remove();
+    await pauseHandle.remove();
     pauseHandle = undefined;
   }
 
   if (resumeHandle) {
-    resumeHandle.remove();
+    await resumeHandle.remove();
     resumeHandle = undefined;
   }
-  resetRoomState();
-})
-
+}
 
 /**
  * 방 초기화 함수

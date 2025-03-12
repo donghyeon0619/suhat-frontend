@@ -67,7 +67,7 @@ export const useEventSourceStore = defineStore('eventSource', {
             this.stopPingInterval();
             useGameStore().roomStatus = RoomStatus.CLOSED;
             await showAlert(
-              "연결 에러",
+              "연결 종료",
               "서버 혹은 네트워크 문제로 게임 연결 종료", [
                 {
                   text: "확인", role: "confirm", handler: () => {

@@ -194,7 +194,7 @@ const handleEndSpeaking = async () => {
   if (hasEnded.value) return; // 이미 종료 처리되었으면 리턴
 
   if (!speakingStarted.value) {
-    await presentAlert("말하기가 아직 시작되지 않았습니다. 먼저 그림카드, 글자카드를 뒤집어서 말하기를 시작 후 종료를 시도하세요");
+    await presentAlert("말하기가 아직 시작되지 않았습니다. 먼저 그림카드, 글자카드를 뒤집어서 말하기를 시작 후 종료를 시도하세요.");
     return;
   }
 
@@ -229,7 +229,7 @@ watch(
  */
 const extendTime = async () => {
   if(!speakingStarted.value) {
-    await presentAlert("먼저 그림카드와 글자 카드를 눌러주세요");
+    await presentAlert("먼저 그림카드와 글자 카드를 눌러주세요.");
     return
   }
 

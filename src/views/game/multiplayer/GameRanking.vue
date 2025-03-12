@@ -241,7 +241,7 @@ ion-content::part(background) {
   flex-direction: column;
   align-items: center;
   position: relative;
-  margin-bottom: -3%;
+  margin-bottom: -1%;
 }
 
 .avatar {
@@ -259,7 +259,6 @@ ion-content::part(background) {
 .user-chip {
   --background: #FFFFFF;
   --color: transparent;
-  padding: 0 4vw 0 4vw;
   border-radius: 12px;
   min-width: 100%;
   justify-content: center;

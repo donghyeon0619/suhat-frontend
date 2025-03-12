@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Android 12(API 31) 이상에서만 적용되는 스타일 -->
+    <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
+        <!-- 여기서만 windowSplashScreenBackground를 추가로 지정 -->
+        <item name="android:background">@drawable/splash</item>
+        <item name="android:windowSplashScreenBackground">#FFFFFF</item>
+        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
+    </style>
+
+</resources>
