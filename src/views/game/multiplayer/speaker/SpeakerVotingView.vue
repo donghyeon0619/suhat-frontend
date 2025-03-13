@@ -5,7 +5,7 @@ import {
 } from "@ionic/vue";
 import PuzzleProgressChip from "@/components/game/PuzzleProgressChip.vue";
 import BaseButtonFooter from "@/components/common/BaseButtonFooter.vue";
-import {computed, inject, onMounted, onUnmounted, PropType, ref, watch} from "vue";
+import {computed, inject, onUnmounted, ref, watch} from "vue";
 import PlayerProfile from "@/components/game/multiplayer/PlayerProfile.vue";
 import ChatBubbleWithBorder from "@/components/common/ChatBubbleWithBorder.vue";
 import ReVoteDetails from "@/components/game/multiplayer/ReVoteDetails.vue";
@@ -17,7 +17,6 @@ import {GameState} from "@/types/GameState";
 import {Player, RankingPlayer} from "@/types/Player";
 import {VoteResult} from "@/types/VoteResult";
 import {RoomStatus, useGameStore} from "@/store/gameStore";
-import {useEventSourceStore} from "@/store/eventSourceStore";
 
 const props = defineProps<{
   gameState: GameState;

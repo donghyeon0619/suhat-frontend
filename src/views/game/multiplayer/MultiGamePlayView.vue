@@ -20,19 +20,13 @@ import GameExitHeader from "@/components/game/GameExitHeader.vue";
 import {AssignedCard} from "@/types/Card";
 import {VoteResult} from "@/types/VoteResult";
 import {RoomStatus, useGameStore} from "@/store/gameStore";
-import {PluginListenerHandle} from "@capacitor/core";
-import {App} from "@capacitor/app";
 import {showAlert} from "@/utils/showAlert";
+import {gameHooks} from "@/globals/gameHooks";
 
 // 라우트 파라미터
 const route = useRoute();
 const roomId = String(route.params.roomId);
 const router = useIonRouter();
-
-// capacitorApp 관련 변수
-let pauseHandle: PluginListenerHandle | undefined;
-let resumeHandle: PluginListenerHandle | undefined;
-
 
 // store 변수 선언
 const eventSourceStore = useEventSourceStore();
@@ -343,12 +337,12 @@ const voteResultHandler = (event: MessageEvent) => {
 /**
  * 앱이 pause 되었을 떄, 핸들러
  */
-const onPauseHandler = () => {
+const onPauseHandler = async () => {
   console.log("앱이 퍼즈상태로 갈때 게임 종료 요청");
   // 앱이 퍼즈상태가 되면 게임 종료 요청을 보내게 함
   eventSourceStore.disconnectByUser();
   try {
-    deleteRequest(`rooms/${roomId}/players`, true);
+    await deleteRequest(`rooms/${roomId}/players`, true);
   } catch (error: any) {
     // 서버 응답에서 오류 메시지를 가져와 경고창 표시
     const errorMessage = error?.message || "알 수 없는 오류가 발생했습니다.";
@@ -360,9 +354,9 @@ const onPauseHandler = () => {
 /**
  * 앱에 다시 접속했을 때 방에 나가졌으므로 홈으로 이동
  */
-const onResumeHandler = () => {
+const onResumeHandler = async () => {
   gameStore.roomStatus = RoomStatus.CLOSED;
-  showAlert(
+  await showAlert(
     "연결 끊김",
     "게임 도중 네트워크 문제로 연결이 끊어져 방에서 나가게 되었습니다. 홈으로 이동합니다.", [
       {
@@ -513,11 +507,13 @@ const addEventListeners = async () => {
   eventSourceStore.addEventListener("speaking-end", speakingEndHandler);
   eventSourceStore.addEventListener("vote-result", voteResultHandler);
 
-  // 앱이 백그라운드 갈때의 이벤트 리스너
-  pauseHandle = await App.addListener('pause', onPauseHandler);
-
-  // 앱이 포그라운드로 돌아올 때
-  resumeHandle = await App.addListener('resume', onResumeHandler);
+  // // 앱이 백그라운드 갈때의 이벤트 리스너
+  // pauseHandle = await App.addListener('pause', onPauseHandler);
+  //
+  // // 앱이 포그라운드로 돌아올 때
+  // resumeHandle = await App.addListener('resume', onResumeHandler);
+  gameHooks.onPauseHandler = onPauseHandler;
+  gameHooks.onResumeHandler = onResumeHandler;
 
 }
 
@@ -536,15 +532,18 @@ const removeEventListeners = async () => {
   eventSourceStore.removeEventListener("vote-result", voteResultHandler);
   eventSourceStore.removeEventListener("not-in-room", notInRoomHandler);
 
-  if (pauseHandle) {
-    await pauseHandle.remove();
-    pauseHandle = undefined;
-  }
+  gameHooks.onPauseHandler = undefined;
+  gameHooks.onResumeHandler = undefined;
 
-  if (resumeHandle) {
-    await resumeHandle.remove();
-    resumeHandle = undefined;
-  }
+  // if (pauseHandle) {
+  //   await pauseHandle.remove();
+  //   pauseHandle = undefined;
+  // }
+  //
+  // if (resumeHandle) {
+  //   await resumeHandle.remove();
+  //   resumeHandle = undefined;
+  // }
 }
 
 /**

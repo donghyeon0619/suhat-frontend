@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {IonPage, IonContent, IonText, IonFooter, modalController, useIonRouter} from "@ionic/vue";
+import {IonPage, IonContent, IonText, modalController, useIonRouter} from "@ionic/vue";
 import BackButtonHeader from "@/components/common/BackButtonHeader.vue";
 import PuzzleProgressChip from "@/components/game/PuzzleProgressChip.vue";
 import GameCardBg from "@/assets/img/game/bg-game-card.svg"
@@ -8,13 +8,12 @@ import PuzzleFailureModal from "@/components/game/PuzzleFailureModal.vue";
 import {enterAnimation, leaveAnimation} from "@/utils/puzzleModalAnimations";
 import {computed, nextTick, ref} from "vue";
 import BaseDoubleButtonFooter from "@/components/common/BaseDoubleButtonFooter.vue";
-import {smartphoneTexts, TextOption} from "@/data/smartphoneTexts";
-import {smartphonePicture, PictureOption} from "@/data/smartphonePicture";
+import {smartphoneTexts} from "@/data/smartphoneTexts";
+import {smartphonePicture} from "@/data/smartphonePicture";
 
 const currentPieces =ref(0);
 const maxPieces = ref(6);
 const router = useIonRouter();
-const isFlipped = ref(false);
 const isResetting = ref(false);
 const cardRefs = ref<HTMLElement[]>([]);
 const cards = ref([

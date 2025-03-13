@@ -17,9 +17,6 @@ import BaseDoubleButtonFooter from "@/components/common/BaseDoubleButtonFooter.v
 import IconRankingFirst from "@/assets/icons/game/icon-ranking-first.svg"
 import IconRankingSecond from "@/assets/icons/game/icon-ranking-second.svg"
 import IconRankingThird from "@/assets/icons/game/icon-ranking-third.svg"
-import IconRankingMan from "@/assets/icons/game/icon-ranking-man.png"
-import IconRankingWoman from "@/assets/icons/game/icon-ranking-woman.png"
-import IconRankingOther from "@/assets/icons/game/icon-ranking-other.png"
 import {useRoute} from "vue-router";
 import {RankingPlayer} from "@/types/Player";
 import {deleteRequest, post} from "@/api/httpService";

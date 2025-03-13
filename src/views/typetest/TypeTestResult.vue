@@ -14,7 +14,7 @@ import {
   IonCardHeader,
   IonLabel, useIonRouter,
 } from "@ionic/vue";
-import {useRoute} from "vue-router";
+import {onBeforeRouteLeave, useRoute} from "vue-router";
 
 import trophy from "@/assets/icons/common/icon-trophy.svg"
 import lock from "@/assets/icons/common/icon-lock.svg"
@@ -33,13 +33,6 @@ const description = route.query.description;
 const suggestion = route.query.suggestion;
 
 const goSummary = () => {
-  console.log("Navigating to TypeTestSummary with:", {
-    suhatTypeId,
-    name,
-    description,
-    suggestion,
-  });
-
   // 제출 처리 후 결과 페이지로 이동
   router.replace({
     name: "TypeTestSummary",
@@ -52,7 +45,14 @@ const goSummary = () => {
   });
 };
 
-
+onBeforeRouteLeave(async (to, from, next) =>{
+  //이동하는 경로가 설문조사일때, 뒤로가기 막기
+  if (to.name === 'TypeTestPage') {
+    next(false);
+  } else {
+    next();
+  }
+})
 </script>
 
 <template>

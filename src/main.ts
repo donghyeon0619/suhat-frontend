@@ -1,8 +1,8 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router';
-
 import { IonicVue } from '@ionic/vue';
+import {App as CapacitorApp} from '@capacitor/app';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/vue/css/core.css';
@@ -41,6 +41,9 @@ import './global.scss';
  */
 import {createPinia} from "pinia";
 import {useNetworkStore} from "@/store/network";
+import {RouteLocationNormalizedLoaded} from "vue-router";
+import {gameWaitingHooks} from "@/globals/gameWaitingHooks";
+import {gameHooks} from "@/globals/gameHooks";
 
 const pinia = createPinia(); // pinia 인스턴스 생성
 
@@ -59,3 +62,25 @@ router.isReady().then(async () => {
 
   app.mount('#app');
 });
+
+
+void CapacitorApp.addListener('pause', () => {
+  // 현재 라우트가 gameWaing인지 확인
+  const currentRoute = router.currentRoute.value as RouteLocationNormalizedLoaded
+  if (currentRoute.name === 'GameWaiting') {
+    gameWaitingHooks.onPauseHandler?.();
+  }
+  if (currentRoute.name === 'MultiGamePlay') {
+    gameHooks.onPauseHandler?.();
+  }
+})
+
+void CapacitorApp.addListener('resume', () => {
+  const currentRoute = router.currentRoute.value as RouteLocationNormalizedLoaded
+  if (currentRoute.name === 'GameWaiting') {
+    gameWaitingHooks.onResumeHandler?.();
+  }
+  if (currentRoute.name === 'MultiGamePlay') {
+    gameHooks.onResumeHandler?.();
+  }
+})

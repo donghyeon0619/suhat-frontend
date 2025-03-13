@@ -24,14 +24,11 @@ import {useEventSourceStore} from "@/store/eventSourceStore";
 import {useUserStore} from "@/store/user";
 import {RoomStatus, useGameStore} from "@/store/gameStore";
 import canStartSpeechBubbleImg from "@/assets/img/game/speech-bubble.svg"
-import { App } from "@capacitor/app"
-import {PluginListenerHandle} from "@capacitor/core";
 import { Network } from "@capacitor/network";
 import {showAlert} from "@/utils/showAlert";
+import {gameWaitingHooks} from "@/globals/gameWaitingHooks";
 
 // capacitorApp 관련 변수
-let pauseHandle: PluginListenerHandle | undefined;
-let resumeHandle: PluginListenerHandle | undefined;
 let networkCheckInterval: ReturnType<typeof setInterval> | null = null;
 let resumeAttemptCount = 0; // 재연결 시도횟수를 추적할 수 있음
 let isConnecting = false;
@@ -76,7 +73,6 @@ function onConnectedHandler(event: MessageEvent) {
   if (currentUserId !== null) {
     setPlayerReady(currentUserId);
   }
-
 }
 
 // 핸들러 함수 정의
@@ -357,7 +353,7 @@ onIonViewWillEnter(async () => {
 /**
  * 앱이 백그라운드로 갈떄 처리하는 핸들러
  */
-function onPauseHandler() {
+async function onPauseHandler()  {
   console.log("[GameWaiting] onPause -> disconnect SSE");
   eventSourceStore.disconnectByUser();
 }
@@ -372,21 +368,19 @@ async function onResumeHandler() {
     return;
   }
 
-  setTimeout(async () => {
-    // 네트워크 상태 확인
-    try {
-      const status = await Network.getStatus();
-      if (status.connected) {
-        console.log("[GameWaiting] network is connected, let's reconnect SSE");
-        await attemptReconnect();
-      } else {
-        // 네트워크 미연결이면 재시도 로직
-        scheduleNetworkRetry();
-      }
-    } catch (error) {
-      console.error("[GameWaiting] resume 시 방 상태 갱신 실패:", error);
+  // 네트워크 상태 확인
+  try {
+    const status = await Network.getStatus();
+    if (status.connected) {
+      console.log("[GameWaiting] network is connected, let's reconnect SSE");
+      await attemptReconnect();
+    } else {
+      // 네트워크 미연결이면 재시도 로직
+      scheduleNetworkRetry();
     }
-  }, 500);
+  } catch (error) {
+    console.error("[GameWaiting] resume 시 방 상태 갱신 실패:", error);
+  }
 }
 
 /**
@@ -407,9 +401,9 @@ function scheduleNetworkRetry() {
     try {
       const status = await Network.getStatus();
       if (status.connected) {
-        console.log("[GameWaiting] 네트워크 재연결 성공, 네트워크 체크 인터벌 삭제");
         clearInterval(networkCheckInterval!);
         networkCheckInterval = null;
+        await presentToast("네트워크 재연결 성공, 재연결 합니다..");
         await attemptReconnect();  //
       } else if (resumeAttemptCount > 5) {
         console.error("[GameWaiting] 네트워크 연결이 안되므로 오류 발생");
@@ -497,11 +491,8 @@ const addEventListeners = async () => {
   eventSourceStore.addEventListener('host-changed', hostChangedHandler);
   eventSourceStore.addEventListener('player-reconnected', playerReconnectedHandler);
 
-  // 앱이 백그라운드로 갈 때
-  pauseHandle = await App.addListener('pause', onPauseHandler);
-
-  // 앱이 포그라운드로 돌아올 때
-  resumeHandle = await App.addListener('resume', onResumeHandler);
+  gameWaitingHooks.onPauseHandler = onPauseHandler;
+  gameWaitingHooks.onResumeHandler = onResumeHandler;
 }
 
 const removeEventListeners = async () => {
@@ -514,15 +505,8 @@ const removeEventListeners = async () => {
   eventSourceStore.removeEventListener('player-reconnected', playerReconnectedHandler);
   eventSourceStore.removeEventListener('not-in-room', notInRoomHandler);
 
-  if (pauseHandle) {
-    await pauseHandle.remove();
-    pauseHandle = undefined;
-  }
-
-  if (resumeHandle) {
-    await resumeHandle.remove();
-    resumeHandle = undefined;
-  }
+  gameWaitingHooks.onPauseHandler = undefined;
+  gameWaitingHooks.onResumeHandler = undefined;
 }
 
 /**

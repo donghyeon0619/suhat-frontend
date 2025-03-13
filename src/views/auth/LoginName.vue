@@ -13,6 +13,7 @@ const isFocused = ref(false);
 // 이름 입력값 상태 관리
 const nameInput = ref(userStore.name || '');
 const isButtonDisabled = ref(true);
+const isError = ref(false); // 에러메시지 표시 여부
 const router = useIonRouter();
 
 // Handle focus event
@@ -33,6 +34,7 @@ const validateName = (name: string) => {
 
 // 입력값이 변경될 때마다 유효성을 체크하고 버튼 활성화 상태 변경
 watch(nameInput, (newValue) => {
+  isError.value = newValue.length > 6;
   isButtonDisabled.value = !validateName(newValue.trim()); // 유효하면 버튼 활성화, 아니면 비활성화
 });
 
@@ -59,17 +61,18 @@ const saveNameAndProceed = async () => {
 
       <!-- 입력 부분 -->
       <div class="input-wrapper">
-      <IonInput
-          v-model="nameInput"
-          type="text"
-          inputmode="text"
-          maxlength="6"
-          aria-label="name input"
-          placeholder="성함을 입력해주세요"
-          @ionFocus="handleFocus"
-          @ionBlur="handleBlur"
-          class="name-input"
-      ></IonInput>
+        <IonInput
+            v-model="nameInput"
+            type="text"
+            inputmode="text"
+            maxlength="6"
+            aria-label="name input"
+            placeholder="성함을 입력해주세요"
+            @ionFocus="handleFocus"
+            @ionBlur="handleBlur"
+            class="name-input"
+        />
+        <p v-if="isError" class="error-message">6글자까지만 입력 가능합니다.</p>
       </div>
     </IonContent>
     <LoginFooter :isButtonDisabled="isButtonDisabled" :onConfirm="saveNameAndProceed"/>
@@ -91,7 +94,6 @@ const saveNameAndProceed = async () => {
   line-height: 1.23;
 }
 
-
 .name-input{
   --color: #191F28;
   --padding-start: 2vh;
@@ -106,7 +108,9 @@ const saveNameAndProceed = async () => {
   border-radius: 12px;
 }
 
-.has-focus {
-  border: 1.4px solid #191F28 !important;
+.error-message {
+  color: red;
+  font-size: 0.875rem;
+  margin-top: 2vh;
 }
 </style>

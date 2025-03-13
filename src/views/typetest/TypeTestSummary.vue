@@ -16,7 +16,7 @@ import BulbIcon from "@/assets/icons/common/icon-bulb.svg"
 import WaveCard from "@/assets/img/typetest/bg-wave-card.svg"
 import VideoIcon from "@/assets/icons/typetest/icon-video.svg"
 import PhotoIcon from "@/assets/icons/typetest/icon-photo.svg"
-import {computed, onMounted} from "vue";
+import {computed} from "vue";
 import {useTypeTestStore} from "@/store/typeTest";
 
 // 이미지 경로

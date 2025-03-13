@@ -8,7 +8,6 @@ import LoginFinish from "@/views/auth/LoginFinish.vue";
 import LoginSchool from "@/views/auth/LoginSchool.vue";
 import GameHome from "@/views/game/GameHome.vue";
 import HomePage from "@/views/home/HomePage.vue";
-import TestView from "@/views/TestView.vue"
 import {validateSession} from "@/api/sessionService";
 import {useAppStateStore} from "@/store/appState";
 import {useNetworkStore} from "@/store/network";
@@ -162,11 +161,6 @@ const routes: Array<RouteRecordRaw> = [
     name: 'MultiGamePlay',
     component: () => import("@/views/game/multiplayer/MultiGamePlayView.vue"),
   },
-  {
-    path: '/test',
-    name: 'Test',
-    component: TestView
-  }
 ]
 
 const router = createRouter({

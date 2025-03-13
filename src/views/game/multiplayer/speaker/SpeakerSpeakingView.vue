@@ -11,10 +11,9 @@ import {
   IonLabel,
   IonIcon, IonThumbnail, modalController, toastController, alertController
 } from "@ionic/vue";
-import {computed, inject, nextTick, onBeforeUnmount, onMounted, Ref, ref, watch} from "vue";
+import {inject, onBeforeUnmount, Ref, ref, watch} from "vue";
 import MikeIcon from "@/assets/icons/game/icon-mike.svg"
 import GameCardBg from "@/assets/img/game/bg-game-card.svg";
-import testImg from "@/assets/img/game/img-test-phone.png";
 import {searchSharp} from "ionicons/icons";
 import FlagIcon from "@/assets/icons/home/icon-flag.svg"
 import TimerIcon from "@/components/game/multiplayer/TimerIcon.vue";
@@ -23,7 +22,7 @@ import HintModal from "@/components/game/multiplayer/HintModal.vue";
 import {smartphoneTexts} from "@/data/smartphoneTexts";
 import {post} from "@/api/httpService";
 import {useRoute} from "vue-router";
-import {AssignedCard, AssignedCardData, Card} from "@/types/Card";
+import {AssignedCard, Card} from "@/types/Card";
 import {smartphonePicture} from "@/data/smartphonePicture";
 import {Player} from "@/types/Player";
 

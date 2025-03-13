@@ -19,7 +19,7 @@ import MultiPuzzleImg from "@/assets/img/game/puzzle/img-multi-puzzle.png"
 import SuhatSign from "@/assets/img/common/img-suhat-sign.svg"
 import BaseButtonFooter from "@/components/common/BaseButtonFooter.vue";
 import {onBeforeRouteLeave, useRoute} from "vue-router";
-import {computed, ref, watch} from "vue";
+import {computed, ref} from "vue";
 
 const router = useIonRouter();
 const route = useRoute();
