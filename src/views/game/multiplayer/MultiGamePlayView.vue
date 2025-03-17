@@ -507,11 +507,6 @@ const addEventListeners = async () => {
   eventSourceStore.addEventListener("speaking-end", speakingEndHandler);
   eventSourceStore.addEventListener("vote-result", voteResultHandler);
 
-  // // 앱이 백그라운드 갈때의 이벤트 리스너
-  // pauseHandle = await App.addListener('pause', onPauseHandler);
-  //
-  // // 앱이 포그라운드로 돌아올 때
-  // resumeHandle = await App.addListener('resume', onResumeHandler);
   gameHooks.onPauseHandler = onPauseHandler;
   gameHooks.onResumeHandler = onResumeHandler;
 
@@ -534,16 +529,6 @@ const removeEventListeners = async () => {
 
   gameHooks.onPauseHandler = undefined;
   gameHooks.onResumeHandler = undefined;
-
-  // if (pauseHandle) {
-  //   await pauseHandle.remove();
-  //   pauseHandle = undefined;
-  // }
-  //
-  // if (resumeHandle) {
-  //   await resumeHandle.remove();
-  //   resumeHandle = undefined;
-  // }
 }
 
 /**
@@ -583,6 +568,15 @@ const gameExit = async () => {
  * 라우팅전 네비게이션 가드 함수
  */
 onBeforeRouteLeave(async (to, from, next) => {
+
+  if (to.name === 'PuzzleCompletion'){
+    try {
+      eventSourceStore.disconnectByUser();
+      await deleteRequest(`sse/${roomId}/players`);
+    } catch (error) {
+      console.error('플레이어 삭제 요청 중 에러 발생', error);
+    }
+  }
 
   // 게임 나가기 중일 때 바로 진행
   if (isLeaving.value) {

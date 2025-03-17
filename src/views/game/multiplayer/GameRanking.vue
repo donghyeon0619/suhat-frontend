@@ -35,8 +35,6 @@ interface UserRanking {
   rank: number;
 }
 
-const eventSourceStore = useEventSourceStore();
-
 // 라우트에서 전달받은 데이터
 const route = useRoute();
 const router = useIonRouter();
@@ -71,8 +69,6 @@ const getRankAnimationClass = (rank: number) => `rank-${rank}`
 
 const goRetry = async () => {
   try{
-
-    eventSourceStore.disconnectByUser();
     const response = await post(`games/${roomId}/retry`, null, true);
 
     if (response.status == "200") {
@@ -107,8 +103,6 @@ const goRetry = async () => {
 
 const goHome = async () => {
   try{
-
-    eventSourceStore.disconnectByUser();
     const response = await deleteRequest(`rooms/${roomId}/players`, true);
 
     if (response.status == "200") {
