@@ -3,69 +3,46 @@ import LoginHeader from "@/components/common/BackButtonHeader.vue";
 import {
   IonPage,
   IonContent,
-  IonInput,
   IonText,
-  IonLabel,
-  IonIcon,
-  modalController,
+  IonRadioGroup,
+  IonItem,
+  IonRadio,
   useIonRouter,
 } from "@ionic/vue";
-import SchoolSearchModal from "@/components/auth/SchoolSearchModal.vue";
 import LoginFooter from "@/views/auth/components/LoginFooter.vue";
-import {computed, ref, watch} from "vue";
-import {closeCircle, searchSharp} from "ionicons/icons";
-import {signup} from "@/api/authService";
+import { ref, watch} from "vue";
 import {useUserStore} from "@/store/user";
+import {signup} from "@/api/authService";
 
 // 스토어 변수 선언
 const userStore = useUserStore();
 
-// 학교 이름 및 상세주소 관리
-const schoolName = ref(userStore.school || '');
-const isButtonDisabled = ref(true);
-const isModalOpen = ref(false);
-
-// API 요청 중인 상태를 관리하는 변수
-const isSubmitting = ref(false);
-
-// 최종 버튼 활성화 상태: 학교명이 유효해야 하고, API 요청 중이 아닐때만 활성화
-const finalButtonDisabled =  computed(() => {
-  return isButtonDisabled.value || isSubmitting.value;
-})
-
+// 성별 선택 관리
+const selectedSchoolType= ref<number|null>(userStore.schoolType ?? null);
+//버튼 비활성화 상태
+const isButtonDisabled = ref(selectedSchoolType.value === null);
 // 라우터 변수 정의
 const router = useIonRouter();
 
-const openModal = async () => {
-  if(isModalOpen.value) return;
-  isModalOpen.value = true;
+// API 요청중인 상태를 관리하는 변수
+const isSubmitting = ref(false);
 
-  const modal = await modalController.create({
-    component: SchoolSearchModal
-  });
+// 학교타입이 선택되었는지에 따라 버튼 활성화
+watch(selectedSchoolType,(newValue) => {
+  isButtonDisabled.value = newValue == null; // 유효하면 버튼 활성화, 아니면 비활성화
+});
 
-  await modal.present();
-
-  const {data, role} = await modal.onWillDismiss();
-  isModalOpen.value = false;
-
-  if(role === 'confirm') {
-    schoolName.value = `${data}`;
-    validateForm();
-  }
-};
-
-// 버튼 활성화/비활성화 관리
-const validateForm = () =>{
-  isButtonDisabled.value = schoolName.value === '';
-};
+// 선택된 학교타입 값을 다루는 이벤트 함수 함수
+const handleSelectionChange= (event: any) =>{
+  selectedSchoolType.value = event.detail.value; // 선택 취소 및 변경 시 selectedSchooltype값 변경
+}
 
 // 학교를 저장하고 loginFinish로 이동
 const saveSchoolAndFinish = async () => {
   // 이미 요청 진행중인지 확인
   if (isSubmitting.value) return;
   isSubmitting.value = true;
-  userStore.setSchool(schoolName.value);
+  userStore.setSchoolType(selectedSchoolType.value ?? 0);
 
   try {
     const response = await signup();
@@ -85,11 +62,6 @@ const saveSchoolAndFinish = async () => {
     isSubmitting.value = false;
   }
 }
-
-// 학교가 선택되었는지에 따라 버튼 활성화
-watch(schoolName,(newValue) => {
-  isButtonDisabled.value = newValue.trim() === ''; // 유효하면 버튼 활성화, 아니면 비활성화
-});
 </script>
 
 <template>
@@ -98,33 +70,26 @@ watch(schoolName,(newValue) => {
     <IonContent class="ion-padding" scroll-y="false">
       <div class="title">
         <ion-text class="title-text">
-          다니고 있는 학교를
+          학년을
           <br>
-          알려주세요
+          선택해주세요
         </ion-text>
       </div>
       <div class="input-wrapper">
-        <!-- 재학중인 학교 -->
-        <div class="section-wrapper">
-          <ion-label class="section-title">재학 중인 학교</ion-label>
-            <ion-input
-              v-model="schoolName"
-              type="text"
-              maxlength="20"
-              aria-label="schoolName input"
-              placeholder="학교 이름, 지번 또는 도로명 검색"
-              class="section-input"
-              readonly
-              @click="openModal"
-            >
-              <!-- Icon at the start -->
-              <ion-icon class="search-icon" slot="start" :icon="searchSharp" aria-hidden="true"></ion-icon>
-              <ion-icon v-if="schoolName" class="close-icon" slot="end" :icon="closeCircle" aria-hidden="true" style="font-size: 1.2rem; color:#626A75"></ion-icon>
-            </ion-input>
-      </div>
+        <ion-radio-group v-model="selectedSchoolType" allow-empty-selection="true" @ionChange=handleSelectionChange>
+          <ion-item :style="{'--border-color': selectedSchoolType == 0 ? '#13BD7E' : '#EBECEE' }" lines="none">
+            <ion-radio value="0" justify="space-between">초등학교 1 ~ 3학년</ion-radio>
+          </ion-item>
+          <ion-item :style="{'--border-color': selectedSchoolType == 1 ? '#13BD7E' : '#EBECEE' }" lines="none">
+            <ion-radio value="1" justify="space-between">초등학교 4 ~ 6학년</ion-radio>
+          </ion-item>
+          <ion-item :style="{'--border-color': selectedSchoolType == 2 ? '#13BD7E' : '#EBECEE' }" lines="none">
+            <ion-radio value="2" justify="space-between">중학교</ion-radio>
+          </ion-item>
+        </ion-radio-group>
       </div>
     </IonContent>
-    <LoginFooter :isButtonDisabled="finalButtonDisabled" :onConfirm="saveSchoolAndFinish"/>
+    <LoginFooter :isButtonDisabled="isButtonDisabled" :onConfirm="saveSchoolAndFinish"/>
   </IonPage>
 </template>
 
@@ -143,40 +108,58 @@ watch(schoolName,(newValue) => {
   line-height: 1.23;
 }
 
-.section-wrapper{
-  margin-bottom: 3vh ;
+ion-radio::part(container) {
+  border-color: transparent;
 }
 
-.section-title{
-  font-size: 1rem;
-  line-height: 1.25;
-  font-weight: 600;
-  color: #191F28;
+ion-radio::part(mark) {
+  background: none;
+  border-radius: 0;
 }
 
-.section-input{
-  margin-top: 2vh;
-  --color: #191F28;
-  --padding-start: 2vh;
-  --padding-end: 2vh;
-  --padding-top: 2vh;
-  --padding-bottom: 2vh;
+ion-radio.radio-checked::part(container) {
+  background: transparent;
+  border-color: transparent;
+}
+
+ion-radio.radio-checked::part(mark) {
+  width: 2vw;
+  height: 1.5vh;
+  border-width: 0 2px 2px 0;
+  border-style: solid;
+  border-color: #13BD7E;
+  transform: rotate(45deg);
+}
+
+/* 기본 상태의 스타일 */
+ion-item {
+  --border-color: #EBECEE;
+  border-color: #EBECEE;
+  --border-style: solid;
   --border-width: 2px;
-  --border-style:solid;
-  border: 1.4px solid #EBECEE;
-  --placeholder-color: #A3A9B0;
-  --highlight-color-focused: tranparent;
-  border-radius: 12px;
+  margin-bottom: 3vh;
+  --border-radius: 12px;
+  --padding-top: 0.3vh;
+  --padding-bottom: 0.3vh;
 }
 
-.search-icon{
-  font-size: 1.2rem;
-  margin-right: 5%;
+ion-item[data-selected="true"] {
+  --border-color: #13BD7E; /* Selected border color */
+  border-color: #13BD7E; /* Directly set border color as well */
 }
 
-.close-icon{
-  font-size: 1.2rem;
-  color:#626A75;
+
+ion-radio::part(label) {
+  color: #A3A9B0; /* 기본 글씨 색상 */
+  font-size: 1rem;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+
+ion-radio.radio-checked::part(label) {
+  color: #13BD7E !important; /* 선택된 상태의 글씨 색상 */
+  font-weight: 500;
 }
 
 </style>

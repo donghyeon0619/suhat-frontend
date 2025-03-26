@@ -4,18 +4,7 @@
 import {post} from "@/api/httpService";
 import {useUserStore} from "@/store/user";
 import {toRaw} from "vue";
-import {CapacitorCookies} from "@capacitor/core";
-import {getJSessionId, setJSessionId} from "@/api/sessionService";
-
-interface CookieOptions {
-  value: string;
-  path?: string;
-  domain?: string;
-  secure?: boolean;
-  httpOnly?: boolean;
-  sameSite?: 'Strict' | 'Lax' | 'None';
-  expires?: string;
-}
+import {setJSessionId} from "@/api/sessionService";
 
 export async function signup(){
   const userStore = useUserStore();

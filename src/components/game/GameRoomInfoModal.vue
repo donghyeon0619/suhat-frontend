@@ -15,7 +15,6 @@ import {useUserStore} from "@/store/user";
 import {useSurveyStore} from "@/store/survey";
 import TagIcon from "@/assets/icons/game/tag-icon.svg"
 import HumanIcon from "@/assets/icons/common/singleplay-icon.svg"
-import {playerAvatarIcons} from "@/data/playerAvatarIcon";
 const props = defineProps({
   roomId: {
     type: String,
@@ -42,7 +41,6 @@ async function enterGameRoom() {
     const response = await post(`rooms/${props.roomId}/players`, {
       userInfo: userStore.userInfo,
       score: surveyStore.latestScore,
-      avatarMaxId: playerAvatarIcons.length,
     });
 
     console.log("response: " + response);
