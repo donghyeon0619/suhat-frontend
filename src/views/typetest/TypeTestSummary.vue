@@ -29,15 +29,15 @@ import imgScrollingMaster from "@/assets/img/typetest/suhatType/img-scrolling-ma
 import imgThumbWarrior from "@/assets/img/typetest/suhatType/img-thumb-warrior.png";
 
 const imagesMap: Record<string, string> = {
-  "1": imgInfluenzaEnthusiast,
+  "1": imgDigitalMaestro,
   "2": imgScrollingMaster,
-  "3": imgDigitalMaestro,
-  "4": imgAutoplayAddict,
+  "3": imgInfluenzaEnthusiast,
+  "4": imgDigitalMaestro,
   "5": imgDopamineLover,
-  "6": imgDigitalMaestro,
-  "7": imgDigitalGladiator,
+  "6": imgAutoplayAddict,
+  "7": imgDigitalMaestro,
   "8": imgThumbWarrior,
-  "9": imgDigitalMaestro,
+  "9": imgDigitalGladiator,
 };
 
 const imageSrc = computed(() => {
