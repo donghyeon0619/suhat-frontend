@@ -2,7 +2,7 @@
 import {modalController,IonLabel, IonButton, IonIcon, IonText, } from "@ionic/vue";
 import {search} from "ionicons/icons";
 import GameCardBg from "@/assets/img/game/bg-game-card.svg";
-import HintPictureImg from "@/assets/img/game/picture/img-picture-card-3.png"
+import HintPictureImg from "@/assets/img/game/multi/picture/img-picture-card-3.png"
 
 const closeModal = () => modalController.dismiss();
 

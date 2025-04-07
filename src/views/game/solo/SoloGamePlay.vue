@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {IonPage, IonContent, IonText, modalController, useIonRouter} from "@ionic/vue";
+import {IonPage, IonContent, IonText, modalController, useIonRouter, onIonViewWillEnter} from "@ionic/vue";
 import BackButtonHeader from "@/components/common/BackButtonHeader.vue";
 import PuzzleProgressChip from "@/components/game/PuzzleProgressChip.vue";
 import GameCardBg from "@/assets/img/game/bg-game-card.svg"
@@ -8,38 +8,59 @@ import PuzzleFailureModal from "@/components/game/PuzzleFailureModal.vue";
 import {enterAnimation, leaveAnimation} from "@/utils/puzzleModalAnimations";
 import {computed, nextTick, ref} from "vue";
 import BaseDoubleButtonFooter from "@/components/common/BaseDoubleButtonFooter.vue";
-import {smartphoneTexts} from "@/data/smartphoneTexts";
-import {smartphonePicture} from "@/data/smartphonePicture";
+import {soloSmartphoneTexts} from "@/data/soloSmartphoneTexts";
+import {soloSmartphonePictures} from "@/data/soloSmartphonePictures";
+import {soloTextPictureMatchingMap} from "@/data/soloTextPictureMatchingMap";
+
+interface CardState {
+  id: number;
+  type: "text" | "picture";
+  isFlipped: boolean;
+  textId: number | null;    // 어떤 텍스트를 뽑았는지
+  pictureId: number | null; // 어떤 그림을 뽑았는지
+  content: string;          // 화면 표시용 (텍스트 or 그림 URL)
+}
+
+// 아직 매칭이 성공되지 않은 텍스트 id 목록
+const remainingTextIds = ref<number[]>(soloSmartphoneTexts.map(t => t.id));
+// 현재 턴에서 "비동의로"로 블랙리스트에 들어간 그림 id들
+const currentTurnPictureBlacklist = ref<Set<number>>(new Set());
 
 const currentPieces =ref(0);
 const maxPieces = ref(6);
 const router = useIonRouter();
 const isResetting = ref(false);
 const cardRefs = ref<HTMLElement[]>([]);
-const cards = ref([
-  { id: 1, isFlipped: false, type: 'text', content: ''},
-  { id: 2, isFlipped: false, type: 'image', content: ''},
-])
 
+const cards = ref<CardState[]>([
+  {id: 1, isFlipped: false, type: 'text', textId: null, pictureId: null, content: ''},
+  {id: 2, isFlipped: false, type: 'picture', textId: null, pictureId: null, content: ''},
+]);
 
 /**
- * 카드의 랜덤 데이터를 설정하는 함수
+ * 글자카드 랜덤 부여함수
+ * "남은 텍스트 ID"중 하나를 랜덤으로 뽑는 함수
  */
-const setRandomCardContent = (card: any) =>{
-  if (card.type ==='text'){
-    // 스마트폰 텍스트 옵션 중 무작위로 선택
-    const randomIndex = Math.floor(Math.random() * smartphoneTexts.length);
-    card.content = smartphoneTexts[randomIndex].text;
-  } else if (card.type === 'image'){
-    const randomIndex = Math.floor(Math.random() * smartphonePicture.length);
-    card.content = smartphonePicture[randomIndex].url;
-  }
+const pickRandomTextCard = () => {
+  console.log("test3");
+  if (remainingTextIds.value.length === 0) return null;
+  const rIndex = Math.floor(Math.random() * remainingTextIds.value.length);
+  const chosenTextId = remainingTextIds.value[rIndex];
+  const data = soloSmartphoneTexts.find(t => t.id === chosenTextId);
+  if (!data) return null;
+  return {textId: data.id, text: data.text};
 }
 
 /**
- * 카드 초기화
+ * 그림카드 랜덤 부여 함수
+ * 블랙리스트에 포함된 pid를 제외한 그림카드를 부여함
  */
-cards.value.forEach(setRandomCardContent);
+const pickRandomPictureCard = () => {
+  const availableCard = soloSmartphonePictures.filter(pic => !currentTurnPictureBlacklist.value.has(pic.id));
+  if (availableCard.length === 0) return null;
+  const rIndex = Math.floor(Math.random() * availableCard.length);
+  return availableCard[rIndex];
+}
 
 /**
  * 모든 카드가 뒤집혔는지 여부를 확인하는 computed
@@ -52,25 +73,52 @@ const allCardsFlipped = computed(() => {
  * 카드 뒤집기 함수
  */
 const toggleFlip = (id: number) => {
+  console.log("test1");
   if (isResetting.value) return; // 리셋 중에는 클릭 방지
-
   const card = cards.value.find(c => c.id === id);
-  if(card && !card.isFlipped){
-    card.isFlipped = true;
-    setRandomCardContent(card);
+
+  if(!card || card.isFlipped) return;
+  card.isFlipped = true;
+
+  if (card.type === "text") {
+    console.log("test2");
+    const chosen = pickRandomTextCard();
+    if (!chosen) {
+      card.content = "모든 글자카드를 다 사용했습니다."
+      return;
+    }
+    card.textId = chosen.textId;
+    card.pictureId = null;
+    card.content = chosen.text;
+  } else {
+    const chosen = pickRandomPictureCard();
+    if (!chosen) {
+      card.content = "사용가능한 그림카드가 없습니다."
+      return;
+    }
+    card.textId = null;
+    card.pictureId = chosen.id;
+    card.content = chosen.url;
   }
 }
 
 /**
  * 카드 상태 초기화 함수
  */
-const resetCards = () => {
+const resetCards = (isInitial = false) => {
   isResetting.value = true; // 리셋 시작
 
   // 모든 카드에 대해 리셋 애니메이션 적용
   cards.value.forEach(card => {
     card.isFlipped = false; // 뒷면으로 초기화
   });
+  currentTurnPictureBlacklist.value.clear();
+
+  // 만약 초기 리셋일 경우
+  if(isInitial) {
+    isResetting.value = false;
+    return;
+  }
 
   // 애니메이션 완료 이벤트 등록
   nextTick(() => {
@@ -85,6 +133,87 @@ const resetCards = () => {
     })
   })
 };
+
+/**
+ * 비동의 버튼 눌렀을 때 핸들러 함수
+ */
+const onDisagree = () => {
+  const pictureCard = cards.value.find(c => c.type === "picture");
+  if (!pictureCard) return;
+
+  // 이미 뒤집힌 상태이면 블랙리스트 추가
+  if (pictureCard.isFlipped && pictureCard.pictureId != null) {
+    currentTurnPictureBlacklist.value.add(pictureCard.pictureId);
+  }
+
+  // double flip으로 재할당
+  rotateCard360(pictureCard);
+}
+
+/**
+ * 그림카드를 한 바퀴(360도) 돌리면서 새로운 그림을 할당하는 함수
+ * - 첫 180도(앞->뒤) transition이 끝난 시점에 content 교체
+ * - 다시 180->360도(뒤->앞) flip
+ */
+const rotateCard360 = (card: CardState) => {
+  if (!card.isFlipped) {
+    // 혹시 카드가 뒷면이면 => 먼저 앞면으로 flip
+    card.isFlipped = true;
+  }
+
+  // 2-1) 우선 "앞면 -> 뒷면"으로 뒤집는다 (180도)
+  card.isFlipped = false;
+
+  // 2-2) transition 끝나면 => 새 그림 뽑기 => 다시 앞면
+  nextTick(() => {
+    const cardEl = cardRefs.value[card.id - 1];
+    if (!cardEl) return;
+
+    // '앞면->뒷면' transition 끝난 시점
+    cardEl.addEventListener("transitionend", () => {
+      // 새로운 그림카드 할당
+      const chosen = pickRandomPictureCard();
+      if (!chosen) {
+        card.content = "사용가능한 그림카드가 없습니다.";
+        // 굳이 다시 flip할지 여부는 상황에 따라 결정
+      } else {
+        card.pictureId = chosen.id;
+        card.textId = null;
+        card.content = chosen.url;
+      }
+
+      // 이제 "뒷면->앞면"으로 뒤집기(180->360)
+      card.isFlipped = true;
+
+    }, { once: true });
+  });
+};
+
+/**
+ * 동의 버튼 눌렀을떄 핸들러 함수
+ */
+const onAgree = () => {
+  const textCard = cards.value.find(c => c.type === "text");
+  const pictureCard = cards.value.find(c => c.type === "picture");
+  if (!textCard || !pictureCard) return;
+  if (!textCard.isFlipped || !pictureCard.isFlipped) return;
+
+  const tId = textCard.textId;
+  const pId = pictureCard.pictureId;
+  if (tId == null || pId == null) return;
+
+  // soloMatchingMap[tId]에 pId가 포함되어있으면 매칭 성공
+  const isMatched = soloTextPictureMatchingMap[tId]?.includes(pId) ?? false;
+
+  if (isMatched) {
+    // 매칭된 글자카드 ID는 다시 못 쓰도록 제거
+    remainingTextIds.value = remainingTextIds.value.filter(id => id !== tId);
+    openSuccessModal();
+  } else {
+    openFailureModal();
+  }
+
+}
 
 /**
  *  모든 퍼즐이 모이면 퍼즐 완성화면으로 라우팅
@@ -139,6 +268,16 @@ const openFailureModal = async () => {
   resetCards(); // 카드 상태 초기화
 };
 
+/**
+ * 페이지 진입 함수
+ */
+onIonViewWillEnter(() => {
+  // 페이지 진입할 때마다 재초기화
+  remainingTextIds.value = soloSmartphoneTexts.map(t => t.id);
+  currentPieces.value = 0;  // 완전히 새 게임이면 퍼즐도 0으로
+  resetCards(true);            // 필요하면 카드도 뒤집힘 상태로 초기화
+});
+
 </script>
 <template>
 <IonPage>
@@ -166,6 +305,7 @@ const openFailureModal = async () => {
         </div>
 
         <!-- 앞면 (뒤집힌 상태) -->
+        <!-- 글자 카드--->
         <div
           v-if="card.type === 'text'"
           class="card-front text-card"
@@ -177,7 +317,7 @@ const openFailureModal = async () => {
           >
           </IonLabel>
         </div>
-
+        <!-- 그림카드 -->
         <div
           v-else
           class="card-front face-card"
@@ -189,14 +329,14 @@ const openFailureModal = async () => {
       </div>
     </div>
     <div class="question-box">
-      <IonText class="question-box-text"> 이야기를 들은 당신의 생각은?</IonText>
+      <IonText class="question-box-text">당신의 생각은?</IonText>
     </div>
   </IonContent>
   <BaseDoubleButtonFooter
     :isButton1Disabled="!allCardsFlipped"
     :isButton2Disabled="!allCardsFlipped"
-    @button1Click="openFailureModal"
-    @button2Click="openSuccessModal"
+    @button1Click="onDisagree"
+    @button2Click="onAgree"
     />
 </IonPage>
 </template>

@@ -3,7 +3,7 @@ export interface TextOption {
   text: string;
 }
 
-export const smartphoneTexts: TextOption[] = [
+export const multiSmartphoneTexts: TextOption[] = [
   { id: 1, text: '스마트폰이 없을 때 중요한 전화나 메세지가 올 것 같은 생각이 듦' },
   { id: 2, text: '스마트폰 요금, 액세서리 비용이 많이 듦' },
   { id: 3, text: '벨소리가 들리거나 진동이 울리는 착각을 자주함' },

@@ -4,8 +4,8 @@ import {inject, onBeforeUnmount, Ref, ref, watch} from "vue";
 import MikeIcon from "@/assets/icons/game/icon-mike.svg"
 import GameCardBg from "@/assets/img/game/bg-game-card.svg";
 import {AssignedCard, Card} from "@/types/Card";
-import {smartphoneTexts} from "@/data/smartphoneTexts";
-import {smartphonePicture} from "@/data/smartphonePicture";
+import {multiSmartphoneTexts} from "@/data/multiSmartphoneTexts";
+import {multiSmartphonePicture} from "@/data/multiSmartphonePicture";
 import {Player} from "@/types/Player";
 
 // props 선언
@@ -49,10 +49,10 @@ watch(
 
         // 카드 타입에 따라 데이터 검색
         if (newCardData.cardType === "text") {
-          const textData = smartphoneTexts.find((item) => item.id === newCardData.cardId);
+          const textData = multiSmartphoneTexts.find((item) => item.id === newCardData.cardId);
           card.content = textData?.text || "데이터 없음";
         } else if (newCardData.cardType === "picture") {
-          const pictureData = smartphonePicture.find((item) => item.id === newCardData.cardId);
+          const pictureData = multiSmartphonePicture.find((item) => item.id === newCardData.cardId);
           card.content = pictureData?.url || "데이터 없음";
         }
       } else {

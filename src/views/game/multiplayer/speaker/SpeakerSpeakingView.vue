@@ -19,11 +19,11 @@ import FlagIcon from "@/assets/icons/home/icon-flag.svg"
 import TimerIcon from "@/components/game/multiplayer/TimerIcon.vue";
 import ChatBubbleModal from "@/components/common/ChatBubbleModal.vue";
 import HintModal from "@/components/game/multiplayer/HintModal.vue";
-import {smartphoneTexts} from "@/data/smartphoneTexts";
+import {multiSmartphoneTexts} from "@/data/multiSmartphoneTexts";
 import {post} from "@/api/httpService";
 import {useRoute} from "vue-router";
 import {AssignedCard, Card} from "@/types/Card";
-import {smartphonePicture} from "@/data/smartphonePicture";
+import {multiSmartphonePicture} from "@/data/multiSmartphonePicture";
 import {Player} from "@/types/Player";
 
 // props 선언
@@ -68,7 +68,7 @@ const sendCardClickRequest = async (id:number) => {
 
   // 카드 타입에 따라 데이터 길이 계산
   const cardType = card.type;
-  const dataCount = cardType === "text" ? smartphoneTexts.length : smartphonePicture.length;
+  const dataCount = cardType === "text" ? multiSmartphoneTexts.length : multiSmartphonePicture.length;
 
   try {
     const response = await post(`games/${roomId}/card/${cardType}?maxId=${dataCount}`);
@@ -96,10 +96,10 @@ watch(
 
         // 카드 타입에 따라 데이터 검색
         if (newCardData.cardType === "text") {
-          const textData = smartphoneTexts.find((item) => item.id === newCardData.cardId);
+          const textData = multiSmartphoneTexts.find((item) => item.id === newCardData.cardId);
           card.content = textData?.text || "데이터 없음";
         } else if (newCardData.cardType === "picture") {
-          const pictureData = smartphonePicture.find((item) => item.id === newCardData.cardId);
+          const pictureData = multiSmartphonePicture.find((item) => item.id === newCardData.cardId);
           card.content = pictureData?.url || "데이터 없음";
         }
       } else {
