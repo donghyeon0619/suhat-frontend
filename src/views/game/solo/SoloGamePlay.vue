@@ -42,7 +42,6 @@ const cards = ref<CardState[]>([
  * "남은 텍스트 ID"중 하나를 랜덤으로 뽑는 함수
  */
 const pickRandomTextCard = () => {
-  console.log("test3");
   if (remainingTextIds.value.length === 0) return null;
   const rIndex = Math.floor(Math.random() * remainingTextIds.value.length);
   const chosenTextId = remainingTextIds.value[rIndex];
@@ -56,8 +55,17 @@ const pickRandomTextCard = () => {
  * 블랙리스트에 포함된 pid를 제외한 그림카드를 부여함
  */
 const pickRandomPictureCard = () => {
+  //먼저 현재 블랙리스트가 전체 그림카드를 커버하는지 확인
+  const allPictureIds = soloSmartphonePictures.map(p => p.id);
+  const isAllBlocked = allPictureIds.every(id => currentTurnPictureBlacklist.value.has(id));
+  if (isAllBlocked) {
+    currentTurnPictureBlacklist.value.clear();
+  }
+
+  // 블렉리스트를 제외한 그림카드
   const availableCard = soloSmartphonePictures.filter(pic => !currentTurnPictureBlacklist.value.has(pic.id));
   if (availableCard.length === 0) return null;
+
   const rIndex = Math.floor(Math.random() * availableCard.length);
   return availableCard[rIndex];
 }
@@ -73,7 +81,6 @@ const allCardsFlipped = computed(() => {
  * 카드 뒤집기 함수
  */
 const toggleFlip = (id: number) => {
-  console.log("test1");
   if (isResetting.value) return; // 리셋 중에는 클릭 방지
   const card = cards.value.find(c => c.id === id);
 
@@ -81,7 +88,6 @@ const toggleFlip = (id: number) => {
   card.isFlipped = true;
 
   if (card.type === "text") {
-    console.log("test2");
     const chosen = pickRandomTextCard();
     if (!chosen) {
       card.content = "모든 글자카드를 다 사용했습니다."
@@ -146,48 +152,9 @@ const onDisagree = () => {
     currentTurnPictureBlacklist.value.add(pictureCard.pictureId);
   }
 
-  // double flip으로 재할당
-  rotateCard360(pictureCard);
+  // 그림카드만 재배정 (다시 뒤집힘= false)
+  pictureCard.isFlipped = false;
 }
-
-/**
- * 그림카드를 한 바퀴(360도) 돌리면서 새로운 그림을 할당하는 함수
- * - 첫 180도(앞->뒤) transition이 끝난 시점에 content 교체
- * - 다시 180->360도(뒤->앞) flip
- */
-const rotateCard360 = (card: CardState) => {
-  if (!card.isFlipped) {
-    // 혹시 카드가 뒷면이면 => 먼저 앞면으로 flip
-    card.isFlipped = true;
-  }
-
-  // 2-1) 우선 "앞면 -> 뒷면"으로 뒤집는다 (180도)
-  card.isFlipped = false;
-
-  // 2-2) transition 끝나면 => 새 그림 뽑기 => 다시 앞면
-  nextTick(() => {
-    const cardEl = cardRefs.value[card.id - 1];
-    if (!cardEl) return;
-
-    // '앞면->뒷면' transition 끝난 시점
-    cardEl.addEventListener("transitionend", () => {
-      // 새로운 그림카드 할당
-      const chosen = pickRandomPictureCard();
-      if (!chosen) {
-        card.content = "사용가능한 그림카드가 없습니다.";
-        // 굳이 다시 flip할지 여부는 상황에 따라 결정
-      } else {
-        card.pictureId = chosen.id;
-        card.textId = null;
-        card.content = chosen.url;
-      }
-
-      // 이제 "뒷면->앞면"으로 뒤집기(180->360)
-      card.isFlipped = true;
-
-    }, { once: true });
-  });
-};
 
 /**
  * 동의 버튼 눌렀을떄 핸들러 함수
@@ -212,7 +179,6 @@ const onAgree = () => {
   } else {
     openFailureModal();
   }
-
 }
 
 /**

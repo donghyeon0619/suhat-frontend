@@ -84,7 +84,7 @@ const saveSchoolAndFinish = async () => {
             <ion-radio value="1" justify="space-between">초등학교 4 ~ 6학년</ion-radio>
           </ion-item>
           <ion-item :style="{'--border-color': selectedSchoolType == 2 ? '#13BD7E' : '#EBECEE' }" lines="none">
-            <ion-radio value="2" justify="space-between">중학교</ion-radio>
+            <ion-radio value="2" justify="space-between">중학생</ion-radio>
           </ion-item>
         </ion-radio-group>
       </div>
