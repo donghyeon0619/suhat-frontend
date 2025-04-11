@@ -18,13 +18,18 @@ import {
 import {computed, ref,} from "vue";
 import { chevronBackOutline} from "ionicons/icons";
 import {get, post,} from "@/api/httpService";
+import {showAlert} from "@/utils/showAlert";
 
+// 제출하기 버튼 클릭 핸들러
+const router = useIonRouter();
 
 // 현재 질문 번호와 선택된 답변들 저장
 const currentQuestionIndex = ref(0);
 
 const questions = ref<string[]>([]);// 선택지 데이터
 const selectedAnswers = ref<number[]>(Array(questions.value.length).fill(-1));
+
+const isSubmitting = ref(false);
 
 const options = ref([
   { text: '전혀<br>그렇지 않다', value:1 },
@@ -102,27 +107,40 @@ const goToNextQuestion = () => {
   }
 };
 
-// 제출하기 버튼 클릭 핸들러
-const router = useIonRouter();
-
 const submitSurvey = async () => {
+
+  if(isSubmitting.value) return;
+  isSubmitting.value = true;
+
   try {
     const endpoint = 'surveys/results';
 
-    await post(endpoint, {
+    const response = await post(endpoint, {
       selectedOptions: selectedAnswers.value.map((value, index) => ({
         surveyId: index + 1,
         score: value,
       })),
-      totalScore: totalScore.value});
-    console.log('설문 결과 데이터 전송 성공');
+      totalScore: totalScore.value}, true);
 
-    router.replace({
-      name: 'SurveyResult',
-      query: { score: totalScore.value },
-    });
+    if (response.status === 200) {
+      router.replace({
+        name: 'SurveyResult',
+        query: { score: totalScore.value },
+      });
+    } else {
+      await showAlert(
+        "설문지 제출 오류",
+        "오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
+        [{
+          text: "확인", role: "confirm",
+        }],
+        "custom-one-button-alert"
+      )
+    }
   } catch (error) {
     console.error('설문 결과 저장 실패', error);
+  } finally {
+    isSubmitting.value = false;
   }
 };
 </script>
@@ -132,7 +150,7 @@ const submitSurvey = async () => {
     <IonHeader class="ion-no-border">
       <IonToolbar>
         <IonButtons slot="start">
-          <IonBackButton :icon="chevronBackOutline" default-href="/"></IonBackButton>
+          <IonBackButton :icon="chevronBackOutline" default-href="/home"></IonBackButton>
         </IonButtons>
       </IonToolbar>
     </IonHeader>
@@ -220,7 +238,7 @@ const submitSurvey = async () => {
             <ion-button
                 expand="block"
                 class="next-button"
-                :disabled="!isOptionSelected"
+                :disabled="!isOptionSelected || isSubmitting"
                 @click="currentQuestionIndex === questions.length - 1 ? submitSurvey() : goToNextQuestion()"
             >
               {{ currentQuestionIndex === questions.length - 1 ? "제출하기" : "다음 문제" }}

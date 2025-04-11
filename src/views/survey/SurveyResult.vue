@@ -15,7 +15,7 @@ import {
   IonLabel,
   actionSheetController, useIonRouter,
 } from "@ionic/vue";
-import {useRoute} from "vue-router";
+import {onBeforeRouteLeave, useRoute} from "vue-router";
 
 import goHomeIcon from "@/assets/icons/common/icon-go-home.svg"
 import trophy from "@/assets/icons/common/icon-trophy.svg"
@@ -66,6 +66,14 @@ const goHome = () => {
   });
 }
 
+onBeforeRouteLeave(async (to, from, next) =>{
+  //이동하는 경로가 이용습관진단지 페이지일때, 뒤로가기 막기
+  if (to.name === 'SurveyPage') {
+    next(false);
+  } else {
+    next();
+  }
+})
 </script>
 
 <template>

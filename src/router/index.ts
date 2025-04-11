@@ -98,12 +98,13 @@ const routes: Array<RouteRecordRaw> = [
     {
       path: '/surveyPage',
       name: 'SurveyPage',
-      component: SurveyPage,
+      component: () => import("@/views/survey/SurveyPage.vue"),
+
     },
     {
       path: '/surveyResult',
       name: 'SurveyResult',
-      component: SurveyResult
+      component: () => import("@/views/survey/SurveyResult.vue"),
     },
     {
       path: '/game/home',

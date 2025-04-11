@@ -73,18 +73,18 @@ const showGameModeActionSheet = async () => {
 const router = useIonRouter();
 
 const goSurveyPage = () =>{
-  router.push("/SurveyPage")
+  router.push({name: 'SurveyPage'})
 }
 
 onBeforeRouteLeave(async (to, from, next) =>{
+  const blockedRoutes = ['LoginSchool', 'PuzzleCompletion', 'GameRanking', 'SoloGameIntro']
   //이동하는 경로가 회원가입 로직일 떄, 뒤로가기 막기
-  if (to.name === 'LoginSchool' || to.name === 'PuzzleCompletion' || to.name === 'GameRanking') {
+  if (typeof to.name === 'string' && blockedRoutes.includes(to.name)) {
     next(false);
   } else {
     next();
   }
 })
-
 </script>
 
 <template>

@@ -25,11 +25,13 @@ import {useRoute} from "vue-router";
 import {post} from "@/api/httpService";
 import {useTypeTestStore} from "@/store/typeTest";
 import SpeechBubbleimg  from "@/assets/img/typetest/img-typetest-speech-bubble.svg"
+import {showAlert} from "@/utils/showAlert";
 
 const router = useIonRouter();
 const route = useRoute();
 const typeTestStore = useTypeTestStore();
 const serviceType= route.query;
+const isSubmitting = ref(false);
 
 const questions = computed(() => typeTestStore.questionData[typeTestStore.currentServiceTypeId] || []);
 
@@ -136,6 +138,9 @@ const goToNextQuestion = () => {
  * 제출하기 버튼 클릭 핸들러
  */
 const submitSurvey = async () =>  {
+  if(isSubmitting.value) return;
+  isSubmitting.value = false;
+
   try{
     // 1. 제출 데이터 구성
     const requestData = {
@@ -145,39 +150,33 @@ const submitSurvey = async () =>  {
     }
     console.log("제출 데이터 ", requestData)
     // 2. 서버에 제출
-    const response = await post("test-results", requestData);
+    const response = await post("test-results", requestData, true);
 
-    console.log(" 응답 데이터: ", response);
-
-    // 제출 처리 후 결과 페이지로 이동
-    router.replace({
-      name: "TypeTestResult",
-      query: {
-        ...response,
-        totalScore: totalScore.value,
-
-      }
-    });
+    if (response.status === 200) {
+      // 제출 처리 후 결과 페이지로 이동
+      router.replace({
+        name: "TypeTestResult",
+        query: {
+          ...response.data,
+          totalScore: totalScore.value,
+        }
+      });
+    } else {
+      await showAlert(
+        "유형검사지 제출 실패",
+        "오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
+        [{
+          text: "확인", role: "confirm",
+        }],
+        "custom-one-button-alert"
+      )
+    }
   } catch (error) {
-    await presentAlert("제출 실패", "결과를 제출하는 중 오류가 발생하였습니다. 다시 시도해주세요" )
+    console.error('유형검사지 제출 실패', error)
+  } finally {
+    isSubmitting.value = false;
   }
 };
-
-/**
- *
- * @param header
- * @param message
- */
-const presentAlert = async (header: string, message: string) => {
-  const alert = await alertController.create({
-    header: header,
-    message: message,
-    buttons: ['확인'],
-  });
-
-  await alert.present();
-};
-
 </script>
 
 <template>
@@ -238,7 +237,7 @@ const presentAlert = async (header: string, message: string) => {
             <ion-button
                 expand="block"
                 class="next-button"
-                :disabled="!isOptionSelected"
+                :disabled="!isOptionSelected || isSubmitting"
                 @click="currentQuestionIndex === questions.length - 1 ? submitSurvey() : goToNextQuestion()"
             >
               {{ currentQuestionIndex === questions.length - 1 ? "제출하기" : "선택완료" }}
