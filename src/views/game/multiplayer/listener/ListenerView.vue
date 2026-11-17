@@ -18,7 +18,7 @@ const emit = defineEmits<{
  * speaking이 true인 사람의 정보를 computed로 가져옴
  */
 const currentSpeaker = computed(() => {
-  return props.gameState.players.find(player => player.isSpeaking) || null;
+  return props.gameState.players.find(player => player.speaking) || null;
 })
 
 const handleNextTurn = (nextSpeakerId: number) => {
@@ -31,7 +31,7 @@ const handleNextTurn = (nextSpeakerId: number) => {
     v-if="currentPhase === GamePhase.DISCUSSION && currentSpeaker"
     :current-speaker="currentSpeaker"
   />
-  <ListenerVotingView
+  <ListenerVotingView :key="props.gameState.votingEndsAt"
     v-if="currentPhase === GamePhase.VOTING && currentSpeaker"
     :current-speaker="currentSpeaker"
     :game-state="props.gameState"

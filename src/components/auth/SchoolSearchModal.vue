@@ -73,7 +73,7 @@ const fetchSearchResults = async (query : string) => {
     const response = await get(endpoint, params);
 
     // 응답 데이터에서 districtAddress만 포맷팅
-    const formattedResults = response.map(item => ({
+    const formattedResults = response.map((item: { districtAddress: string; [key: string]: unknown }) => ({
       ...item,
       districtAddress: formatDistrictAddress(item.districtAddress)
     }));

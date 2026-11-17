@@ -40,7 +40,7 @@ const handleButtonClick = () => {
     <ion-content
         class="ion-padding"
         :class="{ dimmed: isDimmed }"
-        scroll-y="false">
+        :scroll-y="false">
       <div class="tutorial-title">
         <ion-text>보드게임 배우기</ion-text>
       </div>

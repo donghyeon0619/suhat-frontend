@@ -95,7 +95,7 @@ onBeforeRouteLeave(async (to, from, next) =>{
       </IonToolbar>
     </IonHeader>
     <!-- 메인 컨텐츠 부분 -->
-    <IonContent class="ion-padding" scroll-y="false" >
+    <IonContent class="ion-padding" :scroll-y="false" >
 
       <!-- 타이틀 부분 -->
       <div class="title-container">

@@ -49,7 +49,7 @@ const saveNameAndProceed = async () => {
 <template>
   <IonPage>
     <LoginHeader></LoginHeader>
-    <IonContent class="ion-padding" scroll-y="false">
+    <IonContent class="ion-padding" :scroll-y="false">
       <!-- 타이틀 부분-->
       <div class="title">
         <ion-text class="title-text">
@@ -65,7 +65,7 @@ const saveNameAndProceed = async () => {
             v-model="nameInput"
             type="text"
             inputmode="text"
-            maxlength="6"
+            :maxlength="6"
             aria-label="name input"
             placeholder="성함을 입력해주세요"
             @ionFocus="handleFocus"

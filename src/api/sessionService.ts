@@ -1,7 +1,7 @@
 import {CapacitorCookies, CapacitorHttp} from "@capacitor/core";
 import {get, getHttpOptions} from "@/api/httpService";
 
-const BASE_URL = 'https://suhat.kr';
+import { API_URL as BASE_URL } from '@/config/api';
 
 /**
  * 쿠키 및 세션 관리 모듈
@@ -23,7 +23,6 @@ export async function setJSessionId(jsessionId: string) {
       value: jsessionId,
       path: '/', // Spring Security 기본 경로
     });
-    console.log('JSESSIONID 설정 완료:', jsessionId);
   } catch (error) {
     console.error('JSESSIONID 설정 실패:', error);
   }
@@ -34,12 +33,8 @@ export async function setJSessionId(jsessionId: string) {
  */
 export async function getJSessionId(): Promise<string | null> {
   const result = await CapacitorCookies.getCookies({url: BASE_URL});
-  const allResult = await CapacitorCookies.getCookies();
-  console.log("getCookies", result);
-  console.log("getAllCookies", allResult);
   // 쿠키 데이터가 최상위 수준에 있을 경우 처리
   const jSessionId = result['JSESSIONID'] || null;
-  console.log("JSESSIONID:", jSessionId);
 
   return jSessionId;
 }

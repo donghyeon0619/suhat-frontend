@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { IonChip, IonAvatar, IonImg } from "@ionic/vue";
 import SuhatImg from "@/assets/img/suhat_smal.svg";
 

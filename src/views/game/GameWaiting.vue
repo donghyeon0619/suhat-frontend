@@ -633,7 +633,7 @@ const presentToast = async (message: string) => {
       :show-title="true"
       :header-title="'게임 대기'"
     ></Header>
-    <ion-content class="ion-padding" scroll-y="false">
+    <ion-content class="ion-padding" :scroll-y="false">
       <!-- 바코드 화면 -->
       <ion-card class="container no-shadow">
         <ion-card-content>

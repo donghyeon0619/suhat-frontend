@@ -1,144 +1,15 @@
 <script setup lang="ts">
-import {IonAvatar, IonChip, IonCol, IonContent, IonLabel, IonRow, toastController,} from "@ionic/vue";
-import {inject, onBeforeUnmount, Ref, ref, watch} from "vue";
-import MikeIcon from "@/assets/icons/game/icon-mike.svg"
-import GameCardBg from "@/assets/img/game/bg-game-card.svg";
-import {AssignedCard, Card} from "@/types/Card";
-import {multiSmartphoneTexts} from "@/data/multiSmartphoneTexts";
-import {multiSmartphonePicture} from "@/data/multiSmartphonePicture";
-import {Player} from "@/types/Player";
-
-// props 선언
-const props = defineProps<{
-  currentSpeaker: Player
-}>()
-
-// 타이머 샛업
-const initialTime = 180 // 3분 선언
-const timer = ref(initialTime); //타이머 3분에서 시작
-const formattedTime = ref("3:00"); // "MM:SS"로 형식으로 화면에 보여줌
-let timerInterval: ReturnType<typeof setInterval> | null = null;
-const timerStartData = inject<Ref<{ startTime: number; } | null>>("timerStartData", ref(null));
-const timeExtensionData = inject<Ref<{ additionalTime: number } | null>>("timeExtensionData", ref(null));
-
-/**
- * 카드 관련 변수
- */
-const cards = ref<Card[]>([
-  { id: 1, isFlipped: false, type: 'text', content: ''},
-  { id: 2, isFlipped: false, type: 'picture', content: ''},
-])
-const assignedCard = inject<Ref<AssignedCard | null>>("assignedCard", ref(null));
-
-
-/**
- * 카드 부여 함수
- */
-watch(
-  () => assignedCard?.value, // sse 이벤트 데이터 감지
-  (newCardData) => {
-    if (newCardData) {
-      console.log("새로운 카드 데이터 수신:", newCardData);
-
-      // 카드 ID로 해당 카드 찾기
-      const card = cards.value.find((c) => c.type === newCardData.cardType);
-      if (card) {
-        // 카드 데이터 업데이트
-        card.isFlipped = true;
-        card.type = newCardData.cardType;
-
-        // 카드 타입에 따라 데이터 검색
-        if (newCardData.cardType === "text") {
-          const textData = multiSmartphoneTexts.find((item) => item.id === newCardData.cardId);
-          card.content = textData?.text || "데이터 없음";
-        } else if (newCardData.cardType === "picture") {
-          const pictureData = multiSmartphonePicture.find((item) => item.id === newCardData.cardId);
-          card.content = pictureData?.url || "데이터 없음";
-        }
-      } else {
-        console.log(`ID(${newCardData.cardId})에 해당하는 카드를 찾을 수 없습니다.`);
-      }
-    }
-  }
-);
-
-/**
- * 타이머 동기화 로직: 'timer-start' 이벤트를 수신했을 때 타이머 시작
- */
-watch(
-  () => timerStartData?.value,
-  (newTimerData) => {
-    if (newTimerData && newTimerData.startTime) {
-      console.log("타이머 동기화 시작:", newTimerData);
-      startTimer(newTimerData.startTime);
-    }
-  }
-);
-
-// "MM:SS" 로 바꾸는 함수
-const formatTime = (seconds: number) => {
-  const minutes = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${minutes}:${secs.toString().padStart(2, "0")}`;
-};
-
-// 타이머 시작 함수
-const startTimer = (serverStartTime: number) => {
-  const clientCurrentTime = Date.now();
-  const elapsedTime = Math.floor((clientCurrentTime - serverStartTime) / 1000);
-  timer.value = initialTime - elapsedTime
-
-  formattedTime.value = formatTime(timer.value);
-  timerInterval = setInterval(() => {
-    timer.value -= 1;
-    formattedTime.value = formatTime(Math.max(timer.value, 0)); // 음수로 내려가지 않도록 보장
-
-    if (timer.value <= 0) { // 타이머 종료 조건
-      clearInterval(timerInterval!); // timerInterval이 null이 아님을 보장
-      timerInterval = null; // 초기화
-    }
-  }, 1000);
-};
-
-/**
- * 시간 연장 이벤트 수신 시 타이머 업데이트
- */
-watch(
-  () => timeExtensionData?.value,
-  (newExtensionData) => {
-    if (newExtensionData && newExtensionData.additionalTime > 0) {
-      timer.value += newExtensionData.additionalTime;
-      formattedTime.value = formatTime(timer.value);
-      presentToast();
-    }
-  }
-);
-
-/**
- * 시간 연장시 상단 토스트 출현
-  */
-const presentToast = async () => {
-  const toast = await toastController.create({
-    message: '남은 시간이 연장되었어요',
-    cssClass: "top-toast toast-txt-center",
-    duration: 1500,
-    position: "top",
-    positionAnchor:"backButtonHeader"
-  });
-
-  await toast.present();
-}
-
-// unmounted 될 때 타이머 멈춤
-onBeforeUnmount(() => {
-  if (timerInterval !== null) {
-    clearInterval(timerInterval);
-  }
-});
-
+import { IonAvatar, IonChip, IonCol, IonContent, IonLabel, IonRow } from '@ionic/vue';
+import MikeIcon from '@/assets/icons/game/icon-mike.svg';
+import GameCardBg from '@/assets/img/game/bg-game-card.svg';
+import { Player } from '@/types/Player';
+import { useSpeakingState } from '@/composables/useSpeakingState';
+defineProps<{ currentSpeaker: Player }>();
+const { timer, formattedTime, cards } = useSpeakingState();
 </script>
+
 <template>
-  <IonContent scroll-y="false" >
+  <IonContent :scroll-y="false" >
     <!-- 발화자 표시 영역 -->
     <div class="speaker-profile-section">
       <IonAvatar class="mike">

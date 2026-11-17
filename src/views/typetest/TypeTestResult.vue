@@ -61,7 +61,7 @@ onBeforeRouteLeave(async (to, from, next) =>{
       <IonToolbar>
       </IonToolbar>
     </IonHeader>
-    <IonContent class="ion-padding" scroll-y="false" >
+    <IonContent class="ion-padding" :scroll-y="false" >
       <div class="title">
         <IonText class="subtitle-text">
           검사 결과

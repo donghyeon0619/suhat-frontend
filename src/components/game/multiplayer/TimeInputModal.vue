@@ -24,7 +24,8 @@ const formattedUsageTime = ref('00시간 00분');
 // range값 변수
 const rangeValue = ref(0);
 
-const rangeChange = ({detail}) => {
+const rangeChange = ({detail}: { detail: { value: number | { lower: number; upper: number } } }) => {
+  if (typeof detail.value !== "number") return;
   rangeValue.value = detail.value;
   const maxTimeInMinutes = 16 * 60;
   usageTime.value = Math.round((rangeValue.value / 100) * maxTimeInMinutes);
@@ -44,7 +45,7 @@ const isRangeInput = computed(()=>
 </script>
 
 <template>
-  <IonContent scroll-y="false">
+  <IonContent :scroll-y="false">
     <div class="usage-time-modal-container">
       <div class="speech-bubble-wrapper">
         <div class="speech-bubble">
@@ -61,7 +62,7 @@ const isRangeInput = computed(()=>
             <IonLabel class="usage-time">
               {{formattedUsageTime}}
             </IonLabel>
-            <IonRange min="0" max="100" :value="rangeValue" @ionChange="rangeChange"></IonRange>
+            <IonRange :min="0" :max="100" :value="rangeValue" @ionChange="rangeChange"></IonRange>
           </div>
         </IonCardContent>
         <IonRow class="card-footer">

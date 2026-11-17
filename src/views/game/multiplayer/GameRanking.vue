@@ -121,7 +121,7 @@ const goHome = async () => {
   <IonHeader class="ion-no-border">
     <IonToolbar></IonToolbar>
   </IonHeader>
-  <IonContent class="ion-padding" scroll-y="false">
+  <IonContent class="ion-padding" :scroll-y="false">
     <!-- 타이틀 색션 -->
     <div class="title-section">
       <IonText class="subtitle">함께하기 미션</IonText>

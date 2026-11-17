@@ -1,3 +1,4 @@
+import { gameHooks } from "@/globals/gameHooks";
 import {defineStore} from 'pinia';
 import {ref, watch} from "vue";
 import {Network} from "@capacitor/network";
@@ -24,7 +25,7 @@ export const useNetworkStore = defineStore('network', () => {
   // 오프라인 상태가 될 때 알림 띄우기
   watch(isOnline, async (newVal, oldVal) => {
     // 이전에는 true(온라인)이었는데 지금 false(오프라인)로 바뀐 경우
-    if (oldVal && !newVal) {
+    if (oldVal && !newVal && !gameHooks.onResumeHandler) {
       await showOfflineAlert()
     }
   });

@@ -11,7 +11,7 @@ const { maxPieces = 6 } = defineProps<{ maxPieces?: number }>();
 
 </script>
 <template>
-  <IonContent scroll-y="false">
+  <IonContent :scroll-y="false">
     <div class="puzzle-acquired-content">
       <IonImg class="puzzle-acquired-text-img" :src="PuzzleAcquiredTxt"/>
       <IonThumbnail class="puzzle-piece-wrapper">
