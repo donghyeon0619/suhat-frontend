@@ -1,331 +1,52 @@
 <script setup lang="ts">
-import {
-  IonContent,
-  IonAvatar,
-  IonChip,
-  IonCard,
-  IonCardContent,
-  IonRow,
-  IonCol,
-  IonButton,
-  IonLabel,
-  IonIcon, IonThumbnail, modalController, toastController, alertController
-} from "@ionic/vue";
-import {inject, onBeforeUnmount, Ref, ref, watch} from "vue";
-import MikeIcon from "@/assets/icons/game/icon-mike.svg"
-import GameCardBg from "@/assets/img/game/bg-game-card.svg";
-import {searchSharp} from "ionicons/icons";
-import FlagIcon from "@/assets/icons/home/icon-flag.svg"
-import TimerIcon from "@/components/game/multiplayer/TimerIcon.vue";
-import ChatBubbleModal from "@/components/common/ChatBubbleModal.vue";
-import HintModal from "@/components/game/multiplayer/HintModal.vue";
-import {multiSmartphoneTexts} from "@/data/multiSmartphoneTexts";
-import {post} from "@/api/httpService";
-import {useRoute} from "vue-router";
-import {AssignedCard, Card} from "@/types/Card";
-import {multiSmartphonePicture} from "@/data/multiSmartphonePicture";
-import {Player} from "@/types/Player";
+import { computed, ref } from 'vue';
+import { IonContent, IonAvatar, IonChip, IonCard, IonCardContent, IonRow, IonCol, IonButton, IonLabel, IonIcon, IonThumbnail, modalController, alertController } from '@ionic/vue';
+import { useRoute } from 'vue-router';
+import { post } from '@/api/httpService';
+import { Player } from '@/types/Player';
+import { useSpeakingState } from '@/composables/useSpeakingState';
+import { multiSmartphoneTexts } from '@/data/multiSmartphoneTexts';
+import { multiSmartphonePicture } from '@/data/multiSmartphonePicture';
+import MikeIcon from '@/assets/icons/game/icon-mike.svg';
+import GameCardBg from '@/assets/img/game/bg-game-card.svg';
+import FlagIcon from '@/assets/icons/home/icon-flag.svg';
+import { searchSharp } from 'ionicons/icons';
+import TimerIcon from '@/components/game/multiplayer/TimerIcon.vue';
+import HintModal from '@/components/game/multiplayer/HintModal.vue';
 
-// props 선언
-const props = defineProps<{
-  currentSpeaker: Player
-}>()
-
-const route = useRoute();
-const roomId = route.params.roomId;
-
-/**
- *  타이머 샛업
-  */
-const ADDITIONAL_TIME = 120
-const initialTime = 180 // 3분 선언
-const timer = ref(initialTime); //타이머 3분에서 시작
-const formattedTime = ref("3:00"); // "MM:SS"로 형식으로 화면에 보여줌
-let timerInterval: ReturnType<typeof setInterval> | null = null;
-const timerStartData = inject<Ref<{ startTime: number; } | null>>("timerStartData", ref(null));
-const timeExtensionData = inject<Ref<{ additionalTime: number } | null>>("timeExtensionData", ref(null));
-// 시간 연장 유무
-const hasExtended = ref(false);
-const speakingStarted = ref(false);
-const hasEnded = ref(false);
-
-/**
- * 카드 관련 변수
- */
-const cards = ref<Card[]>([
-  { id: 1, isFlipped: false, type: 'text', content: ''},
-  { id: 2, isFlipped: false, type: 'picture', content: ''},
-])
-const assignedCard = inject<Ref<AssignedCard | null>>("assignedCard", ref(null));
-
-/**
- * 카드 클릭 시 호출되는 API 요청
- */
-const sendCardClickRequest = async (id:number) => {
-  // 클릭한 카드 찾기
-  const card = cards.value.find((c) => c.id === id);
-  if (!card || card.isFlipped) return; // 이미 뒤집힌 카드 무시
-
-  // 카드 타입에 따라 데이터 길이 계산
-  const cardType = card.type;
-  const dataCount = cardType === "text" ? multiSmartphoneTexts.length : multiSmartphonePicture.length;
-
+defineProps<{ currentSpeaker: Player }>();
+const roomId = String(useRoute().params.roomId);
+const { state, timer, formattedTime, cards } = useSpeakingState();
+const hasExtended = computed(() => state.value?.timeExtended ?? false);
+const speakingStarted = computed(() => !!state.value?.speakingEndsAt);
+const busy = ref(false);
+async function sendCardClickRequest(id: number) {
+  const card = cards.value.find(c => c.id === id);
+  if (!card || card.isFlipped || busy.value) return;
+  busy.value = true;
   try {
-    const response = await post(`games/${roomId}/card/${cardType}?maxId=${dataCount}`);
-    console.log("카드 요청:", response);
-  } catch (error) {
-    console.error("카드 부여 요청 중 오류 발생", error)
-  }
+    const count = card.type === 'text' ? multiSmartphoneTexts.length : multiSmartphonePicture.length;
+    await post(`games/${roomId}/card/${card.type}?maxId=${count}`);
+  } finally { busy.value = false; }
 }
-
-/**
- * 카드 부여 watch 함수
- */
-watch(
-  () => assignedCard?.value, // sse 이벤트 데이터 감지
-  (newCardData) => {
-    if (newCardData) {
-      console.log("새로운 카드 데이터 수신:", newCardData);
-
-      // 카드 ID로 해당 카드 찾기
-      const card = cards.value.find((c) => c.type === newCardData.cardType);
-      if (card) {
-        // 카드 데이터 업데이트
-        card.isFlipped = true;
-        card.type = newCardData.cardType;
-
-        // 카드 타입에 따라 데이터 검색
-        if (newCardData.cardType === "text") {
-          const textData = multiSmartphoneTexts.find((item) => item.id === newCardData.cardId);
-          card.content = textData?.text || "데이터 없음";
-        } else if (newCardData.cardType === "picture") {
-          const pictureData = multiSmartphonePicture.find((item) => item.id === newCardData.cardId);
-          card.content = pictureData?.url || "데이터 없음";
-        }
-      } else {
-        console.log(`ID(${newCardData.cardId})에 해당하는 카드를 찾을 수 없습니다.`);
-      }
-    }
-  }
-);
-
-/**
- * 타이머  시작 로직: 'timer-start' 이벤트를 수신했을 때 타이머 시작
- */
-watch(
-  () => timerStartData?.value,
-  (newTimerData) => {
-    if (newTimerData && newTimerData.startTime) {
-      console.log("타이머 시작:", newTimerData);
-      speakingStarted.value = true;
-      startTimer(newTimerData.startTime);
-    }
-  }
-)
-
-/**
- * "MM:SS" 로 바꾸는 함수
- * @param seconds
- */
-const formatTime = (seconds: number) => {
-  const minutes = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${minutes}:${secs.toString().padStart(2, "0")}`;
-};
-
-/**
- * 타이머 시작 함수
- */
-const startTimer = (serverStartTime: number) => {
-  const clientCurrentTime = Date.now();
-  const elapsedTime = Math.floor((clientCurrentTime - serverStartTime) / 1000);  // 초단위
-  const remainingTime = initialTime - elapsedTime;
-
-  if (remainingTime > 0) {
-    timer.value = remainingTime
-    formattedTime.value = formatTime(timer.value);
-
-    // 이미 존재한다면 다시 클리어 하고 시작.
-    if (timerInterval !== null) {
-      clearInterval(timerInterval);
-      timerInterval = null;
-    }
-
-    timerInterval = setInterval(() => {
-      if (timer.value > 0) {
-        timer.value -= 1
-        formattedTime.value = formatTime(timer.value);
-
-        // 이 때 1분 남았는지 확인
-        if (timer.value === 60) {
-          const message = hasExtended.value
-            ? "한 번 시도해보고, 잘 안 되면 다시 해봐도 괜찮아요. 중요한 건 시도하는 거예요!"
-            : "천천히 생각해보고, 생각난 대로 말해보세요. 괜찮아요!";
-          openCheerUpModal(message);
-        }
-      } else {
-        handleEndSpeaking();
-      }
-    }, 1000);
-  } else {
-    // 시간이 이미 다 지났다면 다음 단계로 전환
-    handleEndSpeaking();
-  }
-};
-
-/**
- * 타이머 정지 함수
- */
-const stopTimer = async () => {
-  if (timerInterval !== null) {
-    clearInterval(timerInterval);
-    timerInterval = null;
-  }
-  // 모든 열려 있는 모달 닫기
-  await closeAllModals();
-};
-
-/**
- * "말하기 종료" 버튼 클릭 시 타이머 정지 및 다음 phase 전환 함수
- */
-const handleEndSpeaking = async () => {
-
-  if (hasEnded.value) return; // 이미 종료 처리되었으면 리턴
-
-  if (!speakingStarted.value) {
-    await presentAlert("말하기가 아직 시작되지 않았습니다. 먼저 그림카드, 글자카드를 뒤집어서 말하기를 시작 후 종료를 시도하세요.");
-    return;
-  }
-
-  hasEnded.value = true;
-  await stopTimer();
-  try {
-    const response = await post(`games/${roomId}/speaking/end`);
-    console.log("말하기 종료", response);
-  } catch (error) {
-    console.error("말하기 종료 에러", error);
-  }
-};
-
-/**
- * 시간 연장 이벤트 수신 시 타이머 업데이트
- */
-watch(
-  () => timeExtensionData?.value,
-  (newExtensionData) => {
-    if (newExtensionData && newExtensionData.additionalTime > 0 && !hasExtended.value) {
-      timer.value += newExtensionData.additionalTime;
-      formattedTime.value = formatTime(timer.value);
-      hasExtended.value = true;
-      presentToast();
-    }
-  }
-)
-
-
-/**
- * 시간 연장함수
- */
-const extendTime = async () => {
-  if(!speakingStarted.value) {
-    await presentAlert("먼저 그림카드와 글자 카드를 눌러주세요.");
-    return
-  }
-
-  if (!hasExtended.value) {
-    try {
-      const response = await post(`games/${roomId}/timer/extensions?additionalTime=${ADDITIONAL_TIME}`);
-      console.log("시간 연장 요청 결과:", response)
-      formattedTime.value = formatTime(timer.value);
-      hasExtended.value = true;
-    } catch (error) {
-      console.error("시간 연장 실패 :", error);
-    }
-  }
+async function handleEndSpeaking() {
+  if (!speakingStarted.value || busy.value) return;
+  busy.value = true;
+  try { await post(`games/${roomId}/speaking/end`); }
+  finally { busy.value = false; }
 }
-
-/**
- * 시간 연장시 토스트 출현
- */
-const presentToast = async () => {
-  const toast = await toastController.create({
-    message: '남은 시간이 연장되었어요',
-    cssClass: "top-toast toast-txt-center",
-    duration: 1500,
-    position: "top",
-    positionAnchor:"backButtonHeader"
-  });
-
-  await toast.present();
+async function extendTime() {
+  if (hasExtended.value || !speakingStarted.value || busy.value) return;
+  busy.value = true;
+  try { await post(`games/${roomId}/timer/extensions?additionalTime=120`); }
+  finally { busy.value = false; }
 }
-
-/**
- * 응원 모달 오픈 함수
- * @param message
- */
-const openCheerUpModal = async (message:string) => {
-  const modal = await modalController.create({
-    component: ChatBubbleModal,
-    componentProps: { bubbleText: message},
-    cssClass: 'chat-bubble-modal',
-  });
-
+async function openHintModal() {
+  const modal = await modalController.create({ component: HintModal, cssClass: 'chat-bubble-modal' });
   await modal.present();
-  await modal.onDidDismiss();
-};
-
-/**
- * 힌트 모달 오픈
- */
-const openHintModal = async () => {
-  const modal = await modalController.create({
-    component: HintModal,
-    cssClass: 'hint-modal',
-  });
-
-  await modal.present();
-  await modal.onDidDismiss();
-};
-
-/**
- * 모든 모달 삭제
- */
-const closeAllModals = async () => {
-  let activeModal = await modalController.getTop();
-  while (activeModal) {
-    await modalController.dismiss();
-    activeModal = await modalController.getTop();
-  }
-};
-
-/**
- * 오류 발생 시 경고창 뜸
- */
-const presentAlert = async (message: string) => {
-  const alert = await alertController.create({
-    header: '잘못된 동작',
-    message: message,
-    buttons: [
-      {
-        text: '확인',
-        role: 'confirm',
-        cssClass: "my-custom-alert-button-class",
-      },
-    ],
-    cssClass: "custom-one-button-alert"
-  });
-  await alert.present();
 }
-
-/**
- * unmounted 될 때 타이머 초기화
- */
-onBeforeUnmount(() => {
-  if (timerInterval !== null) {
-    clearInterval(timerInterval);
-  }
-});
 </script>
+
 <template>
   <IonContent :scroll-y="false" >
 

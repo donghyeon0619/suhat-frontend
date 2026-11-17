@@ -8,6 +8,7 @@ import ChatBubbleWithBorder from "@/components/common/ChatBubbleWithBorder.vue";
 import TimeInputModal from "@/components/game/multiplayer/TimeInputModal.vue";
 import GameCardBg from "@/assets/img/game/bg-game-card.svg";
 import {GameState} from "@/types/GameState";
+import {useUserStore} from "@/store/user";
 import {post} from "@/api/httpService";
 
 const props = defineProps<{
@@ -26,7 +27,8 @@ const orderSelected = computed(() => props.orderAssigned);
 const roomId = props.gameState.roomId
 
 const usageTime = ref(0);
-const inputCompleted = ref(false);
+const userId = useUserStore().userInfo.id;
+const inputCompleted = computed(() => props.gameState.players.some(p => p.playerId === userId && p.usageTimeSubmitted));
 
 const buttonText = computed(() => {
   // 입력 미완료 상태
@@ -70,7 +72,7 @@ const openTimeInputModal = async () => {
     try {
       const response = await post(`games/${roomId}/round/1/usage-time?usageTime=${Number(data)}`);
       console.log("사용시간 입력", response);
-      inputCompleted.value = true;
+
     } catch (error){
       console.error("사용시간 입력 요청 중 오류 발생", error);
     }

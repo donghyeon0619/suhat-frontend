@@ -3,7 +3,7 @@ import router from "@/router";
 import {showAlert} from "@/utils/showAlert";
 
 
-const BASE_URL = 'https://suhat.kr';
+import { API_URL as BASE_URL } from '@/config/api';
 
 // **HTTP 요청 함수**
 /**

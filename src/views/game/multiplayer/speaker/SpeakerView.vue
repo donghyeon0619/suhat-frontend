@@ -33,7 +33,7 @@ const handleNextTurn = (nextSpeakerId: number) => {
     v-if="currentPhase === GamePhase.DISCUSSION && currentSpeaker"
     :current-speaker="currentSpeaker"
   />
-  <SpeakerVotingView
+  <SpeakerVotingView :key="props.gameState.votingEndsAt"
     v-if="currentPhase === GamePhase.VOTING && currentSpeaker"
     :current-speaker="currentSpeaker"
     :game-state="props.gameState"

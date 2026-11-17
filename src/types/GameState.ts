@@ -7,6 +7,17 @@ export enum GamePhase {
 }
 
 export interface GameState {
+  lastVoteResult: { result?: string; agreeCount?: number; disagreeCount?: number; abstainCount?: number };
+  revision: number;
+  votingRound: number;
+  serverTime: number;
+  roomStatus: 'WAITING' | 'IN_GAME' | 'ENDED';
+  speakingEndsAt: number;
+  votingEndsAt: number;
+  timeExtended: boolean;
+  reVoting: boolean;
+  votedPlayerIds: number[];
+  ranking: import('@/types/Player').RankingPlayer[];
   roomId: string;
   roomName: string;
   hostId: number;

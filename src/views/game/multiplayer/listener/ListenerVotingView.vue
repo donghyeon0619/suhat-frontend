@@ -56,8 +56,8 @@ const currentSpeakerName = computed(()=> props.currentSpeaker.playerInfo.name)
 const agreeCount = ref(0);
 const disagreeCount = ref(0);
 const disagreePlayers = ref<string[]>([]); // 비동의한 인원의 정보 저장
-const isVotingComplete = ref(false);
-const isFooterVisible = ref(true); // 버튼 표시 여부
+const isVotingComplete = computed(() => userStore.userInfo.id !== null && props.gameState.votedPlayerIds.includes(userStore.userInfo.id));
+const isFooterVisible = computed(() => !isVotingComplete.value); // 버튼 표시 여부
 const currentAction = ref(""); // 현재 동의/비동의 상태
 const currentMessage = ref("이야기를 들은 생각은 어떠신가요?<br> 연관성이 높게 잘 말하셨나요?");
 const userStore = useUserStore();
@@ -115,7 +115,7 @@ const nextActionTimer = computed(() => {
 const castVote = async (vote: "agree" | "disagree") => {
   try {
     // API 요청
-    const response = await post(`games/${roomId}/votes`, { vote } );
+    const response = await post(`games/${roomId}/votes`, { vote, votingRound: props.gameState.votingRound } );
     console.log(response);
   } catch (error) {
     console.error("투표 요청 중 오류 발생:", error);
@@ -138,8 +138,6 @@ const handleVoteClick = async (action: "agree" | "disagree") => {
       {
         text: "확인",
         handler: async () => {
-          isFooterVisible.value = false; // 버튼을 숨김
-          isVotingComplete.value = true;
           await castVote(action); // 투표 API 호출
         },
         cssClass: "my-custom-alert-button-class",
@@ -196,8 +194,8 @@ watch(voteResult, (newResult) => {
         currentPhase.value = "reVoting";
         disagreePlayers.value = newResult.disagreePlayers; // 비동의한 인원 업데이트
         currentMessage.value = chatBubbleMessages.value.reVoting;
-        isFooterVisible.value = true;
-        isVotingComplete.value = false;
+
+
       }, 4000);
       break;
     }

@@ -5,6 +5,8 @@ export interface PlayerInfo {
 }
 
 export interface Player {
+  disconnectedAt: number;
+  usageTimeSubmitted: boolean;
   playerId: number;
   playerInfo: PlayerInfo;
   sequenceNumber: number;
