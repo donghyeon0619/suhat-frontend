@@ -7,6 +7,7 @@ const config: CapacitorConfig = {
   appId: 'com.coders.suhat',
   appName: 'SUAHT',
   webDir: 'dist',
+  overrideUserAgent: testOrigin ? process.env.SUHAT_TEST_USER_AGENT : undefined,
   plugins: {
     CapacitorHttp:{
       enabled: true,
