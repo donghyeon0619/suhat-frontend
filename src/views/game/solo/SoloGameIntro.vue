@@ -15,7 +15,7 @@ const goGameStart = () => {
 <template>
 <IonPage>
   <Header></Header>
-  <IonContent class="ion-padding" scroll-y="false">
+  <IonContent class="ion-padding" :scroll-y="false">
     <div class="img-wrapper">
       <IonThumbnail style="--size:95%">
         <img :src="OnboardImg" class="onboard-img" alt="온보딩 이미지">

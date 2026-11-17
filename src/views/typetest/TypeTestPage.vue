@@ -190,7 +190,7 @@ const submitSurvey = async () =>  {
       </IonToolbar>
     </IonHeader>
 
-    <IonContent v-if="questions.length > 0" class="ion-padding" scroll-y="false">
+    <IonContent v-if="questions.length > 0" class="ion-padding" :scroll-y="false">
       <!-- 질문 영역 -->
       <div class="question-container">
         <IonText class="question-number">

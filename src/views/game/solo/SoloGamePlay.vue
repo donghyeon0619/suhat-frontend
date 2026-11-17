@@ -248,7 +248,7 @@ onIonViewWillEnter(() => {
 <template>
 <IonPage>
   <BackButtonHeader></BackButtonHeader>
-  <IonContent class="ion-padding" scroll-y="false">
+  <IonContent class="ion-padding" :scroll-y="false">
     <div class="puzzle-progress-wrapper">
       <PuzzleProgressChip :currentPieces="currentPieces" :totalPieces="maxPieces"/>
     </div>

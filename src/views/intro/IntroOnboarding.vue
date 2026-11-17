@@ -42,7 +42,7 @@ const slides = ref([
 const activeSlide = ref(0);
 const totalSlides = ref(slides.value.length); // 슬라이드 개수 설정
 
-const onSlideChange = (swiper) => {
+const onSlideChange = (swiper: { realIndex: number }) => {
   activeSlide.value = swiper.realIndex;
 };
 
@@ -57,7 +57,7 @@ const completeOnboarding = async () => {
 
 <template>
   <IonPage>
-    <IonContent class="ion-padding" scroll-y="false">
+    <IonContent class="ion-padding" :scroll-y="false">
       <div class="swiper-container" style="height: 90%">
         <!-- Swiper 슬라이드 부분 -->
         <swiper

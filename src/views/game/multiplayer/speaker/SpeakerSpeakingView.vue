@@ -327,7 +327,7 @@ onBeforeUnmount(() => {
 });
 </script>
 <template>
-  <IonContent scroll-y="false" >
+  <IonContent :scroll-y="false" >
 
     <!-- 발화자 표시 영역 -->
     <div class="speaker-profile-section">

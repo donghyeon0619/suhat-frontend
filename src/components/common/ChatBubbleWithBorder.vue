@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { CSSProperties, PropType } from "vue";
 import{
   IonLabel,
 } from "@ionic/vue";
@@ -18,7 +19,7 @@ const props = defineProps({
     default: true
   },
   textAlign:{
-    type:String,
+    type: String as PropType<CSSProperties["textAlign"]>,
     default: "start",
   },
   showChip:{

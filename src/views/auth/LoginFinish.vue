@@ -46,7 +46,7 @@ onBeforeRouteLeave(async (to, from, next) =>{
 
 <template>
   <IonPage>
-    <IonContent class="ion-padding" scroll-y="false">
+    <IonContent class="ion-padding" :scroll-y="false">
       <div class="center-container">
       <!-- 체크 아이콘과 애니메이션 공간 -->
       <div class="icon-container">

@@ -127,7 +127,7 @@ onBeforeRouteLeave(async (to, from, next) =>{
   <IonHeader class="ion-no-border">
     <IonToolbar></IonToolbar>
   </IonHeader>
-  <IonContent class="ion-padding" scroll-y="false">
+  <IonContent class="ion-padding" :scroll-y="false">
     <!-- Congratulatory Title -->
     <div class="title-section">
       <IonText class="completion-subtitle">

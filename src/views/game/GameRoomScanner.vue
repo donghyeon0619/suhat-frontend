@@ -25,7 +25,7 @@ import {
   CapacitorBarcodeScannerTypeHintALLOption
 } from "@capacitor/barcode-scanner";
 
-const roomId = ref(null);
+const roomId = ref('');
 const roomName = ref('방 이름');
 const headCount = ref(4);
 

@@ -67,7 +67,7 @@ const saveSchoolAndFinish = async () => {
 <template>
   <IonPage>
     <LoginHeader></LoginHeader>
-    <IonContent class="ion-padding" scroll-y="false">
+    <IonContent class="ion-padding" :scroll-y="false">
       <div class="title">
         <ion-text class="title-text">
           학년을
@@ -76,7 +76,7 @@ const saveSchoolAndFinish = async () => {
         </ion-text>
       </div>
       <div class="input-wrapper">
-        <ion-radio-group v-model="selectedSchoolType" allow-empty-selection="true" @ionChange=handleSelectionChange>
+        <ion-radio-group v-model="selectedSchoolType" :allow-empty-selection="true" @ionChange=handleSelectionChange>
           <ion-item :style="{'--border-color': selectedSchoolType == 0 ? '#13BD7E' : '#EBECEE' }" lines="none">
             <ion-radio value="0" justify="space-between">초등학교 1 ~ 3학년</ion-radio>
           </ion-item>

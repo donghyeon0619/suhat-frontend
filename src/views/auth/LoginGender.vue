@@ -43,7 +43,7 @@ const saveGenderAndProceed = async () => {
 <template>
   <IonPage>
     <LoginHeader></LoginHeader>
-    <IonContent class="ion-padding" scroll-y="false">
+    <IonContent class="ion-padding" :scroll-y="false">
       <div class="title">
         <ion-text class="title-text">
           성별을
@@ -52,7 +52,7 @@ const saveGenderAndProceed = async () => {
         </ion-text>
       </div>
       <div class="input-wrapper">
-        <ion-radio-group v-model="selectedGender" allow-empty-selection="true" @ionChange=handleSelectionChange>
+        <ion-radio-group v-model="selectedGender" :allow-empty-selection="true" @ionChange=handleSelectionChange>
           <ion-item :style="{'--border-color': selectedGender == 0 ? '#13BD7E' : '#EBECEE' }" lines="none">
             <ion-radio value="0" justify="space-between">남자</ion-radio>
           </ion-item>

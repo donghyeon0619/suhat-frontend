@@ -87,7 +87,7 @@ const goToEnd = () => {
       <IonToolbar>
       </IonToolbar>
     </IonHeader>
-    <IonContent class="ion-padding" scroll-y="false" >
+    <IonContent class="ion-padding" :scroll-y="false" >
       <!-- 페이지 타이틀 부분 -->
       <div class="title">
         <IonText class="subtitle-text">

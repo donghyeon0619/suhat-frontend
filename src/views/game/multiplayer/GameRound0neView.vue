@@ -118,7 +118,7 @@ watch(orderSelected, (newVal) => {
 </script>
 
 <template>
-  <IonContent scroll-y="false" class="ion-padding" >
+  <IonContent :scroll-y="false" class="ion-padding" >
     <!-- 퍼즐 현황 갯수 부분 -->
     <div class="puzzle-progress-section" >
       <PuzzleProgressChip :currentPieces="currentPieces" :totalPieces="maxPieces"/>

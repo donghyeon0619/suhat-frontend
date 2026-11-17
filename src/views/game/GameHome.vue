@@ -133,7 +133,7 @@ onIonViewWillLeave(async () => {
 <template>
   <IonPage>
       <Header></Header>
-      <ion-content class="ion-padding" scroll-y="false">
+      <ion-content class="ion-padding" :scroll-y="false">
         <ion-text class="description">친구들과 함께 퍼즐조각을 모아<br>그림을 완성해보세요!</ion-text>
         <div class="img-container">
           <img src="@/assets/img/puzzle-lock.svg" class="puzzle-lock-img" alt="잠긴 퍼즐 이미지">
