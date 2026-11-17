@@ -27,7 +27,7 @@ const votingSeconds = computed(() => remainingSeconds(state.value?.votingEndsAt 
 const leaving = ref(false);
 const navigating = ref(false);
 const isHost = computed(() => state.value?.hostId === user.userInfo.id);
-const isSpeaker = computed(() => state.value?.players.some(p => p.playerId === user.userInfo.id && p.isSpeaking));
+const isSpeaker = computed(() => state.value?.players.some(p => p.playerId === user.userInfo.id && p.speaking));
 const orderAssigned = computed(() => state.value?.players.every(p => p.sequenceNumber > 0) ?? false);
 const turnKey = computed(() => `${state.value?.currentRound}:${state.value?.currentTurn}`);
 provide('gameSnapshot', state);

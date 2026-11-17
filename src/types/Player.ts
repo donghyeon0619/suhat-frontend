@@ -11,7 +11,7 @@ export interface Player {
   playerInfo: PlayerInfo;
   sequenceNumber: number;
   collectedPuzzlePieces: number;
-  isSpeaking: boolean;
+  speaking: boolean;
   usageTime: number;
   surveyScore: number;
 }
