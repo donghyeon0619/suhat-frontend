@@ -22,6 +22,7 @@ npx cap open android
 
 APK 빌드는 Android SDK와 JDK가 필요하다. `cap sync`는 APK 빌드나 기기 동작 검증을 대신하지 않는다.
 
+- [임시 도메인과 Android 테스트 설정](docs/test-server.md)
 - [게임 상태 복구](docs/game-reconnection.md)
 - [모바일 검증 범위와 기기 시나리오](docs/mobile-validation.md)
 - [개발 규칙](CONTRIBUTING.md)

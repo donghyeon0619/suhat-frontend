@@ -17,6 +17,7 @@ jobs:
           node-version: '20'
           cache: npm
       - run: npm ci
+      - run: node --test scripts/test-api-origin.test.cjs
       - run: npm run build
       - run: npm run test:unit -- --run tests/unit/gameRevision.spec.ts tests/unit/eventSourceStore.spec.ts tests/unit/gameLifecycle.spec.ts
       - run: npx cap sync android

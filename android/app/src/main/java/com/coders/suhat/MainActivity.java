@@ -16,7 +16,8 @@ public class MainActivity extends BridgeActivity {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 var url = request.getUrl();
-                if ("https".equals(url.getScheme()) && "suhat.kr".equals(url.getHost())
+                if ("https".equals(url.getScheme())
+                        && getBridge().getConfig().getHostname().equals(url.getHost())
                         && url.getPath() != null && url.getPath().startsWith("/api/")) {
                     return null;
                 }

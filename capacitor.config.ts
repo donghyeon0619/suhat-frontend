@@ -1,5 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
-import {CapacitorCookies} from "@capacitor/core";
+import { testApiOrigin } from './scripts/test-api-origin.cjs';
+
+const testOrigin = testApiOrigin(process.env.SUHAT_TEST_API_URL);
 
 const config: CapacitorConfig = {
   appId: 'com.coders.suhat',
@@ -25,7 +27,7 @@ const config: CapacitorConfig = {
     },
   },
   server: {
-    hostname: 'suhat.kr',
+    hostname: testOrigin ? new URL(testOrigin).hostname : 'suhat.kr',
     cleartext: false,
   }
 };
